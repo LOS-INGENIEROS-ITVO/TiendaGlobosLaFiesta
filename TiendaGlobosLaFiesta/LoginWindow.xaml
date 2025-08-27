@@ -1,0 +1,18 @@
+﻿<Window x:Class="TiendaGlobosLaFiesta.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Login - La Fiesta" Height="350" Width="400" WindowStartupLocation="CenterScreen">
+    <Grid Background="#FFF0F0F0">
+        <TextBlock Text="La Fiesta - Login" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,20,0,0"/>
+
+        <TextBlock Text="Usuario:" Margin="50,90,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="txtUsername" Width="250" Height="25" Margin="50,110,50,0" VerticalAlignment="Top"/>
+
+        <TextBlock Text="Contraseña:" Margin="50,150,0,0" VerticalAlignment="Top"/>
+        <PasswordBox x:Name="txtPassword" Width="250" Height="25" Margin="50,170,50,0" VerticalAlignment="Top"/>
+
+        <CheckBox x:Name="chkShowPassword" Content="Mostrar contraseña" Margin="50,200,0,0" VerticalAlignment="Top" Checked="chkShowPassword_Checked" Unchecked="chkShowPassword_Unchecked"/>
+
+        <Button Content="Ingresar" Width="100" Height="30" Margin="150,240,150,0" VerticalAlignment="Top" Click="BtnLogin_Click"/>
+    </Grid>
+</Window>

@@ -1,0 +1,17 @@
+﻿<Window x:Class="TiendaGlobosLaFiesta.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="La Fiesta - Menú Principal" Height="450" Width="600" WindowStartupLocation="CenterScreen">
+    <Grid Background="#FFF8F8F8">
+        <TextBlock x:Name="lblWelcome" Text="Bienvenido" FontSize="20" FontWeight="Bold" Margin="20,10,0,0"/>
+
+        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" Width="200" Height="300" >
+            <Button x:Name="btnVentas" Content="Ventas" Height="40" Margin="0,10,0,0" Click="btnVentas_Click"/>
+            <Button x:Name="btnInventario" Content="Inventario" Height="40" Margin="0,10,0,0" Click="btnInventario_Click"/>
+            <Button x:Name="btnClientes" Content="Clientes" Height="40" Margin="0,10,0,0" Click="btnClientes_Click"/>
+            <Button x:Name="btnPedidos" Content="Pedidos" Height="40" Margin="0,10,0,0" Click="btnPedidos_Click"/>
+            <Button x:Name="btnReportes" Content="Reportes" Height="40" Margin="0,10,0,0" Click="btnReportes_Click"/>
+
+        </StackPanel>
+    </Grid>
+</Window>
