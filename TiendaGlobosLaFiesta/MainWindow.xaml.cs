@@ -1,4 +1,6 @@
 ﻿using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media.Imaging;
 
 namespace TiendaGlobosLaFiesta
 {
@@ -6,16 +8,12 @@ namespace TiendaGlobosLaFiesta
     {
         private string RolUsuario;
 
-        public MainWindow()
+        public MainWindow(string rol)
         {
             InitializeComponent();
-        }
-
-        public MainWindow(string rol) : this()
-        {
             RolUsuario = rol;
-            lblWelcome.Text = $"Bienvenido - Rol: {rol}";
             ConfigurarPermisos(rol);
+            CargarImagenPorDefecto();
         }
 
         private void ConfigurarPermisos(string rol)
@@ -26,37 +24,53 @@ namespace TiendaGlobosLaFiesta
                 btnPedidos.IsEnabled = false;
                 btnReportes.IsEnabled = false;
             }
-            else if (rol == "Gerente")
-            {
-                btnInventario.IsEnabled = true;
-                btnPedidos.IsEnabled = true;
-                btnReportes.IsEnabled = true;
-            }
         }
 
-        private void btnVentas_Click(object sender, RoutedEventArgs e)
+        private void CargarImagenPorDefecto()
         {
-            MessageBox.Show("Abrir módulo de Ventas...");
+            BitmapImage imagen = new BitmapImage();
+            imagen.BeginInit();
+            imagen.UriSource = new System.Uri("pack://application:,,,/TiendaGlobosLaFiesta;component/Assets/FondoGerente.png"); // Cambia según tu imagen
+            imagen.EndInit();
+            imgFondo.Source = imagen;
         }
 
-        private void btnInventario_Click(object sender, RoutedEventArgs e)
+        private void MostrarModulo(UserControl control)
         {
-            MessageBox.Show("Abrir módulo de Inventario...");
+            MainContent.Content = control;
+            imgFondo.Visibility = Visibility.Collapsed; // Oculta la imagen de fondo al mostrar un módulo
         }
 
-        private void btnClientes_Click(object sender, RoutedEventArgs e)
+        private void BtnVentas_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Abrir módulo de Clientes...");
+            MostrarModulo(new VentasControl());
         }
 
-        private void btnPedidos_Click(object sender, RoutedEventArgs e)
+        private void BtnInventario_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Abrir módulo de Pedidos...");
+            MostrarModulo(new InventarioControl());
         }
 
-        private void btnReportes_Click(object sender, RoutedEventArgs e)
+        private void BtnClientes_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Abrir módulo de Reportes...");
+            MostrarModulo(new ClientesControl());
+        }
+
+        private void BtnPedidos_Click(object sender, RoutedEventArgs e)
+        {
+            MostrarModulo(new PedidosControl());
+        }
+
+        private void BtnReportes_Click(object sender, RoutedEventArgs e)
+        {
+            MostrarModulo(new ReportesControl());
+        }
+
+        private void BtnCerrarSesion_Click(object sender, RoutedEventArgs e)
+        {
+            LoginWindow login = new LoginWindow();
+            login.Show();
+            this.Close();
         }
     }
 }

@@ -1,18 +1,87 @@
 ﻿<Window x:Class="TiendaGlobosLaFiesta.LoginWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Login - La Fiesta" Height="350" Width="400" WindowStartupLocation="CenterScreen">
-    <Grid Background="#FFF0F0F0">
-        <TextBlock Text="La Fiesta - Login" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,20,0,0"/>
+        Title="Login - La Fiesta" Height="450" Width="420"
+        WindowStartupLocation="CenterScreen"
+        Background="Transparent" ResizeMode="NoResize" 
+        WindowStyle="None" AllowsTransparency="True">
 
-        <TextBlock Text="Usuario:" Margin="50,90,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name="txtUsername" Width="250" Height="25" Margin="50,110,50,0" VerticalAlignment="Top"/>
+    <Border CornerRadius="15" Background="White" BorderBrush="#DDD" BorderThickness="1" Padding="20">
+        <Grid>
+            <!-- Botón cerrar (X) -->
+            <Button Content="✖" Width="35" Height="35"
+                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                    Background="Transparent" BorderThickness="0"
+                    Foreground="Black" FontWeight="Bold" FontSize="16"
+                    Click="BtnCerrar_Click" Cursor="Hand"/>
 
-        <TextBlock Text="Contraseña:" Margin="50,150,0,0" VerticalAlignment="Top"/>
-        <PasswordBox x:Name="txtPassword" Width="250" Height="25" Margin="50,170,50,0" VerticalAlignment="Top"/>
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="320">
+                <!-- Título -->
+                <TextBlock Text="La Fiesta" FontSize="30" FontWeight="Bold"
+                           Foreground="#2C3E50" HorizontalAlignment="Center" Margin="0,0,0,25"/>
 
-        <CheckBox x:Name="chkShowPassword" Content="Mostrar contraseña" Margin="50,200,0,0" VerticalAlignment="Top" Checked="chkShowPassword_Checked" Unchecked="chkShowPassword_Unchecked"/>
+                <!-- Usuario -->
+                <TextBlock Text="Usuario" FontWeight="SemiBold" Margin="0,0,0,5" FontSize="16"/>
+                <Border CornerRadius="8" Background="#F5F5F5" BorderBrush="#CCC" BorderThickness="1" Padding="5">
+                    <DockPanel>
+                        <Image Source="Assets/user32.png" Width="32" Height="32" Margin="0,0,8,0"/>
+                        <TextBox x:Name="txtUsername" Height="32" FontSize="16"
+                                 VerticalContentAlignment="Center"
+                                 KeyDown="TxtUsername_KeyDown"
+                                 Background="Transparent" BorderThickness="0"/>
+                    </DockPanel>
+                </Border>
 
-        <Button Content="Ingresar" Width="100" Height="30" Margin="150,240,150,0" VerticalAlignment="Top" Click="BtnLogin_Click"/>
-    </Grid>
+                <!-- Contraseña -->
+                <TextBlock Text="Contraseña" FontWeight="SemiBold" Margin="0,15,0,5" FontSize="16"/>
+                <Border CornerRadius="8" Background="#F5F5F5" BorderBrush="#CCC" BorderThickness="1" Padding="5">
+                    <DockPanel>
+                        <Image Source="Assets/lock32.png" Width="32" Height="32" Margin="0,0,8,0"/>
+                        <Grid>
+                            <PasswordBox x:Name="txtPassword" Height="32" FontSize="16"
+                                         VerticalContentAlignment="Center"
+                                         Background="Transparent" BorderThickness="0"
+                                         KeyDown="TxtPassword_KeyDown"/>
+                            <TextBox x:Name="txtPasswordVisible" Height="32" FontSize="16"
+                                     VerticalContentAlignment="Center"
+                                     Visibility="Collapsed" Background="Transparent" BorderThickness="0"
+                                     KeyDown="TxtPassword_KeyDown"/>
+                        </Grid>
+                    </DockPanel>
+                </Border>
+
+                <!-- Checkbox -->
+                <CheckBox x:Name="chkShowPassword" Content="Mostrar contraseña" Margin="0,12,0,12"
+                          Checked="chkShowPassword_Checked" Unchecked="chkShowPassword_Unchecked"
+                          Foreground="#444" FontSize="14"/>
+
+                <!-- Botón ingresar -->
+                <Button x:Name="btnIngresar" Content="Ingresar" Height="42"
+                        Background="#4CAF50" Foreground="White" FontWeight="Bold"
+                        BorderThickness="0" Cursor="Hand" Margin="0,10,0,0"
+                        Click="BtnLogin_Click">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="#4CAF50"/>
+                            <Setter Property="Foreground" Value="White"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border CornerRadius="8" Background="{TemplateBinding Background}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#45A049"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Border>
 </Window>
