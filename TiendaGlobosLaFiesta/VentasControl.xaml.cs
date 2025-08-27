@@ -5,6 +5,8 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using TiendaGlobosLaFiesta.Models;
+using TiendaGlobosLaFiesta.Models.TiendaGlobosLaFiesta.Models.TiendaGlobosLaFiesta.Models;
 
 namespace TiendaGlobosLaFiesta
 {
@@ -12,6 +14,9 @@ namespace TiendaGlobosLaFiesta
     {
         private BindingList<ProductoVenta> productos;
         private BindingList<GloboVenta> globos;
+        private BindingList<Cliente> clientes;
+
+        private string connStr = @"Data Source=LALOVG25\SQLEXPRESS;Initial Catalog=Globeriadb;Integrated Security=True;";
 
         public VentasControl()
         {
@@ -24,24 +29,27 @@ namespace TiendaGlobosLaFiesta
 
         private void CargarClientes()
         {
-            string connStr = @"Data Source=LALOVG25\SQLEXPRESS;Initial Catalog=Globeriadb;Integrated Security=True;";
-            List<Cliente> clientes = new List<Cliente>();
+            clientes = new BindingList<Cliente>();
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 conn.Open();
                 SqlCommand cmd = new SqlCommand("SELECT clienteId, primerNombre, apellidoP FROM Cliente", conn);
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
+                using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    clientes.Add(new Cliente
+                    while (reader.Read())
                     {
-                        clienteId = reader["clienteId"].ToString(),
-                        primerNombre = reader["primerNombre"].ToString(),
-                        apellidoP = reader["apellidoP"].ToString()
-                    });
+                        clientes.Add(new Cliente
+                        {
+                            clienteId = reader["clienteId"].ToString(),
+                            primerNombre = reader["primerNombre"].ToString(),
+                            apellidoP = reader["apellidoP"].ToString()
+                        });
+                    }
                 }
             }
             cmbClientes.ItemsSource = clientes;
+            cmbClientes.DisplayMemberPath = "primerNombre";
+            cmbClientes.SelectedValuePath = "clienteId";
         }
 
         private void CargarProductos()
@@ -51,8 +59,7 @@ namespace TiendaGlobosLaFiesta
                 new ProductoVenta { productoId="P001", nombre="Pegamento", stock=50, cantidad=0, costo=15.5 },
                 new ProductoVenta { productoId="P002", nombre="Cinta", stock=30, cantidad=0, costo=10.0 }
             };
-            foreach (var p in productos)
-                p.PropertyChanged += Item_PropertyChanged;
+            foreach (var p in productos) p.PropertyChanged += Item_PropertyChanged;
             dgProductos.ItemsSource = productos;
         }
 
@@ -63,15 +70,11 @@ namespace TiendaGlobosLaFiesta
                 new GloboVenta { globoId="G001", material="Latex", color="Rojo", cantidad=0, costo=5.0 },
                 new GloboVenta { globoId="G002", material="Metalicos", color="Azul", cantidad=0, costo=8.0 }
             };
-            foreach (var g in globos)
-                g.PropertyChanged += Item_PropertyChanged;
+            foreach (var g in globos) g.PropertyChanged += Item_PropertyChanged;
             dgGlobos.ItemsSource = globos;
         }
 
-        private void Item_PropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            ActualizarResumen();
-        }
+        private void Item_PropertyChanged(object sender, PropertyChangedEventArgs e) => ActualizarResumen();
 
         private void ActualizarResumen()
         {
@@ -83,7 +86,7 @@ namespace TiendaGlobosLaFiesta
 
         private void BtnRegistrarVenta_Click(object sender, RoutedEventArgs e)
         {
-            if (cmbClientes.SelectedItem is not Cliente cliente)
+            if (!(cmbClientes.SelectedItem is Cliente cliente))
             {
                 MessageBox.Show("Selecciona un cliente.");
                 return;
@@ -95,7 +98,6 @@ namespace TiendaGlobosLaFiesta
                 return;
             }
 
-            string connStr = @"Data Source=LALOVG25\SQLEXPRESS;Initial Catalog=Globeriadb;Integrated Security=True;";
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 conn.Open();
@@ -104,7 +106,6 @@ namespace TiendaGlobosLaFiesta
                 {
                     string ventaId = "V" + DateTime.Now.ToString("yyyyMMddHHmmss");
 
-                    // Insertar venta
                     SqlCommand cmdVenta = new SqlCommand(
                         "INSERT INTO Venta (ventaId, empleadoId, clienteId, fechaVenta, importeTotal) VALUES (@ventaId,@empleadoId,@clienteId,@fecha,@total)", conn, tran);
                     cmdVenta.Parameters.AddWithValue("@ventaId", ventaId);
@@ -115,7 +116,6 @@ namespace TiendaGlobosLaFiesta
                     cmdVenta.Parameters.AddWithValue("@total", total);
                     cmdVenta.ExecuteNonQuery();
 
-                    // Detalles productos
                     foreach (var p in productos.Where(x => x.cantidad > 0))
                     {
                         SqlCommand cmdDet = new SqlCommand(
@@ -128,7 +128,6 @@ namespace TiendaGlobosLaFiesta
                         cmdDet.ExecuteNonQuery();
                     }
 
-                    // Detalles globos
                     foreach (var g in globos.Where(x => x.cantidad > 0))
                     {
                         SqlCommand cmdDet = new SqlCommand(
@@ -143,7 +142,6 @@ namespace TiendaGlobosLaFiesta
 
                     tran.Commit();
                     MessageBox.Show("Venta registrada correctamente.");
-                    // Reiniciar cantidades
                     foreach (var p in productos) p.cantidad = 0;
                     foreach (var g in globos) g.cantidad = 0;
                     ActualizarResumen();
@@ -155,48 +153,23 @@ namespace TiendaGlobosLaFiesta
                 }
             }
         }
-    }
 
-    public class Cliente
-    {
-        public string clienteId { get; set; }
-        public string primerNombre { get; set; }
-        public string apellidoP { get; set; }
-    }
-
-    public class ProductoVenta : INotifyPropertyChanged
-    {
-        public string productoId { get; set; }
-        public string nombre { get; set; }
-        public int stock { get; set; }
-        private int _cantidad;
-        public int cantidad
+        private void BtnAumentarCantidad_Click(object sender, RoutedEventArgs e)
         {
-            get => _cantidad;
-            set { _cantidad = value; OnPropertyChanged(nameof(cantidad)); OnPropertyChanged(nameof(Importe)); }
+            if (sender is Button btn)
+            {
+                if (btn.Tag is ProductoVenta p && p.cantidad < p.stock) p.cantidad++;
+                else if (btn.Tag is GloboVenta g) g.cantidad++;
+            }
         }
-        public double costo { get; set; }
-        public double Importe => cantidad * costo;
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-    }
-
-    public class GloboVenta : INotifyPropertyChanged
-    {
-        public string globoId { get; set; }
-        public string material { get; set; }
-        public string color { get; set; }
-        private int _cantidad;
-        public int cantidad
+        private void BtnDisminuirCantidad_Click(object sender, RoutedEventArgs e)
         {
-            get => _cantidad;
-            set { _cantidad = value; OnPropertyChanged(nameof(cantidad)); OnPropertyChanged(nameof(Importe)); }
+            if (sender is Button btn)
+            {
+                if (btn.Tag is ProductoVenta p && p.cantidad > 0) p.cantidad--;
+                else if (btn.Tag is GloboVenta g && g.cantidad > 0) g.cantidad--;
+            }
         }
-        public double costo { get; set; }
-        public double Importe => cantidad * costo;
-
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }

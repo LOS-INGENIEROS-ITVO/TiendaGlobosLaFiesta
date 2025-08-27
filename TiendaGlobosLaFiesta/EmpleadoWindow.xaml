@@ -1,19 +1,22 @@
 ﻿<Window x:Class="TiendaGlobosLaFiesta.EmpleadoWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Empleado - La Fiesta" Height="450" Width="700" WindowStartupLocation="CenterScreen" Background="#FFF8F8F8">
+        Title="Empleado - La Fiesta"
+        Height="700" Width="1200"
+        WindowStartupLocation="CenterScreen" Background="#FFF8F8F8">
 
     <Grid>
-        <!-- Panel lateral -->
-        <StackPanel Background="#2C3E50" Width="200" HorizontalAlignment="Left">
-            <TextBlock Text="Empleado" Foreground="White" FontSize="20" FontWeight="Bold" Margin="10,20,0,20" Width="122"/>
-            <Button x:Name="btnVentas" Content="Ventas" Height="40" Margin="10,0,10,10" Click="btnVentas_Click"/>
-            <Button x:Name="btnRegresar" Content="Cerrar sesión" Height="40" Margin="10,0,10,10" Click="btnRegresar_Click"/>
+        <!-- PANEL LATERAL -->
+        <StackPanel Background="#2C3E50" Width="220" HorizontalAlignment="Left">
+            <TextBlock Text="Empleado" Foreground="White" FontSize="26" FontWeight="Bold" 
+                       Margin="10,20,0,30" Width="160"/>
+            <Button x:Name="btnVentas" Content="Ventas" Height="50" Margin="10,0,10,10" Click="btnVentas_Click"/>
+            <Button x:Name="btnRegresar" Content="Cerrar sesión" Height="50" Margin="10,0,10,10" Click="btnRegresar_Click"/>
         </StackPanel>
 
-        <!-- Panel dinámico -->
-        <Grid x:Name="PanelDinamico" Margin="200,0,0,0">
-            <Image x:Name="imgFondo" Stretch="UniformToFill" />
+        <!-- PANEL DINÁMICO -->
+        <Grid x:Name="PanelDinamico" Margin="220,0,0,0">
+            <Image x:Name="imgFondo" Stretch="UniformToFill"/>
         </Grid>
     </Grid>
 </Window>

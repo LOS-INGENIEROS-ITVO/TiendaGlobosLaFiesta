@@ -15,6 +15,7 @@ namespace TiendaGlobosLaFiesta
             CargarImagenPorDefecto();
         }
 
+        // Cargar imagen de fondo predeterminada
         private void CargarImagenPorDefecto()
         {
             BitmapImage imagen = new BitmapImage();
@@ -24,12 +25,15 @@ namespace TiendaGlobosLaFiesta
             imgFondo.Source = imagen;
         }
 
+        // Cargar módulo de Ventas en el panel dinámico
         private void btnVentas_Click(object sender, RoutedEventArgs e)
         {
-            // Aquí puedes cargar un UserControl en PanelDinamico si quieres, por ahora mensaje
-            MessageBox.Show("Abrir módulo de Ventas para empleado...");
+            VentasControl ventas = new VentasControl();
+            PanelDinamico.Children.Clear();
+            PanelDinamico.Children.Add(ventas);
         }
 
+        // Regresar a login
         private void btnRegresar_Click(object sender, RoutedEventArgs e)
         {
             LoginWindow login = new LoginWindow();
