@@ -54,7 +54,6 @@ namespace TiendaGlobosLaFiesta
             Application.Current.Shutdown();
         }
 
-
         // BOTÓN LOGIN
         private void BtnLogin_Click(object sender, RoutedEventArgs e)
         {
@@ -77,10 +76,10 @@ namespace TiendaGlobosLaFiesta
                     conn.Open();
 
                     string query = @"
-                        SELECT u.usuarioId, e.puestoId 
-                        FROM Usuarios u
-                        JOIN Empleado e ON u.empleadoId = e.empleadoId
-                        WHERE u.username=@username AND u.passwordHash=@password AND u.activo=1";
+                           SELECT u.usuarioId, e.puestoId 
+                           FROM Usuarios u
+                           JOIN Empleado e ON u.empleadoId = e.empleadoId
+                           WHERE u.username=@username AND u.passwordHash=@password AND u.activo=1";
 
                     SqlCommand cmd = new SqlCommand(query, conn);
                     cmd.Parameters.AddWithValue("@username", username);
