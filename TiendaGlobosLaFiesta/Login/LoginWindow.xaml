@@ -24,7 +24,7 @@
                 <TextBlock Text="Usuario" FontWeight="SemiBold" Margin="0,0,0,5" FontSize="16"/>
                 <Border CornerRadius="8" Background="#F5F5F5" BorderBrush="#CCC" BorderThickness="1" Padding="5">
                     <DockPanel>
-                        <Image Source="Assets/user32.png" Width="32" Height="32" Margin="0,0,8,0"/>
+                        <Image Width="32" Height="32" Margin="0,0,8,0" Source="/Assets/user32.png"/>
                         <TextBox x:Name="txtUsername" Height="32" FontSize="16"
                                  VerticalContentAlignment="Center"
                                  KeyDown="TxtUsername_KeyDown"
@@ -36,7 +36,7 @@
                 <TextBlock Text="Contraseña" FontWeight="SemiBold" Margin="0,15,0,5" FontSize="16"/>
                 <Border CornerRadius="8" Background="#F5F5F5" BorderBrush="#CCC" BorderThickness="1" Padding="5">
                     <DockPanel>
-                        <Image Source="Assets/lock32.png" Width="32" Height="32" Margin="0,0,8,0"/>
+                        <Image Width="32" Height="32" Margin="0,0,8,0" Source="/Assets/lock32.png"/>
                         <Grid>
                             <PasswordBox x:Name="txtPassword" Height="32" FontSize="16"
                                          VerticalContentAlignment="Center"

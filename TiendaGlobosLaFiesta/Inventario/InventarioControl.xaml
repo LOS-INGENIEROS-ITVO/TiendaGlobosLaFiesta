@@ -1,0 +1,78 @@
+﻿<UserControl x:Class="TiendaGlobosLaFiesta.InventarioControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="900">
+
+    <Grid Margin="10">
+        <TabControl>
+            <!-- Productos -->
+            <TabItem Header="Productos">
+                <Grid>
+                    <DataGrid x:Name="dgProductos" AutoGenerateColumns="False" IsReadOnly="False" Margin="0,0,0,60">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding ProductoId}" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}"/>
+                            <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad}"/>
+                            <DataGridTextColumn Header="Stock" Binding="{Binding Stock}"/>
+                            <DataGridTextColumn Header="Costo" Binding="{Binding Costo}"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Botones al fondo, alineados y estilizados -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,10">
+                        <Button Content="Agregar" Width="100" Height="35" Margin="5"
+                                Background="#4CAF50" Foreground="White" FontWeight="Bold"
+                                Click="BtnAgregarProducto_Click"/>
+                        <Button Content="Modificar" Width="100" Height="35" Margin="5"
+                                Background="#2196F3" Foreground="White" FontWeight="Bold"
+                                Click="BtnModificarProducto_Click"/>
+                        <Button Content="Eliminar" Width="100" Height="35" Margin="5"
+                                Background="#F44336" Foreground="White" FontWeight="Bold"
+                                Click="BtnEliminarProducto_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- Globos -->
+            <TabItem Header="Globos">
+                <Grid>
+                    <DataGrid x:Name="dgGlobos" AutoGenerateColumns="False" IsReadOnly="False" Margin="0,0,0,60">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding GloboId}" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Material" Binding="{Binding Material}"/>
+                            <DataGridTextColumn Header="Color" Binding="{Binding Color}"/>
+                            <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad}"/>
+                            <DataGridTextColumn Header="Stock" Binding="{Binding Stock}"/>
+                            <DataGridTextColumn Header="Costo" Binding="{Binding Costo}"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,10">
+                        <Button Content="Agregar" Width="100" Height="35" Margin="5"
+                                Background="#4CAF50" Foreground="White" FontWeight="Bold"
+                                Click="BtnAgregarGlobo_Click"/>
+                        <Button Content="Modificar" Width="100" Height="35" Margin="5"
+                                Background="#2196F3" Foreground="White" FontWeight="Bold"
+                                Click="BtnModificarGlobo_Click"/>
+                        <Button Content="Eliminar" Width="100" Height="35" Margin="5"
+                                Background="#F44336" Foreground="White" FontWeight="Bold"
+                                Click="BtnEliminarGlobo_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <!-- Resumen en la parte inferior derecha -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,10,10">
+            <TextBlock Text="Total Productos:" Margin="0,0,5,0" VerticalAlignment="Center"/>
+            <TextBox x:Name="txtTotalProductos" IsReadOnly="True" Width="50"/>
+            <TextBlock Text="Total Globos:" Margin="10,0,5,0" VerticalAlignment="Center"/>
+            <TextBox x:Name="txtTotalGlobos" IsReadOnly="True" Width="50"/>
+            <TextBlock Text="Valor Inventario:" Margin="10,0,5,0" VerticalAlignment="Center"/>
+            <TextBox x:Name="txtValorInventario" IsReadOnly="True" Width="100"/>
+        </StackPanel>
+    </Grid>
+</UserControl>
