@@ -4,7 +4,8 @@
         Title="Login - La Fiesta" Height="450" Width="420"
         WindowStartupLocation="CenterScreen"
         Background="Transparent" ResizeMode="NoResize" 
-        WindowStyle="None" AllowsTransparency="True">
+        WindowStyle="None" AllowsTransparency="True"
+        Loaded="Window_Loaded">
 
     <Border CornerRadius="15" Background="White" BorderBrush="#DDD" BorderThickness="1" Padding="20">
         <Grid>

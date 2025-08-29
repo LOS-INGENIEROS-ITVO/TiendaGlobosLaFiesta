@@ -14,6 +14,12 @@ namespace TiendaGlobosLaFiesta
             InitializeComponent();
         }
 
+        // Nuevo: al cargar la ventana, el TextBox de usuario recibe el foco
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            txtUsername.Focus();
+        }
+
         private void TxtUsername_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
@@ -23,7 +29,7 @@ namespace TiendaGlobosLaFiesta
         private void TxtPassword_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
-                BtnLogin_Click(this, new RoutedEventArgs());
+                BtnLogin_Click(sender, new RoutedEventArgs()); // corregido nombre del método
         }
 
         private void chkShowPassword_Checked(object sender, RoutedEventArgs e)
@@ -65,7 +71,7 @@ namespace TiendaGlobosLaFiesta
 
             try
             {
-                using (SqlConnection conn = ConexionBD.ObtenerConexion()) // ✅ Usamos ConexionBD
+                using (SqlConnection conn = ConexionBD.ObtenerConexion())
                 {
                     string query = @"
                         SELECT u.usuarioId, u.empleadoId, e.puestoId 
@@ -75,7 +81,7 @@ namespace TiendaGlobosLaFiesta
 
                     SqlCommand cmd = new SqlCommand(query, conn);
                     cmd.Parameters.AddWithValue("@username", username);
-                    cmd.Parameters.AddWithValue("@password", password); // ⚠ En producción, usar hash seguro
+                    cmd.Parameters.AddWithValue("@password", password);
 
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
@@ -86,8 +92,8 @@ namespace TiendaGlobosLaFiesta
                             SesionActual.Rol = reader["puestoId"]?.ToString() ?? "";
                             SesionActual.Username = username;
 
-                            MenuGerenteWindow GerenteWindow = new MenuGerenteWindow(SesionActual.Rol);
-                            GerenteWindow.Show();
+                            MenuGerenteWindow gerenteWindow = new MenuGerenteWindow(SesionActual.Rol);
+                            gerenteWindow.Show();
                             this.Close();
                         }
                         else
