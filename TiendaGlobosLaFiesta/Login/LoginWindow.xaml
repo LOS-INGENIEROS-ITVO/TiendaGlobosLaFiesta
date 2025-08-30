@@ -56,6 +56,12 @@
                           Checked="chkShowPassword_Checked" Unchecked="chkShowPassword_Unchecked"
                           Foreground="#444" FontSize="14"/>
 
+                <!-- Mensaje de error -->
+                <TextBlock x:Name="txtMensaje" Foreground="Red" FontSize="14" TextAlignment="Center" Margin="0,5,0,0"/>
+
+                <!-- Indicador de carga -->
+                <ProgressBar x:Name="progressLogin" Height="5" IsIndeterminate="True" Visibility="Collapsed" Margin="0,5,0,0"/>
+
                 <!-- Botón ingresar -->
                 <Button x:Name="btnIngresar" Content="Ingresar" Height="42"
                         Background="#4CAF50" Foreground="White" FontWeight="Bold"

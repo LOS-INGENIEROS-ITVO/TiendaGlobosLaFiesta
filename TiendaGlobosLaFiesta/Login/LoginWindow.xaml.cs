@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data.SqlClient;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -9,15 +10,27 @@ namespace TiendaGlobosLaFiesta
 {
     public partial class LoginWindow : Window
     {
+        private int intentosFallidos = 0;
+        private const int MAX_INTENTOS = 5;
+
         public LoginWindow()
         {
             InitializeComponent();
+
+            // Registrar evento solo una vez
+            txtPasswordVisible.TextChanged += TxtPasswordVisible_TextChanged;
         }
 
-        // Nuevo: al cargar la ventana, el TextBox de usuario recibe el foco
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             txtUsername.Focus();
+
+            // Cargar usuario guardado si existe
+            if (!string.IsNullOrEmpty(Properties.Settings.Default.UsuarioGuardado))
+            {
+                txtUsername.Text = Properties.Settings.Default.UsuarioGuardado;
+                txtPassword.Focus();
+            }
         }
 
         private void TxtUsername_KeyDown(object sender, KeyEventArgs e)
@@ -29,7 +42,7 @@ namespace TiendaGlobosLaFiesta
         private void TxtPassword_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
-                BtnLogin_Click(sender, new RoutedEventArgs()); // corregido nombre del método
+                BtnLogin_Click(sender, new RoutedEventArgs());
         }
 
         private void chkShowPassword_Checked(object sender, RoutedEventArgs e)
@@ -37,7 +50,6 @@ namespace TiendaGlobosLaFiesta
             txtPasswordVisible.Text = txtPassword.Password;
             txtPasswordVisible.Visibility = Visibility.Visible;
             txtPassword.Visibility = Visibility.Collapsed;
-            txtPasswordVisible.TextChanged += TxtPasswordVisible_TextChanged;
         }
 
         private void chkShowPassword_Unchecked(object sender, RoutedEventArgs e)
@@ -45,7 +57,6 @@ namespace TiendaGlobosLaFiesta
             txtPassword.Password = txtPasswordVisible.Text;
             txtPassword.Visibility = Visibility.Visible;
             txtPasswordVisible.Visibility = Visibility.Collapsed;
-            txtPasswordVisible.TextChanged -= TxtPasswordVisible_TextChanged;
         }
 
         private void TxtPasswordVisible_TextChanged(object sender, TextChangedEventArgs e)
@@ -58,17 +69,52 @@ namespace TiendaGlobosLaFiesta
             Application.Current.Shutdown();
         }
 
-        private void BtnLogin_Click(object sender, RoutedEventArgs e)
+        private async void BtnLogin_Click(object sender, RoutedEventArgs e)
         {
-            string username = txtUsername.Text;
+            string username = txtUsername.Text.Trim();
             string password = chkShowPassword.IsChecked == true ? txtPasswordVisible.Text : txtPassword.Password;
+
+            txtMensaje.Text = "";
+            progressLogin.Visibility = Visibility.Visible;
 
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
             {
-                MessageBox.Show("Por favor, ingresa usuario y contraseña.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                txtMensaje.Text = "Por favor, ingresa usuario y contraseña.";
+                progressLogin.Visibility = Visibility.Collapsed;
                 return;
             }
 
+            if (intentosFallidos >= MAX_INTENTOS)
+            {
+                txtMensaje.Text = "Has excedido el número máximo de intentos. Intenta más tarde.";
+                progressLogin.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            // Ejecutar login en un hilo separado
+            bool loginExitoso = await Task.Run(() => ValidarLogin(username, password));
+
+            progressLogin.Visibility = Visibility.Collapsed;
+
+            if (loginExitoso)
+            {
+                // Guardar usuario para la próxima vez
+                Properties.Settings.Default.UsuarioGuardado = username;
+                Properties.Settings.Default.Save();
+
+                MenuGerenteWindow gerenteWindow = new MenuGerenteWindow(SesionActual.Rol);
+                gerenteWindow.Show();
+                this.Close();
+            }
+            else
+            {
+                intentosFallidos++;
+                txtMensaje.Text = $"Usuario o contraseña incorrectos. Intento {intentosFallidos}/{MAX_INTENTOS}";
+            }
+        }
+
+        private bool ValidarLogin(string username, string password)
+        {
             try
             {
                 using (SqlConnection conn = ConexionBD.ObtenerConexion())
@@ -79,34 +125,31 @@ namespace TiendaGlobosLaFiesta
                         JOIN Empleado e ON u.empleadoId = e.empleadoId
                         WHERE u.username=@username AND u.passwordHash=@password AND u.activo=1";
 
-                    SqlCommand cmd = new SqlCommand(query, conn);
-                    cmd.Parameters.AddWithValue("@username", username);
-                    cmd.Parameters.AddWithValue("@password", password);
-
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
-                        if (reader.Read())
-                        {
-                            SesionActual.UsuarioId = Convert.ToInt32(reader["usuarioId"]);
-                            SesionActual.EmpleadoId = Convert.ToInt32(reader["empleadoId"]);
-                            SesionActual.Rol = reader["puestoId"]?.ToString() ?? "";
-                            SesionActual.Username = username;
+                        cmd.Parameters.AddWithValue("@username", username);
+                        cmd.Parameters.AddWithValue("@password", password);
 
-                            MenuGerenteWindow gerenteWindow = new MenuGerenteWindow(SesionActual.Rol);
-                            gerenteWindow.Show();
-                            this.Close();
-                        }
-                        else
+                        using (SqlDataReader reader = cmd.ExecuteReader())
                         {
-                            MessageBox.Show("Usuario o contraseña incorrectos.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                            if (reader.Read())
+                            {
+                                SesionActual.UsuarioId = Convert.ToInt32(reader["usuarioId"]);
+                                SesionActual.EmpleadoId = Convert.ToInt32(reader["empleadoId"]);
+                                SesionActual.Rol = reader["puestoId"]?.ToString() ?? "";
+                                SesionActual.Username = username;
+                                return true;
+                            }
                         }
                     }
                 }
             }
-            catch (SqlException ex)
+            catch
             {
-                MessageBox.Show("Error de conexión a la base de datos: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Dispatcher.Invoke(() => txtMensaje.Text = "Error de conexión a la base de datos.");
             }
+
+            return false;
         }
     }
 }
