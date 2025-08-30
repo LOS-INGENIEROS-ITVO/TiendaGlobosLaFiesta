@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Data.SqlClient;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,12 +14,11 @@ namespace TiendaGlobosLaFiesta
     {
         private int intentosFallidos = 0;
         private const int MAX_INTENTOS = 5;
+        private const int BLOQUEO_SEGUNDOS = 30;
 
         public LoginWindow()
         {
             InitializeComponent();
-
-            // Registrar evento solo una vez
             txtPasswordVisible.TextChanged += TxtPasswordVisible_TextChanged;
         }
 
@@ -25,11 +26,11 @@ namespace TiendaGlobosLaFiesta
         {
             txtUsername.Focus();
 
-            // Cargar usuario guardado si existe
             if (!string.IsNullOrEmpty(Properties.Settings.Default.UsuarioGuardado))
             {
                 txtUsername.Text = Properties.Settings.Default.UsuarioGuardado;
                 txtPassword.Focus();
+                chkRemember.IsChecked = true;
             }
         }
 
@@ -86,24 +87,33 @@ namespace TiendaGlobosLaFiesta
 
             if (intentosFallidos >= MAX_INTENTOS)
             {
-                txtMensaje.Text = "Has excedido el número máximo de intentos. Intenta más tarde.";
+                txtMensaje.Text = $"Has excedido {MAX_INTENTOS} intentos. Intenta de nuevo en {BLOQUEO_SEGUNDOS} segundos.";
+                await Task.Delay(BLOQUEO_SEGUNDOS * 1000);
+                intentosFallidos = 0;
+                txtMensaje.Text = "";
                 progressLogin.Visibility = Visibility.Collapsed;
                 return;
             }
 
-            // Ejecutar login en un hilo separado
-            bool loginExitoso = await Task.Run(() => ValidarLogin(username, password));
-
+            // Reemplaza CalcularHashSHA1 con HashHelper.GenerarHash
+            string passwordHash = HashHelper.GenerarHash(password);
+            bool loginExitoso = await Task.Run(() => ValidarLogin(username, passwordHash));
             progressLogin.Visibility = Visibility.Collapsed;
 
             if (loginExitoso)
             {
-                // Guardar usuario para la próxima vez
-                Properties.Settings.Default.UsuarioGuardado = username;
+                if (chkRemember.IsChecked == true)
+                    Properties.Settings.Default.UsuarioGuardado = username;
+                else
+                    Properties.Settings.Default.UsuarioGuardado = string.Empty;
+
                 Properties.Settings.Default.Save();
 
-                MenuGerenteWindow gerenteWindow = new MenuGerenteWindow(SesionActual.Rol);
-                gerenteWindow.Show();
+                if (SesionActual.Rol == "Gerente")
+                    new MenuGerenteWindow(SesionActual.Rol).Show();
+                else
+                    new EmpleadoWindow(SesionActual.Rol).Show();
+
                 this.Close();
             }
             else
@@ -113,40 +123,36 @@ namespace TiendaGlobosLaFiesta
             }
         }
 
-        private bool ValidarLogin(string username, string password)
+        private bool ValidarLogin(string username, string passwordHash)
         {
             try
             {
-                using (SqlConnection conn = ConexionBD.ObtenerConexion())
+                using SqlConnection conn = ConexionBD.ObtenerConexion();
+                string query = @"
+                    SELECT u.usuarioId, u.empleadoId, e.puestoId 
+                    FROM Usuarios u
+                    JOIN Empleado e ON u.empleadoId = e.empleadoId
+                    WHERE u.username=@username AND u.passwordHash=@password AND u.activo=1";
+
+                using SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@username", username);
+                cmd.Parameters.AddWithValue("@password", passwordHash);
+
+                using SqlDataReader reader = cmd.ExecuteReader();
+                if (reader.Read())
                 {
-                    string query = @"
-                        SELECT u.usuarioId, u.empleadoId, e.puestoId 
-                        FROM Usuarios u
-                        JOIN Empleado e ON u.empleadoId = e.empleadoId
-                        WHERE u.username=@username AND u.passwordHash=@password AND u.activo=1";
-
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@username", username);
-                        cmd.Parameters.AddWithValue("@password", password);
-
-                        using (SqlDataReader reader = cmd.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                SesionActual.UsuarioId = Convert.ToInt32(reader["usuarioId"]);
-                                SesionActual.EmpleadoId = Convert.ToInt32(reader["empleadoId"]);
-                                SesionActual.Rol = reader["puestoId"]?.ToString() ?? "";
-                                SesionActual.Username = username;
-                                return true;
-                            }
-                        }
-                    }
+                    SesionActual.UsuarioId = Convert.ToInt32(reader["usuarioId"]);
+                    SesionActual.EmpleadoId = Convert.ToInt32(reader["empleadoId"]);
+                    SesionActual.Rol = reader["puestoId"]?.ToString() ?? "";
+                    SesionActual.Username = username;
+                    return true;
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                Dispatcher.Invoke(() => txtMensaje.Text = "Error de conexión a la base de datos.");
+                Dispatcher.Invoke(() =>
+                    MessageBox.Show("Error de conexión: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error)
+                );
             }
 
             return false;

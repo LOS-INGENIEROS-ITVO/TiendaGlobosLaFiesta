@@ -1,70 +1,99 @@
 ﻿using System;
 using System.Data;
 using System.Data.SqlClient;
+using System.Windows;
 
 namespace TiendaGlobosLaFiesta.Data
 {
-    public static partial class ConexionBD
+    public static class ConexionBD
     {
-        private static readonly string connectionString =
-            @"Data Source=LALOVG25\SQLEXPRESS;Initial Catalog=Globeriadb;Integrated Security=True;";
+        // ========================
+        // CONFIGURACIÓN DEL SERVIDOR
+        // ========================
+        private const string Servidor = @"LALOVG25\SQLEXPRESS"; // tu instancia
+        private const string BaseDatos = "Globeriadb";
+        private const bool UsarWindowsAuth = true; // Windows Authentication
 
-        // Obtener conexión abierta
+        // ========================
+        // CADENA DE CONEXIÓN
+        // ========================
+        private static readonly string ConnectionString = UsarWindowsAuth
+            ? $"Server={Servidor};Database={BaseDatos};Trusted_Connection=True;"
+            : throw new NotSupportedException("Solo está configurado Windows Authentication.");
+
+        // ========================
+        // OBTENER CONEXIÓN
+        // ========================
         public static SqlConnection ObtenerConexion()
         {
-            var conexion = new SqlConnection(connectionString);
-            conexion.Open();
-            return conexion;
+            try
+            {
+                var conn = new SqlConnection(ConnectionString);
+                conn.Open();
+                return conn;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("No se pudo conectar a la base de datos: " + ex.Message,
+                                "Error de conexión", MessageBoxButton.OK, MessageBoxImage.Error);
+                throw;
+            }
         }
 
-        // Crear parámetro
+        // ========================
+        // EJECUTAR CONSULTA SIN PARÁMETROS
+        // ========================
+        public static DataTable EjecutarConsulta(string sql)
+        {
+            using SqlConnection conn = ObtenerConexion();
+            using SqlCommand cmd = new SqlCommand(sql, conn);
+            using SqlDataAdapter da = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
+        // ========================
+        // EJECUTAR CONSULTA CON PARÁMETROS
+        // ========================
+        public static DataTable EjecutarConsulta(string sql, SqlParameter[] parametros)
+        {
+            using SqlConnection conn = ObtenerConexion();
+            using SqlCommand cmd = new SqlCommand(sql, conn);
+            if (parametros != null)
+                cmd.Parameters.AddRange(parametros);
+            using SqlDataAdapter da = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
+        // ========================
+        // EJECUTAR INSERT/UPDATE/DELETE
+        // ========================
+        public static int EjecutarNonQuery(string sql, SqlParameter[] parametros = null)
+        {
+            using SqlConnection conn = ObtenerConexion();
+            using SqlCommand cmd = new SqlCommand(sql, conn);
+            if (parametros != null)
+                cmd.Parameters.AddRange(parametros);
+            return cmd.ExecuteNonQuery();
+        }
+
+        public static int EjecutarNonQuery(string sql, SqlParameter[] parametros, SqlConnection conn, SqlTransaction tran)
+        {
+            using SqlCommand cmd = new SqlCommand(sql, conn, tran);
+            if (parametros != null)
+                cmd.Parameters.AddRange(parametros);
+            return cmd.ExecuteNonQuery();
+        }
+
+        // ========================
+        // CREAR PARÁMETRO RÁPIDO
+        // ========================
         public static SqlParameter Param(string nombre, object valor)
         {
             return new SqlParameter(nombre, valor ?? DBNull.Value);
-        }
-
-        // Ejecutar non query normal
-        public static int EjecutarNonQuery(string query, SqlParameter[] parameters = null)
-        {
-            using (var conexion = new SqlConnection(connectionString))
-            using (var comando = new SqlCommand(query, conexion))
-            {
-                if (parameters != null)
-                    comando.Parameters.AddRange(parameters);
-
-                conexion.Open();
-                return comando.ExecuteNonQuery();
-            }
-        }
-
-        // Sobrecarga para transacciones
-        public static int EjecutarNonQuery(string query, SqlParameter[] parameters, SqlConnection conn, SqlTransaction tran)
-        {
-            using (var comando = new SqlCommand(query, conn, tran))
-            {
-                if (parameters != null)
-                    comando.Parameters.AddRange(parameters);
-
-                return comando.ExecuteNonQuery();
-            }
-        }
-
-        // Ejecutar consulta
-        public static DataTable EjecutarConsulta(string query, SqlParameter[] parameters = null)
-        {
-            using (var conexion = new SqlConnection(connectionString))
-            using (var comando = new SqlCommand(query, conexion))
-            {
-                if (parameters != null)
-                    comando.Parameters.AddRange(parameters);
-
-                using (var adaptador = new SqlDataAdapter(comando))
-                {
-                    var tabla = new DataTable();
-                    adaptador.Fill(tabla);
-                    return tabla;
-                }
-            }
         }
     }
 }

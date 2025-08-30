@@ -17,7 +17,6 @@
                     Click="BtnCerrar_Click" Cursor="Hand"/>
 
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="320">
-                <!-- Título -->
                 <TextBlock Text="La Fiesta" FontSize="30" FontWeight="Bold"
                            Foreground="#2C3E50" HorizontalAlignment="Center" Margin="0,0,0,25"/>
 
@@ -51,9 +50,13 @@
                     </DockPanel>
                 </Border>
 
-                <!-- Checkbox -->
-                <CheckBox x:Name="chkShowPassword" Content="Mostrar contraseña" Margin="0,12,0,12"
+                <!-- Checkbox mostrar contraseña -->
+                <CheckBox x:Name="chkShowPassword" Content="Mostrar contraseña" Margin="0,12,0,5"
                           Checked="chkShowPassword_Checked" Unchecked="chkShowPassword_Unchecked"
+                          Foreground="#444" FontSize="14"/>
+
+                <!-- Checkbox recordar usuario -->
+                <CheckBox x:Name="chkRemember" Content="Recordar usuario" Margin="0,0,0,12"
                           Foreground="#444" FontSize="14"/>
 
                 <!-- Mensaje de error -->
