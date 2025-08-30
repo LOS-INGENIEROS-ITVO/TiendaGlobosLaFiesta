@@ -16,6 +16,7 @@ namespace TiendaGlobosLaFiesta
         private ObservableCollection<ProductoVenta> productos;
         private ObservableCollection<GloboVenta> globos;
         private ObservableCollection<Cliente> clientes;
+        private ObservableCollection<VentaHistorial> historialVentas;
 
         public VentasControl()
         {
@@ -125,7 +126,7 @@ namespace TiendaGlobosLaFiesta
         {
             string query = @"
                 SELECT 
-                    v.ventaId, 
+                    v.ventaId AS VentaId, 
                     c.primerNombre + ' ' + ISNULL(c.segundoNombre,'') + ' ' + c.apellidoP + ' ' + c.apellidoM AS Cliente,
                     e.primerNombre + ' ' + ISNULL(e.segundoNombre,'') + ' ' + e.apellidoP + ' ' + e.apellidoM AS Empleado,
                     v.fechaVenta AS Fecha,
@@ -135,8 +136,18 @@ namespace TiendaGlobosLaFiesta
                 INNER JOIN Empleado e ON v.empleadoId = e.empleadoId
                 ORDER BY v.fechaVenta DESC";
 
-            var dt = ConexionBD.EjecutarConsulta(query);
-            dgHistorial.ItemsSource = dt.DefaultView;
+            historialVentas = ConexionBD.EjecutarConsulta(query)
+                .AsEnumerable()
+                .Select(r => new VentaHistorial
+                {
+                    VentaId = r["VentaId"].ToString(),
+                    Cliente = r["Cliente"].ToString(),
+                    Empleado = r["Empleado"].ToString(),
+                    Fecha = Convert.ToDateTime(r["Fecha"]),
+                    Total = Convert.ToDecimal(r["Total"])
+                }).ToObservableCollection();
+
+            dgHistorial.ItemsSource = historialVentas;
         }
 
         private void BtnFiltrarHistorial_Click(object sender, RoutedEventArgs e)
@@ -148,7 +159,7 @@ namespace TiendaGlobosLaFiesta
             var parametros = new List<System.Data.SqlClient.SqlParameter>();
             string query = @"
                 SELECT 
-                    v.ventaId, 
+                    v.ventaId AS VentaId, 
                     c.primerNombre + ' ' + ISNULL(c.segundoNombre,'') + ' ' + c.apellidoP + ' ' + c.apellidoM AS Cliente,
                     e.primerNombre + ' ' + ISNULL(e.segundoNombre,'') + ' ' + e.apellidoP + ' ' + e.apellidoM AS Empleado,
                     v.fechaVenta AS Fecha,
@@ -178,7 +189,18 @@ namespace TiendaGlobosLaFiesta
 
             query += " ORDER BY v.fechaVenta DESC";
 
-            dgHistorial.ItemsSource = ConexionBD.EjecutarConsulta(query, parametros.ToArray()).DefaultView;
+            historialVentas = ConexionBD.EjecutarConsulta(query, parametros.ToArray())
+                .AsEnumerable()
+                .Select(r => new VentaHistorial
+                {
+                    VentaId = r["VentaId"].ToString(),
+                    Cliente = r["Cliente"].ToString(),
+                    Empleado = r["Empleado"].ToString(),
+                    Fecha = Convert.ToDateTime(r["Fecha"]),
+                    Total = Convert.ToDecimal(r["Total"])
+                }).ToObservableCollection();
+
+            dgHistorial.ItemsSource = historialVentas;
         }
 
         private void Item_PropertyChanged(object sender, PropertyChangedEventArgs e) => ActualizarResumen();
@@ -323,6 +345,16 @@ namespace TiendaGlobosLaFiesta
                 }
             }
         }
+    }
+
+    // Modelo para historial de ventas
+    public class VentaHistorial
+    {
+        public string VentaId { get; set; }
+        public string Cliente { get; set; }
+        public string Empleado { get; set; }
+        public DateTime Fecha { get; set; }
+        public decimal Total { get; set; }
     }
 
     public static class Extensiones
