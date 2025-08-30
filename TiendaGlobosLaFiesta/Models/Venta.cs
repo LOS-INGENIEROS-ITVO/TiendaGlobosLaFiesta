@@ -6,7 +6,7 @@ namespace TiendaGlobosLaFiesta.Models
     public class Venta
     {
         public string VentaId { get; set; }
-        public string EmpleadoId { get; set; }
+        public int EmpleadoId { get; set; }
         public string ClienteId { get; set; }
         public DateTime FechaVenta { get; set; }
         public decimal ImporteTotal { get; set; }

@@ -10,11 +10,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Assets\appicon.ico" />
-    <None Remove="Assets\Fondo3.png" />
-    <None Remove="Assets\FondoGerente.png" />
-    <None Remove="Assets\lock32.png" />
-    <None Remove="Assets\user32.png" />
+    <None Remove="Recursos\appicon.ico" />
+    <None Remove="Recursos\Fondo3.png" />
+    <None Remove="Recursos\FondoGerente.png" />
+    <None Remove="Recursos\lock32.png" />
+    <None Remove="Recursos\user32.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,10 +22,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Assets\appicon.ico">
+    <Resource Include="Recursos\appicon.ico">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Assets\FondoGerente.png">
+    <Resource Include="Recursos\FondoGerente.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>
@@ -35,13 +35,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Assets\Fondo3.png">
+    <Resource Include="Recursos\Fondo3.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Assets\lock32.png">
+    <Resource Include="Recursos\lock32.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Assets\user32.png">
+    <Resource Include="Recursos\user32.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>
@@ -65,6 +65,10 @@
     <Page Update="Login\LoginWindow.xaml">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data\Repositorios\" />
   </ItemGroup>
 
 </Project>

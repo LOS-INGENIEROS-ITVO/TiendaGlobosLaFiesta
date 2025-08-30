@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Linq;
@@ -18,7 +19,11 @@ namespace TiendaGlobosLaFiesta.Models
                 dt.Rows.Cast<DataRow>().Select(r => new Cliente
                 {
                     ClienteId = r["clienteId"].ToString(),
-                    Nombre = $"{r["primerNombre"]} {r["segundoNombre"]} {r["apellidoP"]} {r["apellidoM"]}".Trim()
+                    PrimerNombre = r["primerNombre"].ToString(),
+                    SegundoNombre = r["segundoNombre"].ToString(),
+                    ApellidoP = r["apellidoP"].ToString(),
+                    ApellidoM = r["apellidoM"].ToString(),
+                    Telefono = int.TryParse(r["telefono"].ToString(), out int tel) ? tel : (int?)null
                 })
             );
         }

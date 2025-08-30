@@ -4,10 +4,10 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Collections.ObjectModel;
-using System.Data;
-using System.Collections.Generic;
 using TiendaGlobosLaFiesta.Models;
 using TiendaGlobosLaFiesta.Data;
+using TiendaGlobosLaFiesta.Ventas;
+using System.Data;
 
 namespace TiendaGlobosLaFiesta
 {
@@ -18,15 +18,14 @@ namespace TiendaGlobosLaFiesta
         private ObservableCollection<Cliente> clientes;
         private ObservableCollection<VentaHistorial> historialVentas;
 
+        private VentaDAO ventaDAO = new VentaDAO();
+
         public VentasControl()
         {
             InitializeComponent();
             RefrescarDatos();
         }
 
-        /// <summary>
-        /// Refresca clientes, productos, globos y historial
-        /// </summary>
         private void RefrescarDatos()
         {
             CargarClientes();
@@ -44,8 +43,14 @@ namespace TiendaGlobosLaFiesta
                 .Select(r => new Cliente
                 {
                     ClienteId = r["clienteId"].ToString(),
-                    Nombre = $"{r["primerNombre"]} {r["segundoNombre"]} {r["apellidoP"]} {r["apellidoM"]}".Trim()
+                    PrimerNombre = r["primerNombre"].ToString(),
+                    SegundoNombre = r["segundoNombre"].ToString(),
+                    ApellidoP = r["apellidoP"].ToString(),
+                    ApellidoM = r["apellidoM"].ToString()
+                    // Telefono si lo necesitas
+                    // Telefono = int.TryParse(r["telefono"].ToString(), out int t) ? t : (int?)null
                 }).ToObservableCollection();
+
 
             cmbClientes.ItemsSource = clientes;
             cmbClientes.DisplayMemberPath = "Nombre";
@@ -150,66 +155,13 @@ namespace TiendaGlobosLaFiesta
             dgHistorial.ItemsSource = historialVentas;
         }
 
-        private void BtnFiltrarHistorial_Click(object sender, RoutedEventArgs e)
-        {
-            string clienteId = (cmbFiltroCliente.SelectedItem as Cliente)?.ClienteId;
-            DateTime? fechaDesde = dpFechaDesde.SelectedDate;
-            DateTime? fechaHasta = dpFechaHasta.SelectedDate;
-
-            var parametros = new List<System.Data.SqlClient.SqlParameter>();
-            string query = @"
-                SELECT 
-                    v.ventaId AS VentaId, 
-                    c.primerNombre + ' ' + ISNULL(c.segundoNombre,'') + ' ' + c.apellidoP + ' ' + c.apellidoM AS Cliente,
-                    e.primerNombre + ' ' + ISNULL(e.segundoNombre,'') + ' ' + e.apellidoP + ' ' + e.apellidoM AS Empleado,
-                    v.fechaVenta AS Fecha,
-                    v.importeTotal AS Total
-                FROM Venta v
-                INNER JOIN Cliente c ON v.clienteId = c.clienteId
-                INNER JOIN Empleado e ON v.empleadoId = e.empleadoId
-                WHERE 1=1";
-
-            if (!string.IsNullOrEmpty(clienteId))
-            {
-                query += " AND v.clienteId = @clienteId";
-                parametros.Add(ConexionBD.Param("@clienteId", clienteId));
-            }
-
-            if (fechaDesde.HasValue)
-            {
-                query += " AND v.fechaVenta >= @fechaDesde";
-                parametros.Add(ConexionBD.Param("@fechaDesde", fechaDesde.Value));
-            }
-
-            if (fechaHasta.HasValue)
-            {
-                query += " AND v.fechaVenta <= @fechaHasta";
-                parametros.Add(ConexionBD.Param("@fechaHasta", fechaHasta.Value));
-            }
-
-            query += " ORDER BY v.fechaVenta DESC";
-
-            historialVentas = ConexionBD.EjecutarConsulta(query, parametros.ToArray())
-                .AsEnumerable()
-                .Select(r => new VentaHistorial
-                {
-                    VentaId = r["VentaId"].ToString(),
-                    Cliente = r["Cliente"].ToString(),
-                    Empleado = r["Empleado"].ToString(),
-                    Fecha = Convert.ToDateTime(r["Fecha"]),
-                    Total = Convert.ToDecimal(r["Total"])
-                }).ToObservableCollection();
-
-            dgHistorial.ItemsSource = historialVentas;
-        }
-
         private void Item_PropertyChanged(object sender, PropertyChangedEventArgs e) => ActualizarResumen();
 
         private void ActualizarResumen()
         {
             txtTotalProductos.Text = productos.Sum(p => p.Cantidad).ToString();
             txtTotalGlobos.Text = globos.Sum(g => g.Cantidad).ToString();
-            decimal total = productos.Sum(p => p.Cantidad * p.Costo) + globos.Sum(g => g.Cantidad * g.Costo);
+            decimal total = productos.Sum(p => p.Importe) + globos.Sum(g => g.Importe);
             txtImporteTotal.Text = total.ToString("0.00");
         }
 
@@ -230,6 +182,18 @@ namespace TiendaGlobosLaFiesta
                 else if (btn.Tag is GloboVenta g && g.Cantidad > 0) g.Cantidad--;
             }
         }
+
+
+        private void BtnFiltrarHistorial_Click(object sender, RoutedEventArgs e)
+        {
+            string clienteId = (cmbFiltroCliente.SelectedItem as Cliente)?.ClienteId;
+            DateTime? fechaDesde = dpFechaDesde.SelectedDate;
+            DateTime? fechaHasta = dpFechaHasta.SelectedDate;
+
+            historialVentas = ventaDAO.ObtenerHistorialFiltrado(clienteId, fechaDesde, fechaHasta);
+            dgHistorial.ItemsSource = historialVentas;
+        }
+
 
         private void BtnRegistrarVenta_Click(object sender, RoutedEventArgs e)
         {
@@ -264,104 +228,30 @@ namespace TiendaGlobosLaFiesta
                 }
             }
 
-            string ventaId = "V" + DateTime.Now.ToString("yyyyMMddHHmmss");
-            decimal total = productos.Sum(p => p.Cantidad * p.Costo) + globos.Sum(g => g.Cantidad * g.Costo);
-
-            using (var conn = ConexionBD.ObtenerConexion())
+            // Crear objeto Venta
+            Venta venta = new Venta
             {
-                var tran = conn.BeginTransaction();
-                try
-                {
-                    // Insertar Venta
-                    ConexionBD.EjecutarNonQuery(
-                        "INSERT INTO Venta (ventaId, empleadoId, clienteId, fechaVenta, importeTotal) VALUES (@ventaId,@empleadoId,@clienteId,@fecha,@total)",
-                        new[]
-                        {
-                            ConexionBD.Param("@ventaId", ventaId),
-                            ConexionBD.Param("@empleadoId", SesionActual.EmpleadoId),
-                            ConexionBD.Param("@clienteId", cliente.ClienteId),
-                            ConexionBD.Param("@fecha", DateTime.Now),
-                            ConexionBD.Param("@total", total)
-                        }, conn, tran);
+                VentaId = "V" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+                EmpleadoId = SesionActual.EmpleadoId,
+                ClienteId = cliente.ClienteId,
+                FechaVenta = DateTime.Now,
+                ImporteTotal = productos.Sum(p => p.Importe) + globos.Sum(g => g.Importe),
+                Productos = new ObservableCollection<ProductoVenta>(productos.Where(p => p.Cantidad > 0)),
+                Globos = new ObservableCollection<GloboVenta>(globos.Where(g => g.Cantidad > 0))
+            };
 
-                    // Detalles Productos
-                    foreach (var p in productos.Where(x => x.Cantidad > 0))
-                    {
-                        ConexionBD.EjecutarNonQuery(
-                            "INSERT INTO Detalle_Venta_Producto (ventaId, productoId, cantidad, costo, importe) VALUES (@ventaId,@prodId,@cant,@costo,@importe)",
-                            new[]
-                            {
-                                ConexionBD.Param("@ventaId", ventaId),
-                                ConexionBD.Param("@prodId", p.ProductoId),
-                                ConexionBD.Param("@cant", p.Cantidad),
-                                ConexionBD.Param("@costo", p.Costo),
-                                ConexionBD.Param("@importe", p.Cantidad * p.Costo)
-                            }, conn, tran);
-
-                        ConexionBD.EjecutarNonQuery(
-                            "UPDATE Producto SET stock = stock - @cant WHERE productoId = @prodId",
-                            new[]
-                            {
-                                ConexionBD.Param("@cant", p.Cantidad),
-                                ConexionBD.Param("@prodId", p.ProductoId)
-                            }, conn, tran);
-                    }
-
-                    // Detalles Globos
-                    foreach (var g in globos.Where(x => x.Cantidad > 0))
-                    {
-                        ConexionBD.EjecutarNonQuery(
-                            "INSERT INTO Detalle_Venta_Globo (ventaId, globoId, cantidad, costo, importe) VALUES (@ventaId,@globoId,@cant,@costo,@importe)",
-                            new[]
-                            {
-                                ConexionBD.Param("@ventaId", ventaId),
-                                ConexionBD.Param("@globoId", g.GloboId),
-                                ConexionBD.Param("@cant", g.Cantidad),
-                                ConexionBD.Param("@costo", g.Costo),
-                                ConexionBD.Param("@importe", g.Cantidad * g.Costo)
-                            }, conn, tran);
-
-                        ConexionBD.EjecutarNonQuery(
-                            "UPDATE Globo SET stock = stock - @cant WHERE globoId = @globoId",
-                            new[]
-                            {
-                                ConexionBD.Param("@cant", g.Cantidad),
-                                ConexionBD.Param("@globoId", g.GloboId)
-                            }, conn, tran);
-                    }
-
-                    tran.Commit();
-                    MessageBox.Show("Venta registrada correctamente.");
-
-                    // Reiniciar cantidades y refrescar
-                    foreach (var p in productos) p.Cantidad = 0;
-                    foreach (var g in globos) g.Cantidad = 0;
-                    RefrescarDatos();
-                }
-                catch (Exception ex)
-                {
-                    tran.Rollback();
-                    MessageBox.Show("Error al registrar la venta: " + ex.Message);
-                }
+            // Registrar con DAO
+            if (ventaDAO.RegistrarVenta(venta))
+            {
+                MessageBox.Show("Venta registrada correctamente.");
+                foreach (var p in productos) p.Cantidad = 0;
+                foreach (var g in globos) g.Cantidad = 0;
+                RefrescarDatos();
             }
-        }
-    }
-
-    // Modelo para historial de ventas
-    public class VentaHistorial
-    {
-        public string VentaId { get; set; }
-        public string Cliente { get; set; }
-        public string Empleado { get; set; }
-        public DateTime Fecha { get; set; }
-        public decimal Total { get; set; }
-    }
-
-    public static class Extensiones
-    {
-        public static ObservableCollection<T> ToObservableCollection<T>(this IEnumerable<T> enumerable)
-        {
-            return new ObservableCollection<T>(enumerable);
+            else
+            {
+                MessageBox.Show("Error al registrar la venta.");
+            }
         }
     }
 }

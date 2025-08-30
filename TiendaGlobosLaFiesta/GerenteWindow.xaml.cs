@@ -53,7 +53,7 @@ namespace TiendaGlobosLaFiesta
         {
             BitmapImage imagen = new BitmapImage();
             imagen.BeginInit();
-            imagen.UriSource = new System.Uri("pack://application:,,,/TiendaGlobosLaFiesta;component/Assets/FondoGerente.png");
+            imagen.UriSource = new System.Uri("pack://application:,,,/TiendaGlobosLaFiesta;component/Recursos\\FondoGerente.png");
             imagen.EndInit();
             imgFondo.Source = imagen;
         }

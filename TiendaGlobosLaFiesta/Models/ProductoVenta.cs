@@ -33,16 +33,4 @@ namespace TiendaGlobosLaFiesta.Models
         protected void OnPropertyChanged(string propertyName) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
-
-
-
-    // Clase para mostrar ventas en historial
-    public class VentaHistorial
-    {
-        public string VentaId { get; set; }
-        public string Cliente { get; set; }
-        public string Empleado { get; set; }
-        public DateTime Fecha { get; set; }
-        public decimal Total { get; set; }
-    }
 }

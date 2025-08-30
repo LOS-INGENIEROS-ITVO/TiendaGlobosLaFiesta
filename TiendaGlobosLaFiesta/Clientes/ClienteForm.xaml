@@ -1,0 +1,64 @@
+﻿<Window x:Class="TiendaGlobosLaFiesta.ClienteForm"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Cliente" Height="407" Width="382" WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize" Background="#F0F0F0">
+
+    <Border CornerRadius="12" Background="White" Padding="20" Margin="10"
+            VerticalAlignment="Center" HorizontalAlignment="Center">
+        <Border.Effect>
+            <DropShadowEffect Color="Black" BlurRadius="10" ShadowDepth="3" Opacity="0.3"/>
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Encabezado -->
+            <TextBlock Text="Datos del Cliente" FontSize="20" FontWeight="Bold"
+                       Grid.ColumnSpan="2" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+
+            <!-- ID Cliente -->
+            <TextBlock Text="ID Cliente:" Grid.Row="1" VerticalAlignment="Center" Margin="0,5"/>
+            <TextBox x:Name="txtClienteId" Grid.Row="1" Grid.Column="1" Margin="5" KeyDown="TextBox_KeyDown"/>
+
+            <!-- Primer Nombre -->
+            <TextBlock Text="Primer Nombre:" Grid.Row="2" VerticalAlignment="Center" Margin="0,5"/>
+            <TextBox x:Name="txtPrimerNombre" Grid.Row="2" Grid.Column="1" Margin="5" KeyDown="TextBox_KeyDown"/>
+
+            <!-- Segundo Nombre -->
+            <TextBlock Text="Segundo Nombre:" Grid.Row="3" VerticalAlignment="Center" Margin="0,5"/>
+            <TextBox x:Name="txtSegundoNombre" Grid.Row="3" Grid.Column="1" Margin="5" KeyDown="TextBox_KeyDown"/>
+
+            <!-- Apellido Paterno -->
+            <TextBlock Text="Apellido Paterno:" Grid.Row="4" VerticalAlignment="Center" Margin="0,5"/>
+            <TextBox x:Name="txtApellidoP" Grid.Row="4" Grid.Column="1" Margin="5" KeyDown="TextBox_KeyDown"/>
+
+            <!-- Apellido Materno -->
+            <TextBlock Text="Apellido Materno:" Grid.Row="5" VerticalAlignment="Center" Margin="0,5"/>
+            <TextBox x:Name="txtApellidoM" Grid.Row="5" Grid.Column="1" Margin="5" KeyDown="TextBox_KeyDown"/>
+
+            <!-- Teléfono -->
+            <TextBlock Text="Teléfono:" Grid.Row="6" VerticalAlignment="Center" Margin="0,5"/>
+            <TextBox x:Name="txtTelefono" Grid.Row="6" Grid.Column="1" Margin="5" KeyDown="TextBox_KeyDown"/>
+
+            <!-- Botones -->
+            <StackPanel Orientation="Horizontal" Grid.Row="7" Grid.ColumnSpan="2" HorizontalAlignment="Center" Margin="0,20,0,0">
+                <Button Content="Guardar" Width="100" Margin="10" Click="BtnGuardar_Click" Background="#4CAF50" Foreground="White"/>
+                <Button Content="Cancelar" Width="100" Margin="10" Click="BtnCancelar_Click" Background="#F44336" Foreground="White"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>
