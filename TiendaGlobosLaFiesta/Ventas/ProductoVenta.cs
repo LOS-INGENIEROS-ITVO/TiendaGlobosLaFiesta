@@ -1,13 +1,16 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 
 namespace TiendaGlobosLaFiesta.Models
 {
+    // Clase para productos en venta
     public class ProductoVenta : INotifyPropertyChanged
     {
         public string ProductoId { get; set; }
         public string Nombre { get; set; }
-        public string Unidad { get; set; } // <--- agregar
+        public string Unidad { get; set; }
         public int Stock { get; set; }
+        public decimal Costo { get; set; }
 
         private int cantidad;
         public int Cantidad
@@ -24,11 +27,22 @@ namespace TiendaGlobosLaFiesta.Models
             }
         }
 
-        public decimal Costo { get; set; }
         public decimal Importe => Costo * Cantidad;
 
         public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged(string propName) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propName));
+        protected void OnPropertyChanged(string propertyName) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+
+
+    // Clase para mostrar ventas en historial
+    public class VentaHistorial
+    {
+        public string VentaId { get; set; }
+        public string Cliente { get; set; }
+        public string Empleado { get; set; }
+        public DateTime Fecha { get; set; }
+        public decimal Total { get; set; }
     }
 }

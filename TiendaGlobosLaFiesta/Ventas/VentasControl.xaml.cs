@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Collections.ObjectModel;
 using System.Data;
+using System.Collections.Generic;
 using TiendaGlobosLaFiesta.Models;
 using TiendaGlobosLaFiesta.Data;
 
@@ -19,9 +20,18 @@ namespace TiendaGlobosLaFiesta
         public VentasControl()
         {
             InitializeComponent();
+            RefrescarDatos();
+        }
+
+        /// <summary>
+        /// Refresca clientes, productos, globos y historial
+        /// </summary>
+        private void RefrescarDatos()
+        {
             CargarClientes();
             CargarProductos();
             CargarGlobos();
+            CargarHistorialVentas();
             ActualizarResumen();
         }
 
@@ -39,12 +49,16 @@ namespace TiendaGlobosLaFiesta
             cmbClientes.ItemsSource = clientes;
             cmbClientes.DisplayMemberPath = "Nombre";
             cmbClientes.SelectedValuePath = "ClienteId";
+
+            cmbFiltroCliente.ItemsSource = clientes;
+            cmbFiltroCliente.DisplayMemberPath = "Nombre";
+            cmbFiltroCliente.SelectedValuePath = "ClienteId";
         }
 
         private void CargarProductos()
         {
             productos = ConexionBD.EjecutarConsulta(
-                "SELECT productoId, nombre, unidad, stock, costo FROM Producto") // <--- Unidad incluida
+                "SELECT productoId, nombre, unidad, stock, costo FROM Producto")
                 .AsEnumerable()
                 .Select(r =>
                 {
@@ -67,21 +81,21 @@ namespace TiendaGlobosLaFiesta
         private void CargarGlobos()
         {
             string query = @"
-    SELECT 
-        g.globoId, g.material, g.color, g.unidad, g.stock, g.costo,
-        ISNULL(STUFF((SELECT ', ' + gt.tamanio 
-                      FROM Globo_Tamanio gt 
-                      WHERE gt.globoId = g.globoId 
-                      FOR XML PATH('')), 1, 2, ''), '') AS Tamano,
-        ISNULL(STUFF((SELECT ', ' + gf.forma 
-                      FROM Globo_Forma gf 
-                      WHERE gf.globoId = g.globoId 
-                      FOR XML PATH('')), 1, 2, ''), '') AS Forma,
-        ISNULL(STUFF((SELECT ', ' + t.nombre 
-                      FROM Tematica t 
-                      WHERE t.globoId = g.globoId 
-                      FOR XML PATH('')), 1, 2, ''), '') AS Tematica
-    FROM Globo g";
+                SELECT 
+                    g.globoId, g.material, g.color, g.unidad, g.stock, g.costo,
+                    ISNULL(STUFF((SELECT ', ' + gt.tamanio 
+                                  FROM Globo_Tamanio gt 
+                                  WHERE gt.globoId = g.globoId 
+                                  FOR XML PATH('')), 1, 2, ''), '') AS Tamano,
+                    ISNULL(STUFF((SELECT ', ' + gf.forma 
+                                  FROM Globo_Forma gf 
+                                  WHERE gf.globoId = g.globoId 
+                                  FOR XML PATH('')), 1, 2, ''), '') AS Forma,
+                    ISNULL(STUFF((SELECT ', ' + t.nombre 
+                                  FROM Tematica t 
+                                  WHERE t.globoId = g.globoId 
+                                  FOR XML PATH('')), 1, 2, ''), '') AS Tematica
+                FROM Globo g";
 
             globos = ConexionBD.EjecutarConsulta(query)
                 .AsEnumerable()
@@ -107,7 +121,65 @@ namespace TiendaGlobosLaFiesta
             dgGlobos.ItemsSource = globos;
         }
 
+        private void CargarHistorialVentas()
+        {
+            string query = @"
+                SELECT 
+                    v.ventaId, 
+                    c.primerNombre + ' ' + ISNULL(c.segundoNombre,'') + ' ' + c.apellidoP + ' ' + c.apellidoM AS Cliente,
+                    e.primerNombre + ' ' + ISNULL(e.segundoNombre,'') + ' ' + e.apellidoP + ' ' + e.apellidoM AS Empleado,
+                    v.fechaVenta AS Fecha,
+                    v.importeTotal AS Total
+                FROM Venta v
+                INNER JOIN Cliente c ON v.clienteId = c.clienteId
+                INNER JOIN Empleado e ON v.empleadoId = e.empleadoId
+                ORDER BY v.fechaVenta DESC";
 
+            var dt = ConexionBD.EjecutarConsulta(query);
+            dgHistorial.ItemsSource = dt.DefaultView;
+        }
+
+        private void BtnFiltrarHistorial_Click(object sender, RoutedEventArgs e)
+        {
+            string clienteId = (cmbFiltroCliente.SelectedItem as Cliente)?.ClienteId;
+            DateTime? fechaDesde = dpFechaDesde.SelectedDate;
+            DateTime? fechaHasta = dpFechaHasta.SelectedDate;
+
+            var parametros = new List<System.Data.SqlClient.SqlParameter>();
+            string query = @"
+                SELECT 
+                    v.ventaId, 
+                    c.primerNombre + ' ' + ISNULL(c.segundoNombre,'') + ' ' + c.apellidoP + ' ' + c.apellidoM AS Cliente,
+                    e.primerNombre + ' ' + ISNULL(e.segundoNombre,'') + ' ' + e.apellidoP + ' ' + e.apellidoM AS Empleado,
+                    v.fechaVenta AS Fecha,
+                    v.importeTotal AS Total
+                FROM Venta v
+                INNER JOIN Cliente c ON v.clienteId = c.clienteId
+                INNER JOIN Empleado e ON v.empleadoId = e.empleadoId
+                WHERE 1=1";
+
+            if (!string.IsNullOrEmpty(clienteId))
+            {
+                query += " AND v.clienteId = @clienteId";
+                parametros.Add(ConexionBD.Param("@clienteId", clienteId));
+            }
+
+            if (fechaDesde.HasValue)
+            {
+                query += " AND v.fechaVenta >= @fechaDesde";
+                parametros.Add(ConexionBD.Param("@fechaDesde", fechaDesde.Value));
+            }
+
+            if (fechaHasta.HasValue)
+            {
+                query += " AND v.fechaVenta <= @fechaHasta";
+                parametros.Add(ConexionBD.Param("@fechaHasta", fechaHasta.Value));
+            }
+
+            query += " ORDER BY v.fechaVenta DESC";
+
+            dgHistorial.ItemsSource = ConexionBD.EjecutarConsulta(query, parametros.ToArray()).DefaultView;
+        }
 
         private void Item_PropertyChanged(object sender, PropertyChangedEventArgs e) => ActualizarResumen();
 
@@ -115,7 +187,7 @@ namespace TiendaGlobosLaFiesta
         {
             txtTotalProductos.Text = productos.Sum(p => p.Cantidad).ToString();
             txtTotalGlobos.Text = globos.Sum(g => g.Cantidad).ToString();
-            decimal total = productos.Sum(p => p.Importe) + globos.Sum(g => g.Importe);
+            decimal total = productos.Sum(p => p.Cantidad * p.Costo) + globos.Sum(g => g.Cantidad * g.Costo);
             txtImporteTotal.Text = total.ToString("0.00");
         }
 
@@ -151,8 +223,27 @@ namespace TiendaGlobosLaFiesta
                 return;
             }
 
+            // Validación de stock
+            foreach (var p in productos.Where(x => x.Cantidad > 0))
+            {
+                if (p.Cantidad > p.Stock)
+                {
+                    MessageBox.Show($"No hay suficiente stock de {p.Nombre}.");
+                    return;
+                }
+            }
+
+            foreach (var g in globos.Where(x => x.Cantidad > 0))
+            {
+                if (g.Cantidad > g.Stock)
+                {
+                    MessageBox.Show($"No hay suficiente stock de {g.Material} {g.Color}.");
+                    return;
+                }
+            }
+
             string ventaId = "V" + DateTime.Now.ToString("yyyyMMddHHmmss");
-            decimal total = productos.Sum(p => p.Importe) + globos.Sum(g => g.Importe);
+            decimal total = productos.Sum(p => p.Cantidad * p.Costo) + globos.Sum(g => g.Cantidad * g.Costo);
 
             using (var conn = ConexionBD.ObtenerConexion())
             {
@@ -182,7 +273,7 @@ namespace TiendaGlobosLaFiesta
                                 ConexionBD.Param("@prodId", p.ProductoId),
                                 ConexionBD.Param("@cant", p.Cantidad),
                                 ConexionBD.Param("@costo", p.Costo),
-                                ConexionBD.Param("@importe", p.Importe)
+                                ConexionBD.Param("@importe", p.Cantidad * p.Costo)
                             }, conn, tran);
 
                         ConexionBD.EjecutarNonQuery(
@@ -205,7 +296,7 @@ namespace TiendaGlobosLaFiesta
                                 ConexionBD.Param("@globoId", g.GloboId),
                                 ConexionBD.Param("@cant", g.Cantidad),
                                 ConexionBD.Param("@costo", g.Costo),
-                                ConexionBD.Param("@importe", g.Importe)
+                                ConexionBD.Param("@importe", g.Cantidad * g.Costo)
                             }, conn, tran);
 
                         ConexionBD.EjecutarNonQuery(
@@ -220,9 +311,10 @@ namespace TiendaGlobosLaFiesta
                     tran.Commit();
                     MessageBox.Show("Venta registrada correctamente.");
 
+                    // Reiniciar cantidades y refrescar
                     foreach (var p in productos) p.Cantidad = 0;
                     foreach (var g in globos) g.Cantidad = 0;
-                    ActualizarResumen();
+                    RefrescarDatos();
                 }
                 catch (Exception ex)
                 {
