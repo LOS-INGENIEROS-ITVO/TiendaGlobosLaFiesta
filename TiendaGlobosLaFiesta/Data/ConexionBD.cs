@@ -17,9 +17,9 @@ namespace TiendaGlobosLaFiesta.Data
             ? $"Server={Servidor};Database={BaseDatos};Trusted_Connection=True;"
             : throw new NotSupportedException("Solo está configurado Windows Authentication.");
 
-        // ===========================
-        // CONEXIÓN
-        // ===========================
+        // -------------------------
+        // Conexión y ejecución
+        // -------------------------
         public static SqlConnection ObtenerConexion()
         {
             try
@@ -36,9 +36,6 @@ namespace TiendaGlobosLaFiesta.Data
             }
         }
 
-        // ===========================
-        // MÉTODOS AUXILIARES
-        // ===========================
         public static DataTable EjecutarConsulta(string sql, SqlParameter[] parametros = null)
         {
             using SqlConnection conn = ObtenerConexion();
@@ -164,64 +161,210 @@ namespace TiendaGlobosLaFiesta.Data
             }
         }
 
-        // ===========================
-        // PRODUCTOS
-        // ===========================
-        public static DataTable ObtenerProductos()
+        // -------------------------
+        // Productos
+        // -------------------------
+        public static List<ProductoVenta> ObtenerProductos()
         {
-            string query = "SELECT productoId, nombre, unidad, stock, costo FROM Producto";
-            return EjecutarConsulta(query);
+            List<ProductoVenta> lista = new List<ProductoVenta>();
+            string sql = "SELECT productoId, nombre, unidad, stock, costo FROM Producto";
+            DataTable dt = EjecutarConsulta(sql);
+            foreach (DataRow row in dt.Rows)
+            {
+                lista.Add(new ProductoVenta
+                {
+                    ProductoId = row["productoId"].ToString(),
+                    Nombre = row["nombre"].ToString(),
+                    Unidad = row["unidad"].ToString(),
+                    Stock = Convert.ToInt32(row["stock"]),
+                    Costo = Convert.ToDecimal(row["costo"])
+                });
+            }
+            return lista;
         }
 
-        public static bool ActualizarStockProducto(string productoId, int nuevoStock)
+        // -------------------------
+        // Globos
+        // -------------------------
+        public static List<GloboVenta> ObtenerGlobos()
         {
-            string query = "UPDATE Producto SET Stock = @Stock WHERE productoId = @Id";
-            SqlParameter[] parametros = {
-                Param("@Stock", nuevoStock),
-                Param("@Id", productoId)
-            };
-            return EjecutarNonQuery(query, parametros) > 0;
+            List<GloboVenta> lista = new List<GloboVenta>();
+            string sql = @"
+                SELECT g.globoId, g.material, g.color, g.unidad, g.stock, g.costo,
+                       ISNULL(t.Tamanios, '') AS Tamano,
+                       ISNULL(f.Formas, '') AS Forma,
+                       ISNULL(tm.Tematicas, '') AS Tematica
+                FROM Globo g
+                LEFT JOIN (
+                    SELECT globoId, STRING_AGG(tamanio, ', ') AS Tamanios FROM Globo_Tamanio GROUP BY globoId
+                ) t ON g.globoId = t.globoId
+                LEFT JOIN (
+                    SELECT globoId, STRING_AGG(forma, ', ') AS Formas FROM Globo_Forma GROUP BY globoId
+                ) f ON g.globoId = f.globoId
+                LEFT JOIN (
+                    SELECT globoId, STRING_AGG(nombre, ', ') AS Tematicas FROM Tematica GROUP BY globoId
+                ) tm ON g.globoId = tm.globoId
+                ORDER BY g.globoId";
+
+            DataTable dt = EjecutarConsulta(sql);
+            foreach (DataRow row in dt.Rows)
+            {
+                lista.Add(new GloboVenta
+                {
+                    GloboId = row["globoId"].ToString(),
+                    Material = row["material"].ToString(),
+                    Color = row["color"].ToString(),
+                    Unidad = row["unidad"].ToString(),
+                    Stock = Convert.ToInt32(row["stock"]),
+                    Costo = Convert.ToDecimal(row["costo"]),
+                    Tamano = row["Tamano"].ToString(),
+                    Forma = row["Forma"].ToString(),
+                    Tematica = row["Tematica"].ToString()
+                });
+            }
+            return lista;
         }
 
-        // ===========================
-        // GLOBOS
-        // ===========================
-        public static DataTable ObtenerGlobos()
+        // -------------------------
+        // Registrar venta
+        // -------------------------
+
+        public static string ObtenerSiguienteVentaId()
         {
-            string query = @"
-        SELECT g.globoId, g.material, g.unidad, g.color, g.stock, g.costo,
-               ISNULL(TamaniosList.Tamanios, '') AS Tamanios,
-               ISNULL(FormasList.Formas, '') AS Formas,
-               ISNULL(TematicasList.Tematicas, '') AS Tematicas
-        FROM Globo g
-        LEFT JOIN (
-            SELECT globoId, STRING_AGG(tamanio, ', ') AS Tamanios
-            FROM Globo_Tamanio
-            GROUP BY globoId
-        ) AS TamaniosList ON g.globoId = TamaniosList.globoId
-        LEFT JOIN (
-            SELECT globoId, STRING_AGG(forma, ', ') AS Formas
-            FROM Globo_Forma
-            GROUP BY globoId
-        ) AS FormasList ON g.globoId = FormasList.globoId
-        LEFT JOIN (
-            SELECT globoId, STRING_AGG(nombre, ', ') AS Tematicas
-            FROM Tematica
-            GROUP BY globoId
-        ) AS TematicasList ON g.globoId = TematicasList.globoId
-        ORDER BY g.globoId;
-    ";
-            return EjecutarConsulta(query);
+            string sql = "SELECT TOP 1 ventaId FROM Venta ORDER BY ventaId DESC";
+            DataTable dt = EjecutarConsulta(sql);
+
+            if (dt.Rows.Count == 0)
+                return "VEN0001"; // Primer ID si no hay ventas
+
+            string ultimoId = dt.Rows[0]["ventaId"].ToString(); // Ej: "VEN0010"
+            int numero = int.Parse(ultimoId.Substring(3)); // "0010" -> 10
+            numero++; // Siguiente
+            return "VEN" + numero.ToString("D4"); // Formato con ceros: VEN0011
         }
 
-        public static bool ActualizarStockGlobo(string globoId, int nuevoStock)
+        public static bool RegistrarVenta(Venta venta)
         {
-            string query = "UPDATE Globo SET Stock = @Stock WHERE globoId = @Id";
-            SqlParameter[] parametros = {
-                Param("@Stock", nuevoStock),
-                Param("@Id", globoId)
-            };
-            return EjecutarNonQuery(query, parametros) > 0;
+            using SqlConnection conn = ObtenerConexion();
+            using SqlTransaction tran = conn.BeginTransaction();
+            try
+            {
+                // 1️⃣ Insertar Venta
+                string sqlVenta = @"
+            INSERT INTO Venta (ventaId, empleadoId, clienteId, fechaVenta, importeTotal)
+            VALUES (@VentaId, @EmpleadoId, @ClienteId, @FechaVenta, @ImporteTotal)";
+                SqlCommand cmdVenta = new SqlCommand(sqlVenta, conn, tran);
+                cmdVenta.Parameters.AddRange(new[]
+                {
+            Param("@VentaId", venta.VentaId),
+            Param("@EmpleadoId", venta.EmpleadoId),
+            Param("@ClienteId", venta.ClienteId),
+            Param("@FechaVenta", venta.FechaVenta),
+            Param("@ImporteTotal", venta.ImporteTotal)
+        });
+                cmdVenta.ExecuteNonQuery();
+
+                // 2️⃣ Insertar Detalle Productos y actualizar stock
+                foreach (var p in venta.Productos)
+                {
+                    if (p.Cantidad > p.Stock)
+                        throw new Exception($"No hay suficiente stock para el producto {p.Nombre}.");
+
+                    string sqlDetP = @"
+                INSERT INTO Detalle_Venta_Producto (ventaId, productoId, cantidad, costo, importe)
+                VALUES (@VentaId, @ProductoId, @Cantidad, @Costo, @Importe)";
+                    SqlCommand cmdDetP = new SqlCommand(sqlDetP, conn, tran);
+                    cmdDetP.Parameters.AddRange(new[]
+                    {
+                Param("@VentaId", venta.VentaId),
+                Param("@ProductoId", p.ProductoId),
+                Param("@Cantidad", p.Cantidad),
+                Param("@Costo", p.Costo),
+                Param("@Importe", p.Importe)
+            });
+                    cmdDetP.ExecuteNonQuery();
+
+                    string sqlUpdStock = "UPDATE Producto SET stock = stock - @Cantidad WHERE productoId = @Id";
+                    SqlCommand cmdStock = new SqlCommand(sqlUpdStock, conn, tran);
+                    cmdStock.Parameters.AddRange(new[]
+                    {
+                Param("@Cantidad", p.Cantidad),
+                Param("@Id", p.ProductoId)
+            });
+                    cmdStock.ExecuteNonQuery();
+                }
+
+                // 3️⃣ Insertar Detalle Globos y actualizar stock
+                foreach (var g in venta.Globos)
+                {
+                    if (g.Cantidad > g.Stock)
+                        throw new Exception($"No hay suficiente stock para el globo {g.Material} - {g.Color}.");
+
+                    string sqlDetG = @"
+                INSERT INTO Detalle_Venta_Globo (ventaId, globoId, cantidad, costo, importe)
+                VALUES (@VentaId, @GloboId, @Cantidad, @Costo, @Importe)";
+                    SqlCommand cmdDetG = new SqlCommand(sqlDetG, conn, tran);
+                    cmdDetG.Parameters.AddRange(new[]
+                    {
+                Param("@VentaId", venta.VentaId),
+                Param("@GloboId", g.GloboId),
+                Param("@Cantidad", g.Cantidad),
+                Param("@Costo", g.Costo),
+                Param("@Importe", g.Importe)
+            });
+                    cmdDetG.ExecuteNonQuery();
+
+                    string sqlUpdStockG = "UPDATE Globo SET stock = stock - @Cantidad WHERE globoId = @Id";
+                    SqlCommand cmdStockG = new SqlCommand(sqlUpdStockG, conn, tran);
+                    cmdStockG.Parameters.AddRange(new[]
+                    {
+                Param("@Cantidad", g.Cantidad),
+                Param("@Id", g.GloboId)
+            });
+                    cmdStockG.ExecuteNonQuery();
+                }
+
+                // ✅ Commit si todo sale bien
+                tran.Commit();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                tran.Rollback();
+                MessageBox.Show("Error al registrar venta: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+        }
+
+        // -------------------------
+        // Historial de ventas
+        // -------------------------
+        public static List<VentaHistorial> ObtenerHistorialVentas()
+        {
+            List<VentaHistorial> lista = new List<VentaHistorial>();
+            string sql = @"
+                SELECT v.ventaId,
+                       c.primerNombre + ' ' + c.segundoNombre + ' ' + c.apellidoP + ' ' + c.apellidoM AS Cliente,
+                       e.primerNombre + ' ' + e.segundoNombre + ' ' + e.apellidoP + ' ' + e.apellidoM AS Empleado,
+                       v.fechaVenta AS Fecha,
+                       v.importeTotal AS Total
+                FROM Venta v
+                INNER JOIN Cliente c ON v.clienteId = c.clienteId
+                INNER JOIN Empleado e ON v.empleadoId = e.empleadoId
+                ORDER BY v.fechaVenta DESC";
+            DataTable dt = EjecutarConsulta(sql);
+            foreach (DataRow row in dt.Rows)
+            {
+                lista.Add(new VentaHistorial
+                {
+                    VentaId = row["ventaId"].ToString(),
+                    Cliente = row["Cliente"].ToString(),
+                    Empleado = row["Empleado"].ToString(),
+                    Fecha = Convert.ToDateTime(row["Fecha"]),
+                    Total = Convert.ToDecimal(row["Total"])
+                });
+            }
+            return lista;
         }
     }
 }

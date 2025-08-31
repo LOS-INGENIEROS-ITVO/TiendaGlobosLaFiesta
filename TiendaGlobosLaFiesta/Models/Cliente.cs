@@ -9,7 +9,7 @@ namespace TiendaGlobosLaFiesta.Models
         private string segundoNombre;
         private string apellidoP;
         private string apellidoM;
-        private long? telefono; // Números largos
+        private long? telefono;
 
         public string ClienteId
         {
@@ -47,13 +47,11 @@ namespace TiendaGlobosLaFiesta.Models
             set { telefono = value; OnPropertyChanged(nameof(Telefono)); OnPropertyChanged(nameof(TelefonoTexto)); }
         }
 
-        // Propiedad calculada para mostrar nombre completo
         public string Nombre => $"{PrimerNombre} {SegundoNombre} {ApellidoP} {ApellidoM}".Replace("  ", " ").Trim();
-
-        // Propiedad para mostrar teléfono como texto
         public string TelefonoTexto => Telefono.HasValue ? Telefono.Value.ToString() : "-";
 
         public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged(string propertyName) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        protected void OnPropertyChanged(string propertyName) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

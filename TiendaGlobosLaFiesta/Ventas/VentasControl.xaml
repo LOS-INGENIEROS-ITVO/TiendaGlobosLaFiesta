@@ -23,14 +23,7 @@
             <Setter Property="Height" Value="30"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontWeight" Value="Bold"/>
-        </Style>
-
-        <!-- TextBox de cantidad -->
-        <Style x:Key="CantidadTextBox" TargetType="TextBox">
-            <Setter Property="Width" Value="50"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="Background" Value="LightYellow"/>
-            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="FontSize" Value="16"/>
         </Style>
     </UserControl.Resources>
 
@@ -41,7 +34,7 @@
         </Grid.RowDefinitions>
 
         <!-- Encabezado -->
-        <TextBlock Text="Módulo de Ventas" FontSize="26" FontWeight="Bold"
+        <TextBlock Text="🎉 Módulo de Ventas 🎉" FontSize="26" FontWeight="Bold"
                    HorizontalAlignment="Center" Margin="0,0,0,15"/>
 
         <!-- Pestañas -->
@@ -67,7 +60,7 @@
                     <TabControl Grid.Row="1" Margin="0,0,0,10">
 
                         <!-- Productos -->
-                        <TabItem Header="Productos">
+                        <TabItem Header="Productos 🎁">
                             <DataGrid x:Name="dgProductos" AutoGenerateColumns="False" CanUserAddRows="False"
                                       MinHeight="250" RowHeight="35" IsReadOnly="True"
                                       ColumnHeaderStyle="{StaticResource CenteredHeader}"
@@ -84,19 +77,23 @@
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                                     <Button Content="-" Style="{StaticResource CantidadButton}" Click="BtnDisminuirCantidad_Click" Tag="{Binding}" Background="#F44336" Margin="0,0,5,0"/>
-                                                    <TextBox Text="{Binding Cantidad, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource CantidadTextBox}"/>
+                                                    <Border CornerRadius="5" Background="LightYellow" Width="50" Height="30">
+                                                        <TextBox Text="{Binding Cantidad, UpdateSourceTrigger=PropertyChanged}" 
+                                                                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                                 BorderThickness="0" Background="Transparent" IsReadOnly="True"/>
+                                                    </Border>
                                                     <Button Content="+" Style="{StaticResource CantidadButton}" Click="BtnAumentarCantidad_Click" Tag="{Binding}" Background="#4CAF50" Margin="5,0,0,0"/>
                                                 </StackPanel>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="Importe" Binding="{Binding Importe, StringFormat=C}" Width="80" ElementStyle="{StaticResource CenteredCell}"/>
+                                    <DataGridTextColumn Header="Importe 💰" Binding="{Binding Importe, StringFormat=C}" Width="80" ElementStyle="{StaticResource CenteredCell}"/>
                                 </DataGrid.Columns>
                             </DataGrid>
                         </TabItem>
 
                         <!-- Globos -->
-                        <TabItem Header="Globos">
+                        <TabItem Header="Globos 🎈">
                             <DataGrid x:Name="dgGlobos" AutoGenerateColumns="False" CanUserAddRows="False"
                                       MinHeight="250" RowHeight="35" IsReadOnly="True"
                                       ColumnHeaderStyle="{StaticResource CenteredHeader}"
@@ -104,11 +101,11 @@
                                       HorizontalAlignment="Stretch" ColumnWidth="*">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="ID" Binding="{Binding GloboId}" Width="50" ElementStyle="{StaticResource CenteredCell}"/>
-                                    <DataGridTextColumn Header="Material" Binding="{Binding Material}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
-                                    <DataGridTextColumn Header="Color" Binding="{Binding Color}" Width="80" ElementStyle="{StaticResource CenteredCell}"/>
-                                    <DataGridTextColumn Header="Tamaño" Binding="{Binding Tamano}" Width="80" ElementStyle="{StaticResource CenteredCell}"/>
-                                    <DataGridTextColumn Header="Forma" Binding="{Binding Forma}" Width="80" ElementStyle="{StaticResource CenteredCell}"/>
-                                    <DataGridTextColumn Header="Temática" Binding="{Binding Tematica}" Width="100" ElementStyle="{StaticResource CenteredCell}"/>
+                                    <DataGridTextColumn Header="Material 🎈" Binding="{Binding Material}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
+                                    <DataGridTextColumn Header="Color 🎨" Binding="{Binding Color}" Width="80" ElementStyle="{StaticResource CenteredCell}"/>
+                                    <DataGridTextColumn Header="Tamaño 📏" Binding="{Binding Tamano}" Width="80" ElementStyle="{StaticResource CenteredCell}"/>
+                                    <DataGridTextColumn Header="Forma 🔷" Binding="{Binding Forma}" Width="80" ElementStyle="{StaticResource CenteredCell}"/>
+                                    <DataGridTextColumn Header="Temática 🎉" Binding="{Binding Tematica}" Width="100" ElementStyle="{StaticResource CenteredCell}"/>
                                     <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad}" Width="80" ElementStyle="{StaticResource CenteredCell}"/>
                                     <DataGridTextColumn Header="Stock" Binding="{Binding Stock}" Width="60" ElementStyle="{StaticResource CenteredCell}"/>
                                     <DataGridTemplateColumn Header="Cantidad" Width="120">
@@ -116,14 +113,18 @@
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                                     <Button Content="-" Style="{StaticResource CantidadButton}" Click="BtnDisminuirCantidad_Click" Tag="{Binding}" Background="#F44336" Margin="0,0,5,0"/>
-                                                    <TextBox Text="{Binding Cantidad, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource CantidadTextBox}"/>
+                                                    <Border CornerRadius="5" Background="LightYellow" Width="50" Height="30">
+                                                        <TextBox Text="{Binding Cantidad, UpdateSourceTrigger=PropertyChanged}" 
+                                                                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                                 BorderThickness="0" Background="Transparent" IsReadOnly="True"/>
+                                                    </Border>
                                                     <Button Content="+" Style="{StaticResource CantidadButton}" Click="BtnAumentarCantidad_Click" Tag="{Binding}" Background="#4CAF50" Margin="5,0,0,0"/>
                                                 </StackPanel>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="Costo" Binding="{Binding Costo, StringFormat=C}" Width="80" ElementStyle="{StaticResource CenteredCell}"/>
-                                    <DataGridTextColumn Header="Importe" Binding="{Binding Importe, StringFormat=C}" Width="80" ElementStyle="{StaticResource CenteredCell}"/>
+                                    <DataGridTextColumn Header="Costo 💵" Binding="{Binding Costo, StringFormat=C}" Width="80" ElementStyle="{StaticResource CenteredCell}"/>
+                                    <DataGridTextColumn Header="Importe 💰" Binding="{Binding Importe, StringFormat=C}" Width="80" ElementStyle="{StaticResource CenteredCell}"/>
                                 </DataGrid.Columns>
                             </DataGrid>
                         </TabItem>
@@ -142,17 +143,17 @@
                                 <ColumnDefinition Width="70"/>
                             </Grid.ColumnDefinitions>
 
-                            <TextBlock Text="Total Productos:" FontWeight="Bold" Grid.Column="0" HorizontalAlignment="Right" Margin="0,0,5,0"/>
+                            <TextBlock Text="Total Productos 🎁:" FontWeight="Bold" Grid.Column="0" HorizontalAlignment="Right" Margin="0,0,5,0"/>
                             <TextBlock x:Name="txtTotalProductos" Text="0" Grid.Column="1" TextAlignment="Center"/>
-                            <TextBlock Text="Total Globos:" FontWeight="Bold" Grid.Column="2" HorizontalAlignment="Right" Margin="10,0,5,0"/>
+                            <TextBlock Text="Total Globos 🎈:" FontWeight="Bold" Grid.Column="2" HorizontalAlignment="Right" Margin="10,0,5,0"/>
                             <TextBlock x:Name="txtTotalGlobos" Text="0" Grid.Column="3" TextAlignment="Center"/>
-                            <TextBlock Text="Importe Total:" FontWeight="Bold" Grid.Column="4" HorizontalAlignment="Right" Margin="10,0,5,0"/>
+                            <TextBlock Text="Importe Total 💰:" FontWeight="Bold" Grid.Column="4" HorizontalAlignment="Right" Margin="10,0,5,0"/>
                             <TextBlock x:Name="txtImporteTotal" Text="0.00" Grid.Column="5" TextAlignment="Center"/>
                         </Grid>
                     </Border>
 
                     <!-- Botón Registrar -->
-                    <Button Content="Registrar Venta" Grid.Row="3" Height="45" Width="200"
+                    <Button Content="🛒 Registrar Venta" Grid.Row="3" Height="45" Width="200"
                             HorizontalAlignment="Center" Margin="0,10,0,0"
                             Background="#4CAF50" Foreground="White" FontWeight="Bold"
                             Click="BtnRegistrarVenta_Click"/>
@@ -160,7 +161,7 @@
             </TabItem>
 
             <!-- Historial de Ventas -->
-            <TabItem Header="Historial de Ventas">
+            <TabItem Header="Historial de Ventas 📜">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -177,6 +178,7 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="120"/>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
                         <TextBlock Text="Cliente:" VerticalAlignment="Center" Grid.Column="0" Margin="0,0,5,0"/>
@@ -185,7 +187,8 @@
                         <DatePicker x:Name="dpFechaDesde" Grid.Column="3"/>
                         <TextBlock Text="hasta:" VerticalAlignment="Center" Grid.Column="4" Margin="10,0,5,0"/>
                         <DatePicker x:Name="dpFechaHasta" Grid.Column="5"/>
-                        <Button Content="Filtrar" Width="90" Grid.Column="6" Click="BtnFiltrarHistorial_Click" Background="#2196F3" Foreground="White"/>
+                        <Button Content="Filtrar 🔍" Width="90" Grid.Column="6" Click="BtnFiltrarHistorial_Click" Background="#2196F3" Foreground="White"/>
+                        <Button Content="Limpiar ✖" Width="90" Grid.Column="7" Click="BtnLimpiarFiltros_Click" Background="#F44336" Foreground="White" Margin="5,0,0,0"/>
                     </Grid>
 
                     <!-- DataGrid Historial -->
@@ -195,10 +198,10 @@
                               HorizontalAlignment="Stretch" ColumnWidth="*">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="ID Venta" Binding="{Binding VentaId}" Width="120" ElementStyle="{StaticResource CenteredCell}"/>
-                            <DataGridTextColumn Header="Cliente" Binding="{Binding Cliente}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
-                            <DataGridTextColumn Header="Empleado" Binding="{Binding Empleado}" Width="120" ElementStyle="{StaticResource CenteredCell}"/>
-                            <DataGridTextColumn Header="Fecha" Binding="{Binding Fecha, StringFormat=d}" Width="120" ElementStyle="{StaticResource CenteredCell}"/>
-                            <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat=C}" Width="100" ElementStyle="{StaticResource CenteredCell}"/>
+                            <DataGridTextColumn Header="Cliente 🎁" Binding="{Binding Cliente}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
+                            <DataGridTextColumn Header="Empleado 👤" Binding="{Binding Empleado}" Width="120" ElementStyle="{StaticResource CenteredCell}"/>
+                            <DataGridTextColumn Header="Fecha 📅" Binding="{Binding Fecha, StringFormat=d}" Width="120" ElementStyle="{StaticResource CenteredCell}"/>
+                            <DataGridTextColumn Header="Total 💰" Binding="{Binding Total, StringFormat=C}" Width="100" ElementStyle="{StaticResource CenteredCell}"/>
                         </DataGrid.Columns>
                     </DataGrid>
 

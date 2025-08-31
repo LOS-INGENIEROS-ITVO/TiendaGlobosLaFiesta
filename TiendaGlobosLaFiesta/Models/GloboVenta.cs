@@ -4,16 +4,29 @@ namespace TiendaGlobosLaFiesta.Models
 {
     public class GloboVenta : INotifyPropertyChanged
     {
-
         public string GloboId { get; set; }
         public string Material { get; set; }
         public string Color { get; set; }
+        public string Unidad { get; set; }
+
+        private int stock;
+        public int Stock
+        {
+            get => stock;
+            set
+            {
+                if (stock != value)
+                {
+                    stock = value;
+                    OnPropertyChanged(nameof(Stock));
+                }
+            }
+        }
+
+        public decimal Costo { get; set; }
         public string Tamano { get; set; }
         public string Forma { get; set; }
         public string Tematica { get; set; }
-        public string Unidad { get; set; }
-        public int Stock { get; set; }
-        public decimal Costo { get; set; }
 
         private int cantidad;
         public int Cantidad
@@ -30,7 +43,7 @@ namespace TiendaGlobosLaFiesta.Models
             }
         }
 
-        public decimal Importe => Costo * Cantidad;
+        public decimal Importe => Cantidad * Costo;
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged(string propertyName) =>

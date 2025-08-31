@@ -1,15 +1,27 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 
 namespace TiendaGlobosLaFiesta.Models
 {
-    // Clase para productos en venta
     public class ProductoVenta : INotifyPropertyChanged
     {
         public string ProductoId { get; set; }
         public string Nombre { get; set; }
         public string Unidad { get; set; }
-        public int Stock { get; set; }
+
+        private int stock;
+        public int Stock
+        {
+            get => stock;
+            set
+            {
+                if (stock != value)
+                {
+                    stock = value;
+                    OnPropertyChanged(nameof(Stock));
+                }
+            }
+        }
+
         public decimal Costo { get; set; }
 
         private int cantidad;

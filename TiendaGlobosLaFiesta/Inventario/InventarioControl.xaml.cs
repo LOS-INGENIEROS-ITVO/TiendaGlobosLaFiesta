@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using TiendaGlobosLaFiesta.Data;
 using TiendaGlobosLaFiesta.Inventario;
+using TiendaGlobosLaFiesta.Models;
 
 namespace TiendaGlobosLaFiesta
 {
@@ -27,18 +28,16 @@ namespace TiendaGlobosLaFiesta
         {
             try
             {
-                DataTable dt = ConexionBD.ObtenerProductos();
+                List<ProductoVenta> lista = ConexionBD.ObtenerProductos();
                 productos = new ObservableCollection<ProductoInventario>(
-                    dt.Rows.Cast<DataRow>().Select(r =>
-                        new ProductoInventario
-                        {
-                            ProductoId = r["productoId"].ToString(),
-                            Nombre = r["nombre"].ToString(),
-                            Unidad = Convert.ToInt32(r["unidad"]),
-                            Stock = Convert.ToInt32(r["stock"]),
-                            Costo = Convert.ToDecimal(r["costo"])
-                        }
-                    )
+                    lista.Select(p => new ProductoInventario
+                    {
+                        ProductoId = p.ProductoId,
+                        Nombre = p.Nombre,
+                        Unidad = int.Parse(p.Unidad), // mantener string si así está en la BD
+                        Stock = p.Stock,
+                        Costo = p.Costo
+                    })
                 );
 
                 foreach (var p in productos) p.PropertyChanged += Item_PropertyChanged;
@@ -54,22 +53,20 @@ namespace TiendaGlobosLaFiesta
         {
             try
             {
-                DataTable dt = ConexionBD.ObtenerGlobos();
+                List<GloboVenta> lista = ConexionBD.ObtenerGlobos();
                 globos = new ObservableCollection<GloboInventario>(
-                    dt.Rows.Cast<DataRow>().Select(r =>
-                        new GloboInventario
-                        {
-                            GloboId = r["globoId"].ToString(),
-                            Material = r["material"].ToString(),
-                            Unidad = r["unidad"].ToString(),
-                            Color = r["color"].ToString(),
-                            Stock = Convert.ToInt32(r["stock"]),
-                            Costo = Convert.ToDecimal(r["costo"]),
-                            Tamanios = r["Tamanios"]?.ToString() ?? "",
-                            Formas = r["Formas"]?.ToString() ?? "",
-                            Tematicas = r["Tematicas"]?.ToString() ?? ""
-                        }
-                    )
+                    lista.Select(g => new GloboInventario
+                    {
+                        GloboId = g.GloboId,
+                        Material = g.Material,
+                        Unidad = g.Unidad,
+                        Color = g.Color,
+                        Stock = g.Stock,
+                        Costo = g.Costo,
+                        Tamanios = g.Tamano,   // ahora coincide con el alias de BD
+                        Formas = g.Forma,
+                        Tematicas = g.Tematica
+                    })
                 );
 
                 foreach (var g in globos) g.PropertyChanged += Item_PropertyChanged;
@@ -80,6 +77,7 @@ namespace TiendaGlobosLaFiesta
                 MessageBox.Show("Error al cargar globos: " + ex.Message);
             }
         }
+
 
         private void Item_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
