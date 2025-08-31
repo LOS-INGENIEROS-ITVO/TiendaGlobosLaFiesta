@@ -17,6 +17,9 @@ namespace TiendaGlobosLaFiesta.Data
             ? $"Server={Servidor};Database={BaseDatos};Trusted_Connection=True;"
             : throw new NotSupportedException("Solo está configurado Windows Authentication.");
 
+        // ===========================
+        // CONEXIÓN
+        // ===========================
         public static SqlConnection ObtenerConexion()
         {
             try
@@ -33,6 +36,36 @@ namespace TiendaGlobosLaFiesta.Data
             }
         }
 
+        // ===========================
+        // MÉTODOS AUXILIARES
+        // ===========================
+        public static DataTable EjecutarConsulta(string sql, SqlParameter[] parametros = null)
+        {
+            using SqlConnection conn = ObtenerConexion();
+            using SqlCommand cmd = new SqlCommand(sql, conn);
+            if (parametros != null) cmd.Parameters.AddRange(parametros);
+            using SqlDataAdapter da = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
+        public static int EjecutarNonQuery(string sql, SqlParameter[] parametros = null)
+        {
+            using SqlConnection conn = ObtenerConexion();
+            using SqlCommand cmd = new SqlCommand(sql, conn);
+            if (parametros != null) cmd.Parameters.AddRange(parametros);
+            return cmd.ExecuteNonQuery();
+        }
+
+        public static SqlParameter Param(string nombre, object valor)
+        {
+            return new SqlParameter(nombre, valor ?? DBNull.Value);
+        }
+
+        // ===========================
+        // CLIENTES
+        // ===========================
         public static List<Cliente> ObtenerClientes(string filtro = "")
         {
             List<Cliente> lista = new List<Cliente>();
@@ -131,28 +164,64 @@ namespace TiendaGlobosLaFiesta.Data
             }
         }
 
-        public static DataTable EjecutarConsulta(string sql, SqlParameter[] parametros = null)
+        // ===========================
+        // PRODUCTOS
+        // ===========================
+        public static DataTable ObtenerProductos()
         {
-            using SqlConnection conn = ObtenerConexion();
-            using SqlCommand cmd = new SqlCommand(sql, conn);
-            if (parametros != null) cmd.Parameters.AddRange(parametros);
-            using SqlDataAdapter da = new SqlDataAdapter(cmd);
-            DataTable dt = new DataTable();
-            da.Fill(dt);
-            return dt;
+            string query = "SELECT productoId, nombre, unidad, stock, costo FROM Producto";
+            return EjecutarConsulta(query);
         }
 
-        public static int EjecutarNonQuery(string sql, SqlParameter[] parametros = null)
+        public static bool ActualizarStockProducto(string productoId, int nuevoStock)
         {
-            using SqlConnection conn = ObtenerConexion();
-            using SqlCommand cmd = new SqlCommand(sql, conn);
-            if (parametros != null) cmd.Parameters.AddRange(parametros);
-            return cmd.ExecuteNonQuery();
+            string query = "UPDATE Producto SET Stock = @Stock WHERE productoId = @Id";
+            SqlParameter[] parametros = {
+                Param("@Stock", nuevoStock),
+                Param("@Id", productoId)
+            };
+            return EjecutarNonQuery(query, parametros) > 0;
         }
 
-        public static SqlParameter Param(string nombre, object valor)
+        // ===========================
+        // GLOBOS
+        // ===========================
+        public static DataTable ObtenerGlobos()
         {
-            return new SqlParameter(nombre, valor ?? DBNull.Value);
+            string query = @"
+        SELECT g.globoId, g.material, g.unidad, g.color, g.stock, g.costo,
+               ISNULL(TamaniosList.Tamanios, '') AS Tamanios,
+               ISNULL(FormasList.Formas, '') AS Formas,
+               ISNULL(TematicasList.Tematicas, '') AS Tematicas
+        FROM Globo g
+        LEFT JOIN (
+            SELECT globoId, STRING_AGG(tamanio, ', ') AS Tamanios
+            FROM Globo_Tamanio
+            GROUP BY globoId
+        ) AS TamaniosList ON g.globoId = TamaniosList.globoId
+        LEFT JOIN (
+            SELECT globoId, STRING_AGG(forma, ', ') AS Formas
+            FROM Globo_Forma
+            GROUP BY globoId
+        ) AS FormasList ON g.globoId = FormasList.globoId
+        LEFT JOIN (
+            SELECT globoId, STRING_AGG(nombre, ', ') AS Tematicas
+            FROM Tematica
+            GROUP BY globoId
+        ) AS TematicasList ON g.globoId = TematicasList.globoId
+        ORDER BY g.globoId;
+    ";
+            return EjecutarConsulta(query);
+        }
+
+        public static bool ActualizarStockGlobo(string globoId, int nuevoStock)
+        {
+            string query = "UPDATE Globo SET Stock = @Stock WHERE globoId = @Id";
+            SqlParameter[] parametros = {
+                Param("@Stock", nuevoStock),
+                Param("@Id", globoId)
+            };
+            return EjecutarNonQuery(query, parametros) > 0;
         }
     }
 }

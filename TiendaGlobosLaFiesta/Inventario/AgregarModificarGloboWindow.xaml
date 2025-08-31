@@ -1,8 +1,9 @@
 ﻿<Window x:Class="TiendaGlobosLaFiesta.AgregarModificarGloboWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Agregar / Modificar Globo" Height="350" Width="400"
-        WindowStartupLocation="CenterScreen">
+        Title="Agregar/Modificar Globo" Height="294" Width="450"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="#f4f4f9">
 
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -11,43 +12,28 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,5">
-            <TextBlock Text="Material:" Width="100" VerticalAlignment="Center"/>
-            <ComboBox x:Name="cbMaterial" Width="200">
-                <ComboBoxItem Content="Metalicos"/>
-                <ComboBoxItem Content="Latex"/>
-                <ComboBoxItem Content="Burbuja"/>
-            </ComboBox>
-        </StackPanel>
+        <TextBlock Text="Material:" Grid.Row="0" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#333"/>
+        <TextBox x:Name="txtMaterial" Grid.Row="0" Margin="120,0,0,10" Width="280" Background="#ffffff"/>
 
-        <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="0,5">
-            <TextBlock Text="Color:" Width="100" VerticalAlignment="Center"/>
-            <TextBox x:Name="txtColor" Width="200"/>
-        </StackPanel>
+        <TextBlock Text="Unidad:" Grid.Row="1" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#333"/>
+        <TextBox x:Name="txtUnidad" Grid.Row="1" Margin="120,0,0,10" Width="280" Background="#ffffff"/>
 
-        <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="0,5">
-            <TextBlock Text="Unidad:" Width="100" VerticalAlignment="Center"/>
-            <TextBox x:Name="txtUnidad" Width="200"/>
-        </StackPanel>
+        <TextBlock Text="Color:" Grid.Row="2" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#333"/>
+        <TextBox x:Name="txtColor" Grid.Row="2" Margin="120,0,0,10" Width="280" Background="#ffffff"/>
 
-        <StackPanel Orientation="Horizontal" Grid.Row="3" Margin="0,5">
-            <TextBlock Text="Stock:" Width="100" VerticalAlignment="Center"/>
-            <TextBox x:Name="txtStock" Width="200"/>
-        </StackPanel>
+        <TextBlock Text="Stock:" Grid.Row="3" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#333"/>
+        <TextBox x:Name="txtStock" Grid.Row="3" Margin="120,0,0,10" Width="280" Background="#ffffff"/>
 
-        <StackPanel Orientation="Horizontal" Grid.Row="4" Margin="0,5">
-            <TextBlock Text="Costo:" Width="100" VerticalAlignment="Center"/>
-            <TextBox x:Name="txtCosto" Width="200"/>
-        </StackPanel>
+        <TextBlock Text="Costo:" Grid.Row="4" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#333"/>
+        <TextBox x:Name="txtCosto" Grid.Row="4" Margin="120,0,0,10" Width="280" Background="#ffffff"/>
 
-        <StackPanel Orientation="Horizontal" Grid.Row="5" HorizontalAlignment="Center" Margin="0,10,0,0">
-            <Button Content="Guardar" Width="100" Height="35" Background="#4CAF50" Foreground="White" FontWeight="Bold"
-                    Click="BtnGuardar_Click"/>
-            <Button Content="Cancelar" Width="100" Height="35" Margin="10,0,0,0" Background="#F44336" Foreground="White" FontWeight="Bold"
-                    Click="BtnCancelar_Click"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="5" Margin="0,20,0,0">
+            <Button Content="Guardar" Width="120" Margin="10" Background="#4CAF50" Foreground="White" FontWeight="Bold" Click="BtnGuardar_Click" Height="35"/>
+            <Button Content="Cancelar" Width="120" Margin="10" Background="#F44336" Foreground="White" FontWeight="Bold" Click="BtnCancelar_Click"/>
         </StackPanel>
     </Grid>
 </Window>

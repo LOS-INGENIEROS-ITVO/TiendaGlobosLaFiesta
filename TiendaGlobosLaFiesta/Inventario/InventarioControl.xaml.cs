@@ -6,7 +6,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using TiendaGlobosLaFiesta.Data;
-using TiendaGlobosLaFiesta.Models;
+using TiendaGlobosLaFiesta.Inventario;
 
 namespace TiendaGlobosLaFiesta
 {
@@ -25,43 +25,60 @@ namespace TiendaGlobosLaFiesta
 
         private void CargarProductos()
         {
-            var dt = ConexionBD.EjecutarConsulta("SELECT productoId, nombre, unidad, stock, costo FROM Producto");
-            productos = dt.Rows.Cast<DataRow>().Select(r =>
+            try
             {
-                var p = new ProductoInventario
-                {
-                    ProductoId = r["productoId"].ToString(),
-                    Nombre = r["nombre"].ToString(),
-                    Unidad = Convert.ToInt32(r["unidad"]),
-                    Stock = Convert.ToInt32(r["stock"]),
-                    Costo = Convert.ToDecimal(r["costo"])
-                };
-                p.PropertyChanged += Item_PropertyChanged;
-                return p;
-            }).ToObservableCollection();
+                DataTable dt = ConexionBD.ObtenerProductos();
+                productos = new ObservableCollection<ProductoInventario>(
+                    dt.Rows.Cast<DataRow>().Select(r =>
+                        new ProductoInventario
+                        {
+                            ProductoId = r["productoId"].ToString(),
+                            Nombre = r["nombre"].ToString(),
+                            Unidad = Convert.ToInt32(r["unidad"]),
+                            Stock = Convert.ToInt32(r["stock"]),
+                            Costo = Convert.ToDecimal(r["costo"])
+                        }
+                    )
+                );
 
-            dgProductos.ItemsSource = productos;
+                foreach (var p in productos) p.PropertyChanged += Item_PropertyChanged;
+                dgProductos.ItemsSource = productos;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al cargar productos: " + ex.Message);
+            }
         }
 
         private void CargarGlobos()
         {
-            var dt = ConexionBD.EjecutarConsulta("SELECT globoId, material, color, unidad, stock, costo FROM Globo");
-            globos = dt.Rows.Cast<DataRow>().Select(r =>
+            try
             {
-                var g = new GloboInventario
-                {
-                    GloboId = r["globoId"].ToString(),
-                    Material = r["material"].ToString(),
-                    Color = r["color"].ToString(),
-                    Unidad = r["unidad"].ToString(),
-                    Stock = Convert.ToInt32(r["stock"]),
-                    Costo = Convert.ToDecimal(r["costo"])
-                };
-                g.PropertyChanged += Item_PropertyChanged;
-                return g;
-            }).ToObservableCollection();
+                DataTable dt = ConexionBD.ObtenerGlobos();
+                globos = new ObservableCollection<GloboInventario>(
+                    dt.Rows.Cast<DataRow>().Select(r =>
+                        new GloboInventario
+                        {
+                            GloboId = r["globoId"].ToString(),
+                            Material = r["material"].ToString(),
+                            Unidad = r["unidad"].ToString(),
+                            Color = r["color"].ToString(),
+                            Stock = Convert.ToInt32(r["stock"]),
+                            Costo = Convert.ToDecimal(r["costo"]),
+                            Tamanios = r["Tamanios"]?.ToString() ?? "",
+                            Formas = r["Formas"]?.ToString() ?? "",
+                            Tematicas = r["Tematicas"]?.ToString() ?? ""
+                        }
+                    )
+                );
 
-            dgGlobos.ItemsSource = globos;
+                foreach (var g in globos) g.PropertyChanged += Item_PropertyChanged;
+                dgGlobos.ItemsSource = globos;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al cargar globos: " + ex.Message);
+            }
         }
 
         private void Item_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -71,9 +88,11 @@ namespace TiendaGlobosLaFiesta
 
         private void ActualizarResumen()
         {
-            txtTotalProductos.Text = productos.Sum(p => p.Stock).ToString();
-            txtTotalGlobos.Text = globos.Sum(g => g.Stock).ToString();
-            txtValorInventario.Text = (productos.Sum(p => p.Stock * p.Costo) + globos.Sum(g => g.Stock * g.Costo)).ToString("0.00");
+            txtTotalProductos.Text = productos?.Sum(p => p.Stock).ToString() ?? "0";
+            txtTotalGlobos.Text = globos?.Sum(g => g.Stock).ToString() ?? "0";
+            txtValorInventario.Text = ((productos?.Sum(p => p.Stock * p.Costo) ?? 0) +
+                                       (globos?.Sum(g => g.Stock * g.Costo) ?? 0))
+                                      .ToString("0.00");
         }
 
         #region Botones Productos

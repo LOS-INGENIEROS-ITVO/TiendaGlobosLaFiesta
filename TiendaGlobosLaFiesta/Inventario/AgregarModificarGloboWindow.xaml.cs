@@ -1,33 +1,25 @@
 ﻿using System;
 using System.Windows;
 using TiendaGlobosLaFiesta.Data;
-using TiendaGlobosLaFiesta.Models;
+using TiendaGlobosLaFiesta.Inventario;
 
 namespace TiendaGlobosLaFiesta
 {
     public partial class AgregarModificarGloboWindow : Window
     {
         private GloboInventario globo;
-        private bool esNuevo;
 
-        public AgregarModificarGloboWindow(GloboInventario globo = null)
+        public AgregarModificarGloboWindow(GloboInventario g = null)
         {
             InitializeComponent();
-
-            if (globo == null)
+            globo = g;
+            if (globo != null)
             {
-                this.globo = new GloboInventario();
-                esNuevo = true;
-            }
-            else
-            {
-                this.globo = globo;
-                cbMaterial.Text = globo.Material;
-                txtColor.Text = globo.Color;
+                txtMaterial.Text = globo.Material;
                 txtUnidad.Text = globo.Unidad;
+                txtColor.Text = globo.Color;
                 txtStock.Text = globo.Stock.ToString();
                 txtCosto.Text = globo.Costo.ToString();
-                esNuevo = false;
             }
         }
 
@@ -35,43 +27,41 @@ namespace TiendaGlobosLaFiesta
         {
             try
             {
-                globo.Material = cbMaterial.Text;
-                globo.Color = txtColor.Text.Trim();
-                globo.Unidad = txtUnidad.Text.Trim();
-                globo.Stock = int.Parse(txtStock.Text);
-                globo.Costo = decimal.Parse(txtCosto.Text);
+                if (string.IsNullOrWhiteSpace(txtMaterial.Text))
+                    throw new Exception("El material es obligatorio.");
 
-                if (esNuevo)
+                int stock = int.Parse(txtStock.Text);
+                decimal costo = decimal.Parse(txtCosto.Text);
+
+                if (globo == null)
                 {
-                    string nuevoId = Guid.NewGuid().ToString();
-                    globo.GloboId = nuevoId;
+                    // Agregar
                     ConexionBD.EjecutarNonQuery(
-                        "INSERT INTO Globo (globoId, material, color, unidad, stock, costo) VALUES (@id,@material,@color,@unidad,@stock,@costo)",
+                        "INSERT INTO Globo (globoId, material, unidad, color, stock, costo) VALUES (UUID(), @Material, @Unidad, @Color, @Stock, @Costo)",
                         new[] {
-                            ConexionBD.Param("@id", globo.GloboId),
-                            ConexionBD.Param("@material", globo.Material),
-                            ConexionBD.Param("@color", globo.Color),
-                            ConexionBD.Param("@unidad", globo.Unidad),
-                            ConexionBD.Param("@stock", globo.Stock),
-                            ConexionBD.Param("@costo", globo.Costo)
+                            ConexionBD.Param("@Material", txtMaterial.Text),
+                            ConexionBD.Param("@Unidad", txtUnidad.Text),
+                            ConexionBD.Param("@Color", txtColor.Text),
+                            ConexionBD.Param("@Stock", stock),
+                            ConexionBD.Param("@Costo", costo)
                         });
                 }
                 else
                 {
+                    // Modificar
                     ConexionBD.EjecutarNonQuery(
-                        "UPDATE Globo SET material=@material, color=@color, unidad=@unidad, stock=@stock, costo=@costo WHERE globoId=@id",
+                        "UPDATE Globo SET material=@Material, unidad=@Unidad, color=@Color, stock=@Stock, costo=@Costo WHERE globoId=@Id",
                         new[] {
-                            ConexionBD.Param("@material", globo.Material),
-                            ConexionBD.Param("@color", globo.Color),
-                            ConexionBD.Param("@unidad", globo.Unidad),
-                            ConexionBD.Param("@stock", globo.Stock),
-                            ConexionBD.Param("@costo", globo.Costo),
-                            ConexionBD.Param("@id", globo.GloboId)
+                            ConexionBD.Param("@Material", txtMaterial.Text),
+                            ConexionBD.Param("@Unidad", txtUnidad.Text),
+                            ConexionBD.Param("@Color", txtColor.Text),
+                            ConexionBD.Param("@Stock", stock),
+                            ConexionBD.Param("@Costo", costo),
+                            ConexionBD.Param("@Id", globo.GloboId)
                         });
                 }
 
                 DialogResult = true;
-                Close();
             }
             catch (Exception ex)
             {
@@ -81,7 +71,7 @@ namespace TiendaGlobosLaFiesta
 
         private void BtnCancelar_Click(object sender, RoutedEventArgs e)
         {
-            Close();
+            DialogResult = false;
         }
     }
 }

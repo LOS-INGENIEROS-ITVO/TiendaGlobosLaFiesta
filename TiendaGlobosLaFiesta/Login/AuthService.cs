@@ -1,6 +1,7 @@
-﻿using System.Data;
-using TiendaGlobosLaFiesta.Data;
+﻿using System;
+using System.Data;
 using TiendaGlobosLaFiesta;
+using TiendaGlobosLaFiesta.Data;
 
 public static class AuthService
 {
@@ -8,9 +9,12 @@ public static class AuthService
     {
         rol = null;
 
-        string query = @"SELECT usuarioId, empleadoId, passwordHash 
-                         FROM Usuarios 
-                         WHERE username = @usuario AND activo = 1";
+        string query = @"
+            SELECT u.usuarioId, u.empleadoId, u.passwordHash, e.puestoId
+            FROM Usuarios u
+            JOIN Empleado e ON u.empleadoId = e.empleadoId
+            WHERE u.username = @usuario AND u.activo = 1
+        ";
 
         var parametros = new[] { ConexionBD.Param("@usuario", usuario) };
         DataTable dt = ConexionBD.EjecutarConsulta(query, parametros);
@@ -25,16 +29,11 @@ public static class AuthService
         if (!HashHelper.VerificarHash(contrasena, hashAlmacenado))
             return false;
 
+        rol = dt.Rows[0]["puestoId"].ToString();
         SesionActual.EmpleadoId = empleadoId;
         SesionActual.Username = usuario;
-
-        string rolQuery = @"SELECT puestoId FROM Empleado WHERE empleadoId = @empleadoId";
-        var rolParam = new[] { ConexionBD.Param("@empleadoId", empleadoId) };
-        DataTable rolDt = ConexionBD.EjecutarConsulta(rolQuery, rolParam);
-        if (rolDt.Rows.Count > 0)
-            rol = rolDt.Rows[0]["puestoId"].ToString();
-
         SesionActual.Rol = rol;
+
         return true;
     }
 }

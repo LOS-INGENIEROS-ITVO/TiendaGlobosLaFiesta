@@ -3,38 +3,53 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="La Fiesta - Menú Gerente"
         Height="700" Width="1200"
-        WindowStartupLocation="CenterScreen" Background="#FFF8F8F8">
+        WindowStartupLocation="CenterScreen" Background="#FFFAF0">
+
+    <Window.Resources>
+        <Style x:Key="MenuButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="50"/>
+            <Setter Property="Margin" Value="10"/>
+            <Setter Property="Foreground" Value="#4B3B2C"/>
+            <Setter Property="Background" Value="#D4B483"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DisabledMenuButtonStyle" TargetType="Button" BasedOn="{StaticResource MenuButtonStyle}">
+            <Setter Property="Foreground" Value="Gray"/>
+            <Setter Property="Background" Value="#F2E9D9"/>
+            <Setter Property="Cursor" Value="Arrow"/>
+        </Style>
+    </Window.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="220"/>
-            <!-- Menú lateral -->
             <ColumnDefinition Width="*"/>
-            <!-- Área de contenido -->
         </Grid.ColumnDefinitions>
 
-        <!-- MENÚ LATERAL -->
-        <StackPanel Grid.Column="0" Background="#2C3E50">
-            <!-- Bienvenida -->
-            <TextBlock x:Name="txtBienvenida" 
-                       Text="Bienvenido" 
-                       Foreground="White" FontSize="20" FontWeight="Bold" 
-                       HorizontalAlignment="Center" Margin="0,20,0,30" 
-                       TextWrapping="Wrap" TextAlignment="Center"/>
-
-            <!-- Botones de menú -->
-            <Button x:Name="btnVentas" Content="Ventas" Height="50" Margin="10" Click="BtnVentas_Click"/>
-            <Button x:Name="btnInventario" Content="Inventario" Height="50" Margin="10" Click="BtnInventario_Click"/>
-            <Button x:Name="btnClientes" Content="Clientes" Height="50" Margin="10" Click="BtnClientes_Click"/>
-            <Button x:Name="btnPedidos" Content="Pedidos" Height="50" Margin="10" Click="BtnPedidos_Click"/>
-            <Button x:Name="btnReportes" Content="Reportes" Height="50" Margin="10" Click="BtnReportes_Click"/>
-
-            <!-- Cerrar sesión -->
+        <StackPanel Grid.Column="0" Background="#EDE0C8">
+            <TextBlock x:Name="txtBienvenida" Text="Bienvenido" Foreground="#4B3B2C" FontSize="20" FontWeight="Bold"
+                       HorizontalAlignment="Center" Margin="0,20,0,30" TextWrapping="Wrap" TextAlignment="Center"/>
+            <Button x:Name="btnVentas" Content="Ventas" Style="{StaticResource MenuButtonStyle}" Click="BtnVentas_Click"/>
+            <Button x:Name="btnInventario" Content="Inventario" Style="{StaticResource MenuButtonStyle}" Click="BtnInventario_Click"/>
+            <Button x:Name="btnClientes" Content="Clientes" Style="{StaticResource MenuButtonStyle}" Click="BtnClientes_Click"/>
+            <Button x:Name="btnPedidos" Content="Pedidos" Style="{StaticResource MenuButtonStyle}" Click="BtnPedidos_Click"/>
+            <Button x:Name="btnReportes" Content="Reportes" Style="{StaticResource MenuButtonStyle}" Click="BtnReportes_Click"/>
             <Button x:Name="btnCerrarSesion" Content="Cerrar Sesión" Height="50" Margin="10,50,10,0" 
-                    Click="BtnCerrarSesion_Click" Background="#E74C3C" Foreground="White"/>
+                    Click="BtnCerrarSesion_Click" Background="#B5651D" Foreground="White"/>
         </StackPanel>
 
-        <!-- ÁREA DE CONTENIDO -->
         <Grid Grid.Column="1" Margin="10">
             <Image x:Name="imgFondo" Stretch="UniformToFill"/>
             <ContentControl x:Name="MainContent" Margin="0"/>
