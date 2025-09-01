@@ -228,7 +228,7 @@ namespace TiendaGlobosLaFiesta
 
                 SaveFileDialog sfd = new SaveFileDialog
                 {
-                    Filter = "Archivos Excel (*.xlsx)|*.xlsx",
+                    Filter = "Archivos Excel (.xlsx)|.xlsx",
                     FileName = "Ventas_Exportadas.xlsx"
                 };
 
@@ -414,13 +414,6 @@ namespace TiendaGlobosLaFiesta
 
 
 
-
-
-
-
-
-
-
         private void BtnExportarPDF_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -433,7 +426,7 @@ namespace TiendaGlobosLaFiesta
 
                 var sfd = new SaveFileDialog
                 {
-                    Filter = "Archivos PDF (*.pdf)|*.pdf",
+                    Filter = "Archivos PDF (.pdf)|.pdf",
                     FileName = "Ventas_Exportadas.pdf"
                 };
                 if (sfd.ShowDialog() != true) return;
@@ -446,60 +439,77 @@ namespace TiendaGlobosLaFiesta
                     {
                         page.Size(PageSizes.A4);
                         page.Margin(20);
+                        page.DefaultTextStyle(x => x.FontSize(9));
+
+                        // ======= HEADER =======
+                        page.Header().Row(row =>
+                        {
+                            row.RelativeColumn().AlignLeft()
+                                .Text("Reporte de Ventas")
+                                .FontSize(18).Bold().FontColor(Colors.Blue.Medium);
+
+                            row.RelativeColumn().AlignRight()
+                                .Text(DateTime.Now.ToString("dd/MM/yyyy"))
+                                .FontSize(10).FontColor(Colors.Grey.Medium);
+                        });
+
+                        // ======= CONTENT =======
                         page.Content().Column(col =>
                         {
-                            // Título principal
-                            col.Item().Element(c =>
-                                c.PaddingBottom(10).AlignCenter()
-                                 .Text("Reporte de Ventas").Bold().FontSize(22)
-                            );
+                            // =========================
+                            // TABLA RESUMEN
+                            // =========================
+                            col.Item().PaddingVertical(5).AlignCenter()
+                                .Text("Resumen de Ventas").FontSize(13).Bold().FontColor(Colors.Blue.Darken1);
 
-                            // Subtítulo Resumen
-                            col.Item().Element(c =>
-                                c.PaddingBottom(5).AlignCenter()
-                                 .Text("Resumen de Ventas").Bold().FontSize(16)
-                            );
-
-                            // TABLA DE RESUMEN
                             col.Item().Table(table =>
                             {
-                                table.ColumnsDefinition(c => {
-                                    c.RelativeColumn(); c.RelativeColumn(); c.RelativeColumn(); c.RelativeColumn(); c.RelativeColumn();
+                                table.ColumnsDefinition(c =>
+                                {
+                                    c.RelativeColumn(1);
+                                    c.RelativeColumn(2);
+                                    c.RelativeColumn(2);
+                                    c.RelativeColumn(2);
+                                    c.RelativeColumn(2);
                                 });
 
+                                // Encabezado
                                 table.Header(header =>
                                 {
                                     foreach (var text in new[] { "ID Venta", "Cliente", "Empleado", "Fecha", "Total" })
                                     {
-                                        header.Cell().Element(cell =>
-                                            cell.Border(1).Padding(5)
-                                                .Text(text).Bold().AlignCenter()
-                                        );
+                                        header.Cell()
+                                            .Background(Colors.Grey.Lighten2)
+                                            .Border(0.8f)
+                                            .Padding(4)
+                                            .AlignCenter()
+                                            .Text(text).Bold().FontColor(Colors.Black);
                                     }
                                 });
 
+                                // Datos
                                 foreach (var venta in historialFiltrado)
                                 {
-                                    table.Cell().Element(c => c.Border(1).Padding(5).Text(venta.VentaId.ToString()).AlignCenter());
-                                    table.Cell().Element(c => c.Border(1).Padding(5).Text(venta.ClienteNombre).AlignCenter());
-                                    table.Cell().Element(c => c.Border(1).Padding(5).Text(venta.Empleado).AlignCenter());
-                                    table.Cell().Element(c => c.Border(1).Padding(5).Text(venta.FechaVenta.ToShortDateString()).AlignCenter());
-                                    table.Cell().Element(c => c.Border(1).Padding(5).Text(venta.Total.ToString("C")).AlignCenter());
+                                    table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(venta.VentaId.ToString());
+                                    table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(venta.ClienteNombre);
+                                    table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(venta.Empleado);
+                                    table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(venta.FechaVenta.ToShortDateString());
+                                    table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(venta.Total.ToString("C"));
                                 }
                             });
 
                             col.Item().PageBreak();
 
-                            // Subtítulo Productos
-                            col.Item().Element(c =>
-                                c.PaddingBottom(5).AlignCenter()
-                                 .Text("Productos").Bold().FontSize(16)
-                            );
+                            // =========================
+                            // TABLA PRODUCTOS
+                            // =========================
+                            col.Item().PaddingVertical(5).AlignCenter()
+                                .Text("Productos").FontSize(13).Bold().FontColor(Colors.Green.Darken1);
 
-                            // TABLA DE PRODUCTOS
                             col.Item().Table(table =>
                             {
-                                table.ColumnsDefinition(c => {
+                                table.ColumnsDefinition(c =>
+                                {
                                     for (int i = 0; i < 6; i++) c.RelativeColumn();
                                 });
 
@@ -507,10 +517,12 @@ namespace TiendaGlobosLaFiesta
                                 {
                                     foreach (var text in new[] { "ID Venta", "Producto", "Unidad", "Cantidad", "Costo", "Importe" })
                                     {
-                                        header.Cell().Element(cell =>
-                                            cell.Border(1).Padding(5)
-                                                .Text(text).Bold().AlignCenter()
-                                        );
+                                        header.Cell()
+                                            .Background(Colors.Green.Lighten3)
+                                            .Border(0.8f)
+                                            .Padding(4)
+                                            .AlignCenter()
+                                            .Text(text).Bold();
                                     }
                                 });
 
@@ -518,39 +530,42 @@ namespace TiendaGlobosLaFiesta
                                 {
                                     foreach (var prod in venta.Productos)
                                     {
-                                        table.Cell().Element(c => c.Border(1).Padding(5).Text(venta.VentaId.ToString()).AlignCenter());
-                                        table.Cell().Element(c => c.Border(1).Padding(5).Text(prod.Nombre).AlignCenter());
-                                        table.Cell().Element(c => c.Border(1).Padding(5).Text(prod.Unidad).AlignCenter());
-                                        table.Cell().Element(c => c.Border(1).Padding(5).Text(prod.Cantidad.ToString()).AlignCenter());
-                                        table.Cell().Element(c => c.Border(1).Padding(5).Text(prod.Costo.ToString("C")).AlignCenter());
-                                        table.Cell().Element(c => c.Border(1).Padding(5).Text(prod.Importe.ToString("C")).AlignCenter());
+                                        table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(venta.VentaId.ToString());
+                                        table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(prod.Nombre);
+                                        table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(prod.Unidad);
+                                        table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(prod.Cantidad.ToString());
+                                        table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(prod.Costo.ToString("C"));
+                                        table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(prod.Importe.ToString("C"));
                                     }
                                 }
                             });
 
                             col.Item().PageBreak();
 
-                            // Subtítulo Globos
-                            col.Item().Element(c =>
-                                c.PaddingBottom(5).AlignCenter()
-                                 .Text("Globos").Bold().FontSize(16)
-                            );
+                            // =========================
+                            // TABLA GLOBOS
+                            // =========================
+                            col.Item().PaddingVertical(5).AlignCenter()
+                                .Text("Globos").FontSize(13).Bold().FontColor(Colors.Red.Darken1);
 
-                            // TABLA DE GLOBOS
                             col.Item().Table(table =>
                             {
-                                table.ColumnsDefinition(c => {
+                                table.ColumnsDefinition(c =>
+                                {
                                     for (int i = 0; i < 10; i++) c.RelativeColumn();
                                 });
 
                                 table.Header(header =>
                                 {
-                                    foreach (var text in new[] { "ID Venta", "Material", "Color", "Tamaño", "Forma", "Temática", "Unidad", "Cantidad", "Costo", "Importe" })
+                                    foreach (var text in new[]
+                                             { "ID Venta", "Material", "Color", "Tamaño", "Forma", "Temática", "Unidad", "Cantidad", "Costo", "Importe" })
                                     {
-                                        header.Cell().Element(cell =>
-                                            cell.Border(1).Padding(5)
-                                                .Text(text).Bold().AlignCenter()
-                                        );
+                                        header.Cell()
+                                            .Background(Colors.Red.Lighten3)
+                                            .Border(0.8f)
+                                            .Padding(4)
+                                            .AlignCenter()
+                                            .Text(text).Bold();
                                     }
                                 });
 
@@ -558,19 +573,28 @@ namespace TiendaGlobosLaFiesta
                                 {
                                     foreach (var globo in venta.Globos)
                                     {
-                                        table.Cell().Element(c => c.Border(1).Padding(5).Text(venta.VentaId.ToString()).AlignCenter());
-                                        table.Cell().Element(c => c.Border(1).Padding(5).Text(globo.Material).AlignCenter());
-                                        table.Cell().Element(c => c.Border(1).Padding(5).Text(globo.Color).AlignCenter());
-                                        table.Cell().Element(c => c.Border(1).Padding(5).Text(globo.Tamano).AlignCenter());
-                                        table.Cell().Element(c => c.Border(1).Padding(5).Text(globo.Forma).AlignCenter());
-                                        table.Cell().Element(c => c.Border(1).Padding(5).Text(globo.Tematica).AlignCenter());
-                                        table.Cell().Element(c => c.Border(1).Padding(5).Text(globo.Unidad).AlignCenter());
-                                        table.Cell().Element(c => c.Border(1).Padding(5).Text(globo.Cantidad.ToString()).AlignCenter());
-                                        table.Cell().Element(c => c.Border(1).Padding(5).Text(globo.Costo.ToString("C")).AlignCenter());
-                                        table.Cell().Element(c => c.Border(1).Padding(5).Text(globo.Importe.ToString("C")).AlignCenter());
+                                        table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(venta.VentaId.ToString());
+                                        table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(globo.Material);
+                                        table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(globo.Color);
+                                        table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(globo.Tamano);
+                                        table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(globo.Forma);
+                                        table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(globo.Tematica);
+                                        table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(globo.Unidad);
+                                        table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(globo.Cantidad.ToString());
+                                        table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(globo.Costo.ToString("C"));
+                                        table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(globo.Importe.ToString("C"));
                                     }
                                 }
                             });
+                        });
+
+                        // ======= FOOTER =======
+                        page.Footer().AlignCenter().Text(txt =>
+                        {
+                            txt.Span("Página ").FontSize(9);
+                            txt.CurrentPageNumber().FontSize(9);
+                            txt.Span(" de ").FontSize(9);
+                            txt.TotalPages().FontSize(9);
                         });
                     });
                 });
@@ -593,24 +617,9 @@ namespace TiendaGlobosLaFiesta
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         private void BtnMostrarGrafica_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Funcionalidad de mostrar gráfica aún no implementada.");
+
         }
     }
 
