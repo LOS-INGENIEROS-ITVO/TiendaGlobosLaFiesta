@@ -129,7 +129,7 @@ namespace TiendaGlobosLaFiesta
             {
                 using SqlConnection conn = ConexionBD.ObtenerConexion();
                 string query = @"
-                    SELECT u.usuarioId, u.empleadoId, e.puestoId 
+                    SELECT u.usuarioId, u.empleadoId, e.puestoId, e.primerNombre, e.segundoNombre, e.apellidoP, e.apellidoM
                     FROM Usuarios u
                     JOIN Empleado e ON u.empleadoId = e.empleadoId
                     WHERE u.username=@username AND u.passwordHash=@password AND u.activo=1";
@@ -145,6 +145,7 @@ namespace TiendaGlobosLaFiesta
                     SesionActual.EmpleadoId = Convert.ToInt32(reader["empleadoId"]);
                     SesionActual.Rol = reader["puestoId"]?.ToString() ?? "";
                     SesionActual.Username = username;
+                    SesionActual.NombreEmpleadoCompleto = $"{reader["primerNombre"]} {reader["segundoNombre"]} {reader["apellidoP"]} {reader["apellidoM"]}".Trim();
                     return true;
                 }
             }
