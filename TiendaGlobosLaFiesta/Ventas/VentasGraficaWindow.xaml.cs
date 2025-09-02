@@ -1,50 +1,67 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Windows;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
-using LiveChartsCore.SkiaSharpView.WPF;
+using LiveChartsCore.SkiaSharpView.Painting;
+using SkiaSharp;
+using TiendaGlobosLaFiesta.ViewModels;
 
 namespace TiendaGlobosLaFiesta
 {
     public partial class VentasGraficaWindow : Window
     {
-        public VentasGraficaWindow(ViewModels.ModeloDeVistaVentas vm)
+        public ISeries[] Series { get; set; }
+        public Axis[] XAxes { get; set; }
+        public Axis[] YAxes { get; set; }
+
+        public VentasGraficaWindow(ModeloDeVistaVentas vm)
         {
             InitializeComponent();
 
-            // Agrupar ventas por cliente
             var ventasPorCliente = vm.Historial
-                .GroupBy(vh => vh.ClienteNombre)
-                .ToDictionary(g => g.Key, g => g.Sum(v => v.Total));
-
-            // Crear series
-            var series = new ISeries[]
-            {
-                new ColumnSeries<decimal>
+                .GroupBy(v => v.ClienteNombre)
+                .Select(g => new
                 {
-                    Values = ventasPorCliente.Values
+                    Cliente = g.Key,
+                    Total = g.Sum(v => (double)v.Total)
+                })
+                .OrderByDescending(x => x.Total)
+                .ToList();
+
+            var labels = ventasPorCliente.Select(d => d.Cliente).ToArray();
+            var values = ventasPorCliente.Select(d => d.Total).ToArray();
+
+            Series = new ISeries[]
+            {
+                new ColumnSeries<double>
+                {
+                    Values = values,
+                    Name = "Ventas",
+                    Fill = new SolidColorPaint(SKColors.CornflowerBlue)
+                    // NO usar DataLabelsFormatter ni PrimaryValue aquí (evita errores por versión)
                 }
             };
 
-            // Configurar ejes
-            Chart.Series = series;
-            Chart.XAxes = new Axis[]
+            XAxes = new[]
             {
                 new Axis
                 {
-                    Labels = ventasPorCliente.Keys.ToArray(),
-                    LabelsRotation = 15
+                    Labels = labels,
+                    LabelsRotation = 45,
+                    LabelsPaint = new SolidColorPaint(SKColors.Black)
                 }
             };
-            Chart.YAxes = new Axis[]
+
+            YAxes = new[]
             {
                 new Axis
                 {
-                    Labeler = value => value.ToString("C")
+                    Labeler = value => value.ToString("C"),
+                    LabelsPaint = new SolidColorPaint(SKColors.Black)
                 }
             };
+
+            DataContext = this;
         }
     }
 }

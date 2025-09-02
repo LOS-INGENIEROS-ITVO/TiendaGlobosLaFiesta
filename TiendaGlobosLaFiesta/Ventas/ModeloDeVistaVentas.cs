@@ -98,7 +98,7 @@ namespace TiendaGlobosLaFiesta.ViewModels
                 .Select(g => new
                 {
                     Cliente = g.Key,
-                    Total = g.Sum(x => x.Total)
+                    Total = g.Sum(x => (double)x.Total) // convertir a double
                 })
                 .OrderByDescending(x => x.Total)
                 .ToList();
@@ -108,8 +108,12 @@ namespace TiendaGlobosLaFiesta.ViewModels
             Series.Clear();
             Series.Add(new ColumnSeries<double>
             {
-                Values = datos.Select(d => (double)d.Total).ToArray(),
-                Name = "Ventas"
+                Values = datos.Select(d => d.Total).ToArray(),
+                Name = "Ventas",
+                DataLabelsPaint = new LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SkiaSharp.SKColors.Black),
+                DataLabelsSize = 14,
+                // Ahora usamos directamente el valor
+                DataLabelsFormatter = value => $"{value:C}"
             });
 
             OnPropertyChanged(nameof(Series));
