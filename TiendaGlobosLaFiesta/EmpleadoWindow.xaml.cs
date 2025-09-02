@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace TiendaGlobosLaFiesta
@@ -18,11 +19,27 @@ namespace TiendaGlobosLaFiesta
         // Cargar imagen de fondo predeterminada
         private void CargarImagenPorDefecto()
         {
-            BitmapImage imagen = new BitmapImage();
-            imagen.BeginInit();
-            imagen.UriSource = new System.Uri("pack://application:,,,/TiendaGlobosLaFiesta;component/Assets/Fondo3.png");
-            imagen.EndInit();
-            imgFondo.Source = imagen;
+            try
+            {
+                // Crea el BitmapImage de manera segura
+                BitmapImage imagen = new BitmapImage();
+                imagen.BeginInit();
+
+                // Ruta relativa al recurso dentro del proyecto
+                imagen.UriSource = new Uri("pack://application:,,,/TiendaGlobosLaFiesta;component/Recursos/Fondo3.png", UriKind.Absolute);
+
+                imagen.CacheOption = BitmapCacheOption.OnLoad; // Mejora el rendimiento
+                imagen.EndInit();
+                imagen.Freeze(); // Para que sea seguro usar desde otros hilos
+
+                imgFondo.Source = imagen;
+            }
+            catch (Exception ex)
+            {
+                // Opcional: log o mensaje de error sin romper la app
+                Console.WriteLine("No se pudo cargar la imagen de fondo: " + ex.Message);
+
+            }
         }
 
         // Cargar módulo de Ventas en el panel dinámico

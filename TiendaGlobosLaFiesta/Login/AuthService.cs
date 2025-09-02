@@ -10,7 +10,14 @@ public static class AuthService
         rol = null;
 
         string query = @"
-            SELECT u.usuarioId, u.empleadoId, u.passwordHash, e.puestoId
+            SELECT u.usuarioId, 
+                   u.empleadoId, 
+                   u.passwordHash, 
+                   e.puestoId,
+                   e.primerNombre, 
+                   e.segundoNombre, 
+                   e.apellidoP, 
+                   e.apellidoM
             FROM Usuarios u
             JOIN Empleado e ON u.empleadoId = e.empleadoId
             WHERE u.username = @usuario AND u.activo = 1
@@ -33,6 +40,14 @@ public static class AuthService
         SesionActual.EmpleadoId = empleadoId;
         SesionActual.Username = usuario;
         SesionActual.Rol = rol;
+
+        // Construimos el nombre completo
+        string primerNombre = dt.Rows[0]["primerNombre"].ToString();
+        string segundoNombre = dt.Rows[0]["segundoNombre"].ToString();
+        string apellidoP = dt.Rows[0]["apellidoP"].ToString();
+        string apellidoM = dt.Rows[0]["apellidoM"].ToString();
+
+        SesionActual.NombreEmpleadoCompleto = $"{primerNombre} {segundoNombre} {apellidoP} {apellidoM}".Trim();
 
         return true;
     }

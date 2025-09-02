@@ -95,9 +95,7 @@ namespace TiendaGlobosLaFiesta
                 return;
             }
 
-            // Reemplaza CalcularHashSHA1 con HashHelper.GenerarHash
-            string passwordHash = HashHelper.GenerarHash(password);
-            bool loginExitoso = await Task.Run(() => ValidarLogin(username, passwordHash));
+            bool loginExitoso = await Task.Run(() => AuthService.ValidarLogin(username, password, out string rol));
             progressLogin.Visibility = Visibility.Collapsed;
 
             if (loginExitoso)
@@ -121,42 +119,6 @@ namespace TiendaGlobosLaFiesta
                 intentosFallidos++;
                 txtMensaje.Text = $"Usuario o contraseña incorrectos. Intento {intentosFallidos}/{MAX_INTENTOS}";
             }
-        }
-
-        private bool ValidarLogin(string username, string passwordHash)
-        {
-            try
-            {
-                using SqlConnection conn = ConexionBD.ObtenerConexion();
-                string query = @"
-                    SELECT u.usuarioId, u.empleadoId, e.puestoId, e.primerNombre, e.segundoNombre, e.apellidoP, e.apellidoM
-                    FROM Usuarios u
-                    JOIN Empleado e ON u.empleadoId = e.empleadoId
-                    WHERE u.username=@username AND u.passwordHash=@password AND u.activo=1";
-
-                using SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@username", username);
-                cmd.Parameters.AddWithValue("@password", passwordHash);
-
-                using SqlDataReader reader = cmd.ExecuteReader();
-                if (reader.Read())
-                {
-                    SesionActual.UsuarioId = Convert.ToInt32(reader["usuarioId"]);
-                    SesionActual.EmpleadoId = Convert.ToInt32(reader["empleadoId"]);
-                    SesionActual.Rol = reader["puestoId"]?.ToString() ?? "";
-                    SesionActual.Username = username;
-                    SesionActual.NombreEmpleadoCompleto = $"{reader["primerNombre"]} {reader["segundoNombre"]} {reader["apellidoP"]} {reader["apellidoM"]}".Trim();
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                Dispatcher.Invoke(() =>
-                    MessageBox.Show("Error de conexión: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error)
-                );
-            }
-
-            return false;
         }
     }
 }
