@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using TiendaGlobosLaFiesta.Models;
-using TiendaGlobosLaFiesta.Data;
 
 namespace TiendaGlobosLaFiesta.Services
 {
-    public static class VentasService
+    public static class GestorDeVentas
     {
         public static bool ValidarStock(IEnumerable<ItemVenta> items, out string mensaje)
         {
@@ -33,14 +31,14 @@ namespace TiendaGlobosLaFiesta.Services
             }
         }
 
-        public static VentaHistorial CrearHistorial(Venta venta, Cliente cliente)
+        public static VentaHistorial CrearHistorial(Venta venta, Cliente cliente, string nombreEmpleado)
         {
             return new VentaHistorial
             {
                 VentaId = venta.VentaId,
                 ClienteId = cliente.ClienteId,
                 ClienteNombre = cliente.NombreCompleto(),
-                Empleado = SesionActual.NombreEmpleadoCompleto,
+                Empleado = nombreEmpleado,
                 FechaVenta = venta.FechaVenta,
                 Total = venta.ImporteTotal,
                 Productos = venta.Productos,

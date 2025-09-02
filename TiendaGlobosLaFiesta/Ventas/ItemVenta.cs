@@ -37,6 +37,9 @@ namespace TiendaGlobosLaFiesta.Models
         public decimal Costo { get; set; }
         public decimal Importe => Cantidad * Costo;
 
+        public void Incrementar() => Cantidad = Cantidad < Stock ? Cantidad + 1 : Cantidad;
+        public void Decrementar() => Cantidad = Cantidad > 0 ? Cantidad - 1 : 0;
+
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged(string propertyName) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

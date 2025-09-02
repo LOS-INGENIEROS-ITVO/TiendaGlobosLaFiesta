@@ -1,0 +1,12 @@
+﻿<Window x:Class="TiendaGlobosLaFiesta.VentasGraficaWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+        Title="Gráfica de Ventas" Height="500" Width="800"
+        WindowStartupLocation="CenterScreen">
+
+    <Grid Margin="10">
+        <lvc:CartesianChart x:Name="Chart"
+                            LegendPosition="Top"/>
+    </Grid>
+</Window>
