@@ -74,15 +74,24 @@ namespace TiendaGlobosLaFiesta.ViewModels
             {
                 if (obj is VentaHistorial vh)
                 {
+                    // Filtrar por cliente si se seleccionó
                     bool clienteOk = cliente == null || vh.ClienteId == cliente.ClienteId;
+
+                    // Filtrar por fecha desde
                     bool desdeOk = !desde.HasValue || vh.FechaVenta.Date >= desde.Value.Date;
+
+                    // Filtrar por fecha hasta
                     bool hastaOk = !hasta.HasValue || vh.FechaVenta.Date <= hasta.Value.Date;
+
+                    // Retorna true solo si todos los filtros coinciden
                     return clienteOk && desdeOk && hastaOk;
                 }
                 return false;
             };
+
             HistorialView.Refresh();
         }
+
 
         public void LimpiarFiltros()
         {

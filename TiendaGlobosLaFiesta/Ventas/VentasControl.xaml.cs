@@ -38,7 +38,35 @@ namespace TiendaGlobosLaFiesta
             dgProductos.ItemsSource = VM.Productos;
             dgGlobos.ItemsSource = VM.Globos;
             dgHistorial.ItemsSource = VM.HistorialView;
+
+            foreach (var p in VM.Productos) p.PropertyChanged += ItemVenta_PropertyChanged;
+            foreach (var g in VM.Globos) g.PropertyChanged += ItemVenta_PropertyChanged;
+
+            ActualizarTotales();
         }
+
+        private void ItemVenta_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(ItemVenta.Cantidad) || e.PropertyName == nameof(ItemVenta.Importe))
+            {
+                ActualizarTotales();
+            }
+        }
+
+        private void ActualizarTotales()
+        {
+            int totalProductos = VM.Productos.Sum(p => p.Cantidad);
+            int totalGlobos = VM.Globos.Sum(g => g.Cantidad);
+            decimal importeTotal = VM.Productos.Sum(p => p.Importe) + VM.Globos.Sum(g => g.Importe);
+
+            txtTotalProductos.Text = totalProductos.ToString();
+            txtTotalGlobos.Text = totalGlobos.ToString();
+            txtImporteTotal.Text = importeTotal.ToString("C");
+        }
+
+
+
+
 
         // ==========================
         // Incrementar / Disminuir
@@ -46,13 +74,23 @@ namespace TiendaGlobosLaFiesta
         private void BtnAumentarCantidad_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is ItemVenta item)
+            {
                 VM.Incrementar(item);
+                // Forzar actualización de DataGrid
+                dgProductos.Items.Refresh();
+                dgGlobos.Items.Refresh();
+            }
         }
 
         private void BtnDisminuirCantidad_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is ItemVenta item)
+            {
                 VM.Decrementar(item);
+                // Forzar actualización de DataGrid
+                dgProductos.Items.Refresh();
+                dgGlobos.Items.Refresh();
+            }
         }
 
         // ==========================
@@ -100,6 +138,12 @@ namespace TiendaGlobosLaFiesta
 
                 VM.Historial.Insert(0, vh);
                 VM.HistorialView.Refresh();
+
+                // Refrescar DataGrids para reflejar stock y cantidad
+                dgProductos.Items.Refresh();
+                dgGlobos.Items.Refresh();
+
+                ActualizarTotales();
 
                 MessageBox.Show("Venta registrada correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
             }
