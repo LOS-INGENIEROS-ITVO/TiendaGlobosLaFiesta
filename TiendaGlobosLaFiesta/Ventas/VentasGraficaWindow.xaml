@@ -2,50 +2,42 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
-        xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
-        Title="Ventas por Cliente" Height="650" Width="950"
-        WindowStartupLocation="CenterScreen">
-    <Window.Background>
-        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#f5f7fa" Offset="0"/>
-            <GradientStop Color="#e9eff8" Offset="1"/>
-        </LinearGradientBrush>
-    </Window.Background>
+        Title="Gráfica de Ventas"
+        Height="600" Width="900"
+        WindowStartupLocation="CenterScreen"
+        Background="White">
 
-    <Grid Margin="16">
-        <Border CornerRadius="14" Background="White" Padding="18">
-            <Border.Effect>
-                <DropShadowEffect Color="#33000000" BlurRadius="14" ShadowDepth="6" Opacity="0.33" />
-            </Border.Effect>
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="10"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-            <DockPanel LastChildFill="True">
-                <!-- HEADER CON ICONO -->
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0 0 0 16"
-                            HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <iconPacks:PackIconMaterial Kind="ChartBar"
-                                                Width="36" Height="36"
-                                                Foreground="#34495e"
-                                                Margin="0,0,10,0"/>
-                    <TextBlock Text="Ventas por Cliente"
-                               FontSize="28" FontWeight="Bold"
-                               Foreground="#2c3e50"
-                               VerticalAlignment="Center"/>
-                </StackPanel>
+        <!-- TÍTULO CON ICONO NARANJA -->
+        <TextBlock Grid.Row="0" FontSize="24" FontWeight="Bold" 
+                   Foreground="#ff7f50" HorizontalAlignment="Center" Margin="0,0,0,12">
+            <Run Text="📊 "/>
+            <Run Text="Ventas por Cliente"/>
+        </TextBlock>
 
-                <!-- SEPARADOR -->
-                <Separator DockPanel.Dock="Top" Margin="0,0,0,12" Background="#dfe6e9" Height="1"/>
+        <!-- SEPARADOR CON GRADIENTE NARANJA -->
+        <Separator Grid.Row="1" Height="3" Margin="0,0,0,12">
+            <Separator.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Color="#ff7f50" Offset="0"/>
+                    <GradientStop Color="#ffb347" Offset="1"/>
+                </LinearGradientBrush>
+            </Separator.Background>
+        </Separator>
 
-                <!-- CHART -->
-                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                    <lvc:CartesianChart x:Name="Chart"
-                                        Series="{Binding Series}"
-                                        XAxes="{Binding XAxes}"
-                                        YAxes="{Binding YAxes}"
-                                        LegendPosition="Right"
-                                        ZoomMode="X"
-                                        Margin="0"/>
-                </ScrollViewer>
-            </DockPanel>
-        </Border>
+        <!-- GRÁFICA -->
+        <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+            <lvc:CartesianChart Series="{Binding Series}" 
+                                XAxes="{Binding XAxes}" 
+                                YAxes="{Binding YAxes}" 
+                                LegendPosition="Top" 
+                                ZoomMode="X"/>
+        </ScrollViewer>
     </Grid>
 </Window>

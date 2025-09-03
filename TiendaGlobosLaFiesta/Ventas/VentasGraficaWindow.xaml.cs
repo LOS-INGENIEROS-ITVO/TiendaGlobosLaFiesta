@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Windows;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
 using TiendaGlobosLaFiesta.ViewModels;
-using TiendaGlobosLaFiesta.Models;
 
 namespace TiendaGlobosLaFiesta
 {
@@ -17,91 +14,56 @@ namespace TiendaGlobosLaFiesta
         public Axis[] XAxes { get; set; }
         public Axis[] YAxes { get; set; }
 
-        private int _topN;
+        // Paleta de colores más atractiva
+        private readonly SKColor barraColor = SKColors.MediumSlateBlue;
+        private readonly SKColor ejeColor = SKColors.DarkSlateGray;
 
-        public VentasGraficaWindow(ModeloDeVistaVentas vm, int topN = 12)
+        public VentasGraficaWindow(ModeloDeVistaVentas vm)
         {
             InitializeComponent();
-            _topN = topN;
 
-            // Inicializar con todo el historial; puede actualizarse luego con filtrado.
-            UpdateChart(vm.Historial, topN);
-
-            DataContext = this;
-        }
-
-        /// <summary>
-        /// Actualiza la gráfica con un conjunto de ventas (por ejemplo: Historial o HistorialView filtrado).
-        /// Agrupa por cliente, toma topN y suma el resto como "Otros".
-        /// </summary>
-        public void UpdateChart(IEnumerable<VentaHistorial> historialFiltrado, int topN = -1)
-        {
-            if (topN <= 0) topN = _topN;
-
-            var ventas = historialFiltrado
+            var ventasPorCliente = vm.Historial
                 .GroupBy(v => v.ClienteNombre)
-                .Select(g => new { Cliente = g.Key, Total = g.Sum(v => (double)v.Total) })
+                .Select(g => new
+                {
+                    Cliente = g.Key,
+                    Total = g.Sum(v => (double)v.Total)
+                })
                 .OrderByDescending(x => x.Total)
                 .ToList();
 
-            // Top N + "Otros"
-            var top = ventas.Take(topN).ToList();
-            var othersTotal = ventas.Skip(topN).Sum(x => x.Total);
-            if (othersTotal > 0)
-            {
-                top.Add(new { Cliente = "Otros", Total = othersTotal });
-            }
-
-            var labels = top.Select(t => t.Cliente).ToArray();
-            var values = top.Select(t => t.Total).ToArray();
-
+            var labels = ventasPorCliente.Select(d => d.Cliente).ToArray();
+            var values = ventasPorCliente.Select(d => d.Total).ToArray();
 
             Series = new ISeries[]
-{
-    new ColumnSeries<double>
-    {
-        Values = values,
-        Name = "Ventas",
-        MaxBarWidth = 48,
-        Fill = new SolidColorPaint(SKColors.MediumSlateBlue),
-        Stroke = new SolidColorPaint(SKColors.White) { StrokeThickness = 1 },
-        AnimationsSpeed = TimeSpan.FromMilliseconds(600)
-        // NO usar DataLabels/DataLabelsFormatter/TooltipLabelFormatter si tu paquete no los soporta
-    }
-};
+            {
+                new ColumnSeries<double>
+                {
+                    Values = values,
+                    Name = "Ventas",
+                    Fill = new SolidColorPaint(barraColor) // Color más atractivo
+                }
+            };
 
             XAxes = new[]
             {
-    new Axis
-    {
-        Labels = labels,
-        LabelsRotation = 45,
-        LabelsPaint = new SolidColorPaint(SKColors.Black),
-        TextSize = 12
-    }
-};
+                new Axis
+                {
+                    Labels = labels,
+                    LabelsRotation = 45,
+                    LabelsPaint = new SolidColorPaint(ejeColor)
+                }
+            };
 
             YAxes = new[]
             {
-    new Axis
-    {
-        Labeler = value => value.ToString("C"),
-        LabelsPaint = new SolidColorPaint(SKColors.Black),
-        TextSize = 12
-    }
-};
+                new Axis
+                {
+                    Labeler = value => value.ToString("C"),
+                    LabelsPaint = new SolidColorPaint(ejeColor)
+                }
+            };
 
-            DataContext = this;
-
-            // Evitar solapamiento: dar ancho mínimo proportional al número de barras
-            if (Chart != null)
-            {
-                var minWidth = Math.Max(700, labels.Length * 70);
-                Chart.MinWidth = minWidth;
-            }
-
-            // Forzar actualización del binding (simple y efectivo)
-            DataContext = null;
             DataContext = this;
         }
     }

@@ -54,13 +54,17 @@ namespace TiendaGlobosLaFiesta.Services
                                 .FontColor(Colors.Grey.Medium);
                         });
 
+                        // ======= CONTENT =======
                         page.Content().Column(col =>
                         {
-                            // ======= Resumen =======
-                            col.Item().PaddingVertical(5).AlignCenter()
-                                .Text("Resumen de Ventas").FontSize(13).Bold().FontColor(Colors.Blue.Darken1);
+                            // ======= Resumen de Ventas =======
+                            col.Item().PaddingVertical(10).AlignCenter()
+                               .Text("📄 Resumen de Ventas")
+                               .FontSize(16)
+                               .Bold()
+                               .FontColor(Colors.Blue.Darken1);
 
-                            col.Item().Table(table =>
+                            col.Item().PaddingBottom(10).Table(table =>
                             {
                                 table.ColumnsDefinition(c =>
                                 {
@@ -71,7 +75,6 @@ namespace TiendaGlobosLaFiesta.Services
                                     c.RelativeColumn(2);
                                 });
 
-                                // Header
                                 table.Header(header =>
                                 {
                                     foreach (var text in new[] { "ID Venta", "Cliente", "Empleado", "Fecha", "Total" })
@@ -87,7 +90,6 @@ namespace TiendaGlobosLaFiesta.Services
                                     }
                                 });
 
-                                // Datos
                                 foreach (var venta in historial)
                                 {
                                     table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(venta.VentaId);
@@ -101,16 +103,15 @@ namespace TiendaGlobosLaFiesta.Services
                             col.Item().PageBreak();
 
                             // ======= Productos =======
-                            col.Item().PaddingVertical(5).AlignCenter()
-                                .Text("Productos").FontSize(13).Bold().FontColor(Colors.Green.Darken1);
+                            col.Item().PaddingVertical(10).AlignCenter()
+                               .Text("🛒 Productos")
+                               .FontSize(16)
+                               .Bold()
+                               .FontColor(Colors.Green.Darken1);
 
-                            col.Item().Table(table =>
+                            col.Item().PaddingBottom(10).Table(table =>
                             {
-                                table.ColumnsDefinition(c =>
-                                {
-                                    for (int i = 0; i < 6; i++) c.RelativeColumn();
-                                });
-
+                                table.ColumnsDefinition(c => { for (int i = 0; i < 6; i++) c.RelativeColumn(); });
                                 table.Header(header =>
                                 {
                                     foreach (var text in new[] { "ID Venta", "Producto", "Unidad", "Cantidad", "Costo", "Importe" })
@@ -136,16 +137,15 @@ namespace TiendaGlobosLaFiesta.Services
                             col.Item().PageBreak();
 
                             // ======= Globos =======
-                            col.Item().PaddingVertical(5).AlignCenter()
-                                .Text("Globos").FontSize(13).Bold().FontColor(Colors.Red.Darken1);
+                            col.Item().PaddingVertical(10).AlignCenter()
+                               .Text("🎈 Globos")
+                               .FontSize(16)
+                               .Bold()
+                               .FontColor(Colors.Red.Darken1);
 
-                            col.Item().Table(table =>
+                            col.Item().PaddingBottom(10).Table(table =>
                             {
-                                table.ColumnsDefinition(c =>
-                                {
-                                    for (int i = 0; i < 10; i++) c.RelativeColumn();
-                                });
-
+                                table.ColumnsDefinition(c => { for (int i = 0; i < 10; i++) c.RelativeColumn(); });
                                 table.Header(header =>
                                 {
                                     foreach (var text in new[]
@@ -181,6 +181,7 @@ namespace TiendaGlobosLaFiesta.Services
                             txt.CurrentPageNumber().FontSize(9);
                             txt.Span(" de ").FontSize(9);
                             txt.TotalPages().FontSize(9);
+                            txt.Span(" | Tienda Globos La Fiesta").FontSize(9);
                         });
                     });
                 });
