@@ -1,4 +1,4 @@
-﻿namespace TiendaGlobosLaFiesta
+﻿namespace TiendaGlobosLaFiesta.Modelos
 {
     public static class SesionActual
     {

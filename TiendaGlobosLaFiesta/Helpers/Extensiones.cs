@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Linq;
-using TiendaGlobosLaFiesta.Clientes;
+using TiendaGlobosLaFiesta.Modelos;
 
 namespace TiendaGlobosLaFiesta.Models
 {

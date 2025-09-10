@@ -9,7 +9,7 @@ using TiendaGlobosLaFiesta.Data;
 using TiendaGlobosLaFiesta.Services;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
-using TiendaGlobosLaFiesta.Clientes;
+using TiendaGlobosLaFiesta.Modelos;
 
 namespace TiendaGlobosLaFiesta.ViewModels
 {

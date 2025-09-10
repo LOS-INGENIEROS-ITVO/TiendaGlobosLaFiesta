@@ -1,4 +1,6 @@
-﻿namespace TiendaGlobosLaFiesta.Models
+﻿using TiendaGlobosLaFiesta.Models;
+
+namespace TiendaGlobosLaFiesta.Models
 {
     public class GloboVenta : ItemVenta
     {
@@ -9,5 +11,8 @@
         public string Tamano { get; set; }
         public string Forma { get; set; }
         public string Tematica { get; set; }
+
+        // Nombre de visualización
+        public string Nombre => $"{Material} {Tamano} {Forma}".Trim();
     }
 }

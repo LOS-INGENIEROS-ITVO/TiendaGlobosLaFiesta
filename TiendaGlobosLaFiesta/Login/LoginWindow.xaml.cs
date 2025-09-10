@@ -92,11 +92,17 @@ namespace TiendaGlobosLaFiesta
                 return;
             }
 
-            bool loginExitoso = await Task.Run(() => AuthService.ValidarLogin(username, password, out string rol));
+            // 🔹 Inicializamos las variables antes de pasarlas al método
+            string rol = string.Empty;
+            string mensaje = string.Empty;
+
+            bool loginExitoso = await Task.Run(() => AuthService.Login(username, password, out rol, out mensaje));
+
             progressLogin.Visibility = Visibility.Collapsed;
 
             if (loginExitoso)
             {
+                // Guardar usuario si se marca recordar
                 if (chkRemember.IsChecked == true)
                     Properties.Settings.Default.UsuarioGuardado = username;
                 else
@@ -104,22 +110,18 @@ namespace TiendaGlobosLaFiesta
 
                 Properties.Settings.Default.Save();
 
-                // Abrir la ventana correcta según el rol
-                if (SesionActual.Rol == "Gerente")
-                {
-                    new MenuGerenteWindow(SesionActual.Rol).Show();
-                }
+                // Abrir la ventana según rol
+                if (rol == "Gerente")
+                    new MenuGerenteWindow(rol).Show();
                 else
-                {
-                    new EmpleadoWindow(SesionActual.Rol).Show();
-                }
+                    new EmpleadoWindow(rol).Show();
 
                 this.Close();
             }
             else
             {
                 intentosFallidos++;
-                txtMensaje.Text = $"Usuario o contraseña incorrectos. Intento {intentosFallidos}/{MAX_INTENTOS}";
+                txtMensaje.Text = mensaje != string.Empty ? mensaje : $"Usuario o contraseña incorrectos. Intento {intentosFallidos}/{MAX_INTENTOS}";
             }
         }
     }

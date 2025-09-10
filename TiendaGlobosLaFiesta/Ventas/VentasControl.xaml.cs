@@ -5,11 +5,8 @@ using System.Windows;
 using System.Windows.Controls;
 using ClosedXML.Excel;
 using Microsoft.Win32;
-using QuestPDF.Fluent;
-using QuestPDF.Helpers;
-using QuestPDF.Infrastructure;
-using TiendaGlobosLaFiesta.Clientes;
 using TiendaGlobosLaFiesta.Data;
+using TiendaGlobosLaFiesta.Modelos;
 using TiendaGlobosLaFiesta.Models;
 using TiendaGlobosLaFiesta.Services;
 using TiendaGlobosLaFiesta.ViewModels;
@@ -19,11 +16,13 @@ namespace TiendaGlobosLaFiesta
     public partial class VentasControl : UserControl
     {
         public ModeloDeVistaVentas VM { get; set; }
+        private readonly VentaService _ventaService = new();
+        private readonly VentasRepository _ventasRepo = new();
+        private readonly ProductoRepository _productoRepo = new();
+        private readonly GloboRepository _globoRepo = new();
 
-        // Evento para notificar que se realizó una venta
         public event Action VentaRealizada;
 
-        // Datos filtrados del historial
         private IEnumerable<VentaHistorial> historialFiltrado =>
             VM.HistorialView?.Cast<VentaHistorial>() ?? Enumerable.Empty<VentaHistorial>();
 
@@ -33,14 +32,12 @@ namespace TiendaGlobosLaFiesta
             VM = new ModeloDeVistaVentas();
             DataContext = VM;
 
-            // Bindings de combos y datagrids
             cmbClientes.ItemsSource = VM.Clientes;
             cmbFiltroCliente.ItemsSource = VM.Clientes;
             dgProductos.ItemsSource = VM.Productos;
             dgGlobos.ItemsSource = VM.Globos;
             dgHistorial.ItemsSource = VM.HistorialView;
 
-            // Suscripción a cambios de cantidad para actualizar totales
             foreach (var p in VM.Productos) p.PropertyChanged += (_, __) => ActualizarTotales();
             foreach (var g in VM.Globos) g.PropertyChanged += (_, __) => ActualizarTotales();
 
@@ -54,28 +51,18 @@ namespace TiendaGlobosLaFiesta
             txtImporteTotal.Text = VM.ImporteTotal.ToString("C");
         }
 
-        // =========================
-        // Incrementar / Decrementar usando botones
-        // =========================
         private void BtnAumentarCantidad_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is ItemVenta item)
-            {
                 item.Incrementar();
-            }
         }
 
         private void BtnDisminuirCantidad_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is ItemVenta item)
-            {
                 item.Decrementar();
-            }
         }
 
-        // =========================
-        // Registrar Venta
-        // =========================
         private void BtnRegistrarVenta_Click(object sender, RoutedEventArgs e)
         {
             if (cmbClientes.SelectedItem is not Cliente cliente)
@@ -94,7 +81,7 @@ namespace TiendaGlobosLaFiesta
                 return;
             }
 
-            if (!GestorDeVentas.ValidarStock(itemsVenta, out string mensaje))
+            if (!_ventaService.ValidarStock(itemsVenta, out string mensaje))
             {
                 MessageBox.Show(mensaje, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
@@ -102,7 +89,7 @@ namespace TiendaGlobosLaFiesta
 
             var venta = new Venta
             {
-                VentaId = ConexionBD.ObtenerSiguienteVentaId(),
+                VentaId = Guid.NewGuid().ToString(),
                 ClienteId = cliente.ClienteId,
                 EmpleadoId = SesionActual.EmpleadoId,
                 FechaVenta = DateTime.Now,
@@ -111,10 +98,10 @@ namespace TiendaGlobosLaFiesta
                 ImporteTotal = VM.ImporteTotal
             };
 
-            if (ConexionBD.RegistrarVenta(venta))
+            if (_ventasRepo.RegistrarVenta(venta))
             {
-                GestorDeVentas.ActualizarStock(itemsVenta);
-                var vh = GestorDeVentas.CrearHistorial(venta, cliente, SesionActual.NombreEmpleadoCompleto);
+                _ventaService.ActualizarStock(itemsVenta);
+                var vh = _ventaService.CrearHistorial(venta, cliente, SesionActual.NombreEmpleadoCompleto);
 
                 VM.Historial.Insert(0, vh);
                 VM.HistorialView.Refresh();
@@ -122,21 +109,13 @@ namespace TiendaGlobosLaFiesta
                 ActualizarTotales();
                 MessageBox.Show("Venta registrada correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                // ⚡ Notificar al Dashboard que se realizó una venta
                 VentaRealizada?.Invoke();
             }
         }
 
-        // =========================
-        // Filtrar / Limpiar Historial
-        // =========================
         private void BtnFiltrarHistorial_Click(object sender, RoutedEventArgs e)
         {
-            VM.FiltrarHistorial(
-                cmbFiltroCliente.SelectedItem as Cliente,
-                dpFechaDesde.SelectedDate,
-                dpFechaHasta.SelectedDate
-            );
+            VM.FiltrarHistorial(cmbFiltroCliente.SelectedItem as Cliente, dpFechaDesde.SelectedDate, dpFechaHasta.SelectedDate);
         }
 
         private void BtnLimpiarFiltros_Click(object sender, RoutedEventArgs e)
@@ -147,9 +126,6 @@ namespace TiendaGlobosLaFiesta
             VM.LimpiarFiltros();
         }
 
-        // =========================
-        // Exportar Excel
-        // =========================
         private void BtnExportarExcel_Click(object sender, RoutedEventArgs e)
         {
             if (!historialFiltrado.Any())
@@ -166,17 +142,13 @@ namespace TiendaGlobosLaFiesta
             if (sfd.ShowDialog() != true) return;
 
             using var workbook = new XLWorkbook();
-
             GeneradorDeExcel.CrearHojas(workbook, historialFiltrado);
-
             workbook.SaveAs(sfd.FileName);
+
             MessageBox.Show("Exportación a Excel completada.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = sfd.FileName, UseShellExecute = true });
         }
 
-        // =========================
-        // Exportar PDF
-        // =========================
         private void BtnExportarPDF_Click(object sender, RoutedEventArgs e)
         {
             GeneradorDePDF.GenerarPDF(historialFiltrado);
@@ -185,21 +157,8 @@ namespace TiendaGlobosLaFiesta
         private void BtnMostrarGrafica_Click(object sender, RoutedEventArgs e)
         {
             VM.ActualizarGrafica(historialFiltrado);
-
-            // Abrir ventana con la gráfica
             var ventana = new VentasGraficaWindow(VM);
             ventana.ShowDialog();
-        }
-    }
-
-    // =========================
-    // Extensión para NombreCompleto
-    // =========================
-    public static class ClienteExtensions
-    {
-        public static string NombreCompleto(this Cliente c)
-        {
-            return $"{c.PrimerNombre} {c.SegundoNombre} {c.ApellidoP} {c.ApellidoM}".Trim();
         }
     }
 }

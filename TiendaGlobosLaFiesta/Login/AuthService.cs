@@ -1,51 +1,69 @@
-﻿using System.Data;
-using System.Threading.Tasks;
+﻿using System;
+using System.Data;
+using System.Data.SqlClient;
 using TiendaGlobosLaFiesta.Data;
+using TiendaGlobosLaFiesta.Modelos;
 
 namespace TiendaGlobosLaFiesta
 {
     public static class AuthService
     {
-        public static async Task<bool> ValidarLoginAsync(string usuario, string contrasena)
-        {
-            string rol;
-            return await Task.Run(() => ValidarLogin(usuario, contrasena, out rol));
-        }
-
-        public static bool ValidarLogin(string usuario, string contrasena, out string rol)
+        public static bool Login(string usuario, string contrasena, out string rol, out string mensaje)
         {
             rol = null;
-            string query = @"
-                SELECT u.usuarioId, u.empleadoId, u.passwordHash, e.puestoId, 
-                       e.primerNombre, e.segundoNombre, e.apellidoP, e.apellidoM
-                FROM Usuarios u
-                JOIN Empleado e ON u.empleadoId = e.empleadoId
-                WHERE u.username = @usuario AND u.activo = 1";
+            mensaje = null;
 
-            var parametros = new[] { ConexionBD.Param("@usuario", usuario) };
-            DataTable dt = ConexionBD.EjecutarConsulta(query, parametros);
+            try
+            {
+                string query = @"
+                    SELECT u.usuarioId, 
+                           u.empleadoId, 
+                           u.passwordHash, 
+                           e.puestoId,
+                           e.primerNombre, 
+                           e.segundoNombre, 
+                           e.apellidoP, 
+                           e.apellidoM
+                    FROM Usuarios u
+                    JOIN Empleado e ON u.empleadoId = e.empleadoId
+                    WHERE u.username = @usuario AND u.activo = 1
+                ";
 
-            if (dt.Rows.Count == 0) return false;
+                var parametros = new SqlParameter[] { new SqlParameter("@usuario", usuario) };
+                DataTable dt = DbHelper.ExecuteQuery(query, parametros);
 
-            string hashAlmacenado = dt.Rows[0]["passwordHash"].ToString().Trim();
-            int empleadoId = Convert.ToInt32(dt.Rows[0]["empleadoId"]);
-            SesionActual.UsuarioId = Convert.ToInt32(dt.Rows[0]["usuarioId"]);
+                if (dt.Rows.Count == 0)
+                {
+                    mensaje = "Usuario no encontrado o inactivo.";
+                    return false;
+                }
 
-            if (!HashHelper.VerificarHash(contrasena, hashAlmacenado)) return false;
+                string hashAlmacenado = dt.Rows[0]["passwordHash"].ToString().Trim();
+                if (!HashHelper.VerificarHash(contrasena, hashAlmacenado))
+                {
+                    mensaje = "Contraseña incorrecta.";
+                    return false;
+                }
 
-            rol = dt.Rows[0]["puestoId"].ToString();
-            SesionActual.EmpleadoId = empleadoId;
-            SesionActual.Username = usuario;
-            SesionActual.Rol = rol;
+                rol = dt.Rows[0]["puestoId"].ToString();
+                SesionActual.UsuarioId = Convert.ToInt32(dt.Rows[0]["usuarioId"]);
+                SesionActual.EmpleadoId = Convert.ToInt32(dt.Rows[0]["empleadoId"]);
+                SesionActual.Username = usuario;
+                SesionActual.Rol = rol;
 
-            string primerNombre = dt.Rows[0]["primerNombre"].ToString();
-            string segundoNombre = dt.Rows[0]["segundoNombre"].ToString();
-            string apellidoP = dt.Rows[0]["apellidoP"].ToString();
-            string apellidoM = dt.Rows[0]["apellidoM"].ToString();
+                string primerNombre = dt.Rows[0]["primerNombre"].ToString();
+                string segundoNombre = dt.Rows[0]["segundoNombre"].ToString();
+                string apellidoP = dt.Rows[0]["apellidoP"].ToString();
+                string apellidoM = dt.Rows[0]["apellidoM"].ToString();
+                SesionActual.NombreEmpleadoCompleto = $"{primerNombre} {segundoNombre} {apellidoP} {apellidoM}".Trim();
 
-            SesionActual.NombreEmpleadoCompleto = $"{primerNombre} {segundoNombre} {apellidoP} {apellidoM}".Trim();
-
-            return true;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                mensaje = "Error de conexión: " + ex.Message;
+                return false;
+            }
         }
     }
 }

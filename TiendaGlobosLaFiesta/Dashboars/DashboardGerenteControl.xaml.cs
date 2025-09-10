@@ -11,6 +11,11 @@ namespace TiendaGlobosLaFiesta.Views
 {
     public partial class DashboardGerenteControl : UserControl
     {
+        private readonly VentasRepository _ventasRepo = new VentasRepository();
+        private readonly StockRepository _stockRepo = new StockRepository();
+        private readonly ClienteRepository _clienteRepo = new ClienteRepository();
+        private readonly ProductoRepository _productoRepo = new ProductoRepository();
+
         public DashboardGerenteControl()
         {
             InitializeComponent();
@@ -44,10 +49,10 @@ namespace TiendaGlobosLaFiesta.Views
         {
             try
             {
-                txtVentasHoy.Text = ConexionBD.ObtenerVentasHoy().ToString("C2");
-                txtVentas7Dias.Text = ConexionBD.ObtenerVentasUltimos7DiasTotal().ToString("C2");
-                txtVentasMes.Text = ConexionBD.ObtenerVentasMes().ToString("C2");
-                txtTicketPromedioHoy.Text = ConexionBD.ObtenerTicketPromedioHoy().ToString("C2");
+                txtVentasHoy.Text = _ventasRepo.ObtenerVentasHoy().ToString("C2");
+                txtVentas7Dias.Text = _ventasRepo.ObtenerVentasUltimos7DiasTotal().ToString("C2");
+                txtVentasMes.Text = _ventasRepo.ObtenerVentasMes().ToString("C2");
+                txtTicketPromedioHoy.Text = _ventasRepo.ObtenerTicketPromedioHoy().ToString("C2");
             }
             catch (Exception ex)
             {
@@ -61,7 +66,7 @@ namespace TiendaGlobosLaFiesta.Views
         {
             try
             {
-                var productosStockCritico = ConexionBD.ObtenerProductosStockCritico() ?? new List<ConexionBD.ProductoStockCritico>();
+                var productosStockCritico = _stockRepo.ObtenerProductosStockCritico();
                 txtStockCriticoNumero.Text = $"{productosStockCritico.Count} productos críticos";
                 txtStockCriticoLista.Text = productosStockCritico.Any()
                     ? string.Join(", ", productosStockCritico.Take(3).Select(p => $"{p.Nombre} ({p.Stock})")) +
@@ -80,7 +85,7 @@ namespace TiendaGlobosLaFiesta.Views
         {
             try
             {
-                var clientes = ConexionBD.ObtenerClientesFrecuentesDetalle() ?? new List<ConexionBD.ClienteFrecuente>();
+                var clientes = _clienteRepo.ObtenerClientesFrecuentesDetalle();
                 txtClientesFrecuentesNumero.Text = $"{clientes.Count} clientes";
                 txtClientesFrecuentesNombres.Text = clientes.Any()
                     ? string.Join(", ", clientes.Take(3).Select(c => c.NombreCompleto())) +
@@ -99,7 +104,7 @@ namespace TiendaGlobosLaFiesta.Views
         {
             try
             {
-                var topCliente = ConexionBD.ObtenerTopClienteMes();
+                var topCliente = _clienteRepo.ObtenerTopClienteMes();
                 if (topCliente != null)
                 {
                     txtTopClienteMesNombre.Text = topCliente.Nombre;
@@ -125,9 +130,9 @@ namespace TiendaGlobosLaFiesta.Views
         {
             try
             {
-                var prodDia = ConexionBD.ObtenerProductoMasVendido("DIA");
-                var prodSemana = ConexionBD.ObtenerProductoMasVendido("SEMANA");
-                var prodMes = ConexionBD.ObtenerProductoMasVendido("MES");
+                var prodDia = _productoRepo.ObtenerProductoMasVendido("DIA");
+                var prodSemana = _productoRepo.ObtenerProductoMasVendido("SEMANA");
+                var prodMes = _productoRepo.ObtenerProductoMasVendido("MES");
 
                 txtProductoMasVendidoDia.Text = $"Hoy: {prodDia?.Nombre ?? "-"} ({prodDia?.Cantidad ?? 0})";
                 txtProductoMasVendidoSemana.Text = $"Semana: {prodSemana?.Nombre ?? "-"} ({prodSemana?.Cantidad ?? 0})";
@@ -145,7 +150,7 @@ namespace TiendaGlobosLaFiesta.Views
         {
             try
             {
-                var ventasDetalle = ConexionBD.ObtenerVentasUltimos7DiasDetalle() ??
+                var ventasDetalle = _ventasRepo.ObtenerVentasUltimos7DiasDetalle() ??
                                     Enumerable.Range(0, 7).Select(i => DateTime.Today.AddDays(-6 + i)).ToDictionary(d => d, d => 0m);
 
                 var labels = ventasDetalle.Keys.Select(d => d.ToString("dd/MM")).ToArray();
@@ -199,4 +204,4 @@ namespace TiendaGlobosLaFiesta.Views
             ventasControl.VentaRealizada += RefrescarKPIs;
         }
     }
-}
+}  

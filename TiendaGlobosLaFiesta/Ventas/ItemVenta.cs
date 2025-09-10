@@ -34,7 +34,17 @@ namespace TiendaGlobosLaFiesta.Models
             }
         }
 
+        // Precio base
         public decimal Costo { get; set; }
+
+        // Alias para compatibilidad con VentasControl
+        public decimal Precio
+        {
+            get => Costo;
+            set => Costo = value;
+        }
+
+        // Importe total según cantidad
         public decimal Importe => Cantidad * Costo;
 
         public void Incrementar() => Cantidad = Cantidad < Stock ? Cantidad + 1 : Cantidad;

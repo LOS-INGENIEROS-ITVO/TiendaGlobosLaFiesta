@@ -5,6 +5,6 @@
         public int UsuarioId { get; set; }
         public string NombreUsuario { get; set; }
         public string ContrasenaHash { get; set; }
-        public string Rol { get; set; }  // Ej: Admin, Vendedor, etc.
+        public string Rol { get; set; }
     }
 }

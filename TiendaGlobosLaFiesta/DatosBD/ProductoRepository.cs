@@ -26,6 +26,44 @@ namespace TiendaGlobosLaFiesta.Data
             return DbHelper.ExecuteNonQuery(query, parametros) > 0;
         }
 
+
+
+        public class ProductoMasVendido
+        {
+            public string Nombre { get; set; }
+            public int Cantidad { get; set; }
+        }
+
+        public ProductoMasVendido ObtenerProductoMasVendido(string periodo)
+        {
+            string where = periodo switch
+            {
+                "DIA" => "CAST(v.fecha AS DATE) = CAST(GETDATE() AS DATE)",
+                "SEMANA" => "v.fecha >= DATEADD(DAY,-6,CAST(GETDATE() AS DATE))",
+                "MES" => "MONTH(v.fecha) = MONTH(GETDATE()) AND YEAR(v.fecha) = YEAR(GETDATE())",
+                _ => "1=0"
+            };
+
+            string query = $@"
+                SELECT TOP 1 g.nombre, SUM(vd.cantidad) AS Cantidad
+                FROM VentaDetalle vd
+                JOIN Venta v ON vd.ventaId = v.ventaId
+                JOIN Globo g ON vd.globoId = g.globoId
+                WHERE {where}
+                GROUP BY g.nombre
+                ORDER BY SUM(vd.cantidad) DESC";
+
+            DataTable dt = DbHelper.ExecuteQuery(query);
+            if (dt.Rows.Count == 0) return null;
+
+            return new ProductoMasVendido
+            {
+                Nombre = dt.Rows[0]["nombre"].ToString(),
+                Cantidad = Convert.ToInt32(dt.Rows[0]["Cantidad"])
+            };
+        }
+
+
         // Actualizar producto
         public bool ActualizarProducto(Producto producto)
         {
