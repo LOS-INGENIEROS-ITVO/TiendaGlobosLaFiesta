@@ -117,12 +117,27 @@ namespace TiendaGlobosLaFiesta.Data
             }
         }
 
+
+
+        public int ObtenerUltimoNumeroVenta()
+        {
+            using var conn = DbHelper.ObtenerConexion();
+            string query = "SELECT MAX(CAST(SUBSTRING(ventaId,4,LEN(ventaId)-3) AS INT)) FROM Venta";
+            using var cmd = new SqlCommand(query, conn);
+            var result = cmd.ExecuteScalar();
+            return result != DBNull.Value ? Convert.ToInt32(result) : 0;
+        }
+
+
+
         // Historial de ventas
+
+
         public List<VentaHistorial> ObtenerHistorialVentas()
         {
             string query = @"
     SELECT v.ventaId, v.clienteId, v.empleadoId, v.fechaVenta AS fecha, v.importeTotal AS total,
-           c.primerNombre AS primerNombreCliente, c.segundoNombre AS segundoNombreCliente, 
+           c.primerNombre AS primerNombreCliente, c.segundoNombre AS segundoNombreCliente,
            c.apellidoP AS apellidoPCliente, c.apellidoM AS apellidoMCliente,
            e.primerNombre AS primerNombreEmpleado, e.segundoNombre AS segundoNombreEmpleado,
            e.apellidoP AS apellidoPEmpleado, e.apellidoM AS apellidoMEmpleado
@@ -140,10 +155,8 @@ namespace TiendaGlobosLaFiesta.Data
                 {
                     VentaId = row["ventaId"].ToString(),
                     ClienteId = row["clienteId"].ToString(),
-                    ClienteNombre = $"{row["primerNombreCliente"]} {row["segundoNombreCliente"]} {row["apellidoPCliente"]} {row["apellidoMCliente"]}"
-                                    .Replace("  ", " ").Trim(),
-                    NombreEmpleado = $"{row["primerNombreEmpleado"]} {row["segundoNombreEmpleado"]} {row["apellidoPEmpleado"]} {row["apellidoMEmpleado"]}"
-                                     .Replace("  ", " ").Trim(),
+                    ClienteNombre = $"{row["primerNombreCliente"]} {row["segundoNombreCliente"]} {row["apellidoPCliente"]} {row["apellidoMCliente"]}".Trim(),
+                    NombreEmpleado = $"{row["primerNombreEmpleado"]} {row["segundoNombreEmpleado"]} {row["apellidoPEmpleado"]} {row["apellidoMEmpleado"]}".Trim(),
                     FechaVenta = Convert.ToDateTime(row["fecha"]),
                     Total = Convert.ToDecimal(row["total"]),
                     Productos = new ObservableCollection<ProductoVenta>(),

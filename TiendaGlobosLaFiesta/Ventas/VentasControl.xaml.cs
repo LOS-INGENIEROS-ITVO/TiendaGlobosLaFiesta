@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -67,51 +69,130 @@ namespace TiendaGlobosLaFiesta
         {
             if (cmbClientes.SelectedItem is not Cliente cliente)
             {
-                MessageBox.Show("Seleccione un cliente.", "Atención", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Selecciona un cliente.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
-            var productosVenta = VM.Productos.Where(p => p.Cantidad > 0).ToList();
-            var globosVenta = VM.Globos.Where(g => g.Cantidad > 0).ToList();
-            var itemsVenta = productosVenta.Cast<ItemVenta>().Concat(globosVenta);
+            var productosSeleccionados = VM.Productos.Where(p => p.Cantidad > 0).ToList();
+            var globosSeleccionados = VM.Globos.Where(g => g.Cantidad > 0).ToList();
 
-            if (!itemsVenta.Any())
+            if (!productosSeleccionados.Any() && !globosSeleccionados.Any())
             {
-                MessageBox.Show("Seleccione al menos un producto o globo.", "Atención", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Debes seleccionar al menos un producto o globo.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            if (!_ventaService.ValidarStock(itemsVenta, out string mensaje))
-            {
-                MessageBox.Show(mensaje, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
+            // 🔹 Generar ID de venta seguro
+            int ultimoNumero = _ventasRepo.ObtenerUltimoNumeroVenta();
+            string ventaId = $"VEN{(ultimoNumero + 1):D4}";
 
             var venta = new Venta
             {
-                VentaId = Guid.NewGuid().ToString(),
+                VentaId = ventaId,
                 ClienteId = cliente.ClienteId,
                 EmpleadoId = SesionActual.EmpleadoId,
                 FechaVenta = DateTime.Now,
-                Productos = new System.Collections.ObjectModel.ObservableCollection<ProductoVenta>(productosVenta),
-                Globos = new System.Collections.ObjectModel.ObservableCollection<GloboVenta>(globosVenta),
-                ImporteTotal = VM.ImporteTotal
+                ImporteTotal = productosSeleccionados.Sum(p => p.Importe) + globosSeleccionados.Sum(g => g.Importe),
+                Productos = new ObservableCollection<ProductoVenta>(productosSeleccionados),
+                Globos = new ObservableCollection<GloboVenta>(globosSeleccionados)
             };
 
-            if (_ventasRepo.RegistrarVenta(venta))
+            if (RegistrarVentaConStock(venta))
             {
-                _ventaService.ActualizarStock(itemsVenta);
-                var vh = _ventaService.CrearHistorial(venta, cliente, SesionActual.NombreEmpleadoCompleto);
+                // 🔹 Actualizar stock en la UI
+                foreach (var p in venta.Productos)
+                {
+                    var prodVM = VM.Productos.FirstOrDefault(x => x.ProductoId == p.ProductoId);
+                    if (prodVM != null) prodVM.Stock -= p.Cantidad;
+                }
+                foreach (var g in venta.Globos)
+                {
+                    var globoVM = VM.Globos.FirstOrDefault(x => x.GloboId == g.GloboId);
+                    if (globoVM != null) globoVM.Stock -= g.Cantidad;
+                }
 
-                VM.Historial.Insert(0, vh);
-                VM.HistorialView.Refresh();
-
-                ActualizarTotales();
-                MessageBox.Show("Venta registrada correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
-
+                VM.CargarHistorial();
                 VentaRealizada?.Invoke();
+                LimpiarFormulario();
+                ActualizarTotales();
+
+                MessageBox.Show("Venta registrada correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                MessageBox.Show("Ocurrió un error al registrar la venta.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+
+        private void LimpiarFormulario()
+        {
+            foreach (var p in VM.Productos) p.Cantidad = 0;
+            foreach (var g in VM.Globos) g.Cantidad = 0;
+            cmbClientes.SelectedIndex = -1;
+            ActualizarTotales();
+        }
+
+        public bool RegistrarVentaConStock(Venta venta)
+        {
+            using var conn = DbHelper.ObtenerConexion();
+            using var tran = conn.BeginTransaction();
+
+            try
+            {
+                // Insertar venta
+                string queryVenta = @"INSERT INTO Venta (ventaId, clienteId, empleadoId, fechaVenta, importeTotal)
+                              VALUES (@ventaId, @clienteId, @empleadoId, @fecha, @total)";
+                using (var cmd = new SqlCommand(queryVenta, conn, tran))
+                {
+                    cmd.Parameters.AddWithValue("@ventaId", venta.VentaId);
+                    cmd.Parameters.AddWithValue("@clienteId", venta.ClienteId);
+                    cmd.Parameters.AddWithValue("@empleadoId", venta.EmpleadoId);
+                    cmd.Parameters.AddWithValue("@fecha", venta.FechaVenta);
+                    cmd.Parameters.AddWithValue("@total", venta.ImporteTotal);
+                    cmd.ExecuteNonQuery();
+                }
+
+                // Insertar detalle y actualizar stock de productos
+                foreach (var p in venta.Productos)
+                {
+                    string queryProd = @"INSERT INTO Detalle_Venta_Producto (ventaId, productoId, cantidad, costo, importe)
+                                 VALUES (@ventaId, @productoId, @cantidad, @costo, @importe);
+                                 UPDATE Producto SET stock = stock - @cantidad WHERE productoId = @productoId;";
+                    using var cmd = new SqlCommand(queryProd, conn, tran);
+                    cmd.Parameters.AddWithValue("@ventaId", venta.VentaId);
+                    cmd.Parameters.AddWithValue("@productoId", p.ProductoId);
+                    cmd.Parameters.AddWithValue("@cantidad", p.Cantidad);
+                    cmd.Parameters.AddWithValue("@costo", p.Costo);
+                    cmd.Parameters.AddWithValue("@importe", p.Importe);
+                    cmd.ExecuteNonQuery();
+                }
+
+                // Insertar detalle y actualizar stock de globos
+                foreach (var g in venta.Globos)
+                {
+                    string queryGlobo = @"INSERT INTO Detalle_Venta_Globo (ventaId, globoId, cantidad, costo, importe)
+                                  VALUES (@ventaId, @globoId, @cantidad, @costo, @importe);
+                                  UPDATE Globo SET stock = stock - @cantidad WHERE globoId = @globoId;";
+                    using var cmd = new SqlCommand(queryGlobo, conn, tran);
+                    cmd.Parameters.AddWithValue("@ventaId", venta.VentaId);
+                    cmd.Parameters.AddWithValue("@globoId", g.GloboId);
+                    cmd.Parameters.AddWithValue("@cantidad", g.Cantidad);
+                    cmd.Parameters.AddWithValue("@costo", g.Costo);
+                    cmd.Parameters.AddWithValue("@importe", g.Importe);
+                    cmd.ExecuteNonQuery();
+                }
+
+                tran.Commit();
+                return true;
+            }
+            catch
+            {
+                tran.Rollback();
+                return false;
+            }
+        }
+
 
         private void BtnFiltrarHistorial_Click(object sender, RoutedEventArgs e)
         {

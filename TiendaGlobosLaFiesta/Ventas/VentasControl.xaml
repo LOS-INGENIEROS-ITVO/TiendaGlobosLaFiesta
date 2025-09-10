@@ -206,7 +206,7 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="ID Venta" Binding="{Binding VentaId}" Width="130" ElementStyle="{StaticResource CenteredCell}"/>
                             <DataGridTextColumn Header="Cliente 🎁" Binding="{Binding ClienteNombre}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
-                            <DataGridTextColumn Header="Empleado 👤" Binding="{Binding Empleado}" Width="290" ElementStyle="{StaticResource CenteredCell}"/>
+                            <DataGridTextColumn Header="Empleado 👤" Binding="{Binding NombreEmpleado}" Width="290" ElementStyle="{StaticResource CenteredCell}"/>
                             <DataGridTextColumn Header="Fecha 📅" Binding="{Binding FechaVenta, StringFormat=d}" Width="120" ElementStyle="{StaticResource CenteredCell}"/>
                             <DataGridTextColumn Header="Total 💰" Binding="{Binding Total, StringFormat=C}" Width="150" ElementStyle="{StaticResource CenteredCell}"/>
                         </DataGrid.Columns>

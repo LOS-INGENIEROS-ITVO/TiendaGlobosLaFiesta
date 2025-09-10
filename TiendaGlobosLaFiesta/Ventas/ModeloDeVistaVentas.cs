@@ -34,51 +34,49 @@ namespace TiendaGlobosLaFiesta.ViewModels
         protected void OnPropertyChanged(string name) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
+        // Propiedad para empleado actual
+        public int EmpleadoIdActual => SesionActual.EmpleadoId;
+
         public ModeloDeVistaVentas()
         {
             CargarDatos();
-
             Productos.CollectionChanged += (_, _) => OnPropertyChanged(nameof(TotalProductos));
             Globos.CollectionChanged += (_, _) => OnPropertyChanged(nameof(TotalGlobos));
         }
 
         private void CargarDatos()
         {
-            // Cargar clientes
             Clientes = new ObservableCollection<Cliente>(_clienteRepo.ObtenerClientes());
 
-            // Mapear productos a ProductoVenta
             Productos = new ObservableCollection<ProductoVenta>(
                 _productoRepo.ObtenerProductos().Select(p => new ProductoVenta
                 {
                     ProductoId = p.ProductoId,
                     Nombre = p.Nombre,
-                    Costo = p.Costo,  // Ahora coincide con tu BD
+                    Costo = p.Costo,
                     Stock = p.Stock,
                     Unidad = p.Unidad
                 })
             );
 
-            // Mapear globos a GloboVenta
             Globos = new ObservableCollection<GloboVenta>(
-    _globoRepo.ObtenerGlobos().Select(g => new GloboVenta
-    {
-        GloboId = g.GloboId,
-        Material = g.Material,
-        Color = g.Color,
-        Tamano = g.Tamano,       // Obtenido desde Globo_Tamanio en el repositorio
-        Forma = g.Forma,         // Obtenido desde Globo_Forma
-        Tematica = g.Tematica,   // Obtenido desde Tematica
-        Unidad = g.Unidad,       // <--- CORREGIDO: ahora se asigna la unidad
-        Costo = g.Costo,
-        Stock = g.Stock
-    })
-);
+                _globoRepo.ObtenerGlobos().Select(g => new GloboVenta
+                {
+                    GloboId = g.GloboId,
+                    Material = g.Material,
+                    Color = g.Color,
+                    Tamano = g.Tamano,
+                    Forma = g.Forma,
+                    Tematica = g.Tematica,
+                    Unidad = g.Unidad,
+                    Costo = g.Costo,
+                    Stock = g.Stock
+                })
+            );
 
             foreach (var p in Productos) p.PropertyChanged += (_, __) => OnPropertyChanged(nameof(ImporteTotal));
             foreach (var g in Globos) g.PropertyChanged += (_, __) => OnPropertyChanged(nameof(ImporteTotal));
 
-            // Historial de ventas
             Historial = new ObservableCollection<VentaHistorial>(_ventasRepo.ObtenerHistorialVentas());
             HistorialView = CollectionViewSource.GetDefaultView(Historial);
         }
@@ -111,6 +109,15 @@ namespace TiendaGlobosLaFiesta.ViewModels
         public void LimpiarFiltros()
         {
             HistorialView.Filter = null;
+            HistorialView.Refresh();
+        }
+
+        // Recargar historial completo
+        public void CargarHistorial()
+        {
+            Historial.Clear();
+            foreach (var vh in _ventasRepo.ObtenerHistorialVentas())
+                Historial.Add(vh);
             HistorialView.Refresh();
         }
 
