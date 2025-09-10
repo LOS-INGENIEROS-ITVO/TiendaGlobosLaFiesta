@@ -48,6 +48,12 @@
             <TextBlock x:Name="txtBienvenida" Text="Bienvenido" Foreground="#4B3B2C" FontWeight="Bold"
                        HorizontalAlignment="Center" Margin="10,20,10,30" TextWrapping="Wrap" TextAlignment="Center"
                        FontSize="24"/>
+
+            <!-- Botón Dashboard al inicio -->
+            <Button x:Name="btnDashboard" Content="Dashboard" 
+                    Style="{StaticResource MenuButtonStyle}" 
+                    Click="BtnDashboard_Click"/>
+
             <Button x:Name="btnVentas" Content="Ventas" Style="{StaticResource MenuButtonStyle}" Click="BtnVentas_Click"/>
             <Button x:Name="btnInventario" Content="Inventario" Style="{StaticResource MenuButtonStyle}" Click="BtnInventario_Click"/>
             <Button x:Name="btnClientes" Content="Clientes" Style="{StaticResource MenuButtonStyle}" Click="BtnClientes_Click"/>

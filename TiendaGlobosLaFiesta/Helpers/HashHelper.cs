@@ -1,21 +1,17 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 
-public static class HashHelper
+namespace TiendaGlobosLaFiesta
 {
-    public static string GenerarHash(string input)
+    public static class HashHelper
     {
-        using SHA256 sha = SHA256.Create();
-        byte[] bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(input));
-        StringBuilder builder = new StringBuilder();
-        foreach (var b in bytes)
-            builder.Append(b.ToString("x2")); // minúsculas
-        return builder.ToString();
-    }
-
-    public static bool VerificarHash(string input, string hashAlmacenado)
-    {
-        string nuevoHash = GenerarHash(input).Trim();
-        return nuevoHash == hashAlmacenado.Trim();
+        public static bool VerificarHash(string password, string hashAlmacenado)
+        {
+            using var sha256 = SHA256.Create();
+            var bytes = Encoding.UTF8.GetBytes(password);
+            var hash = sha256.ComputeHash(bytes);
+            var hashString = BitConverter.ToString(hash).Replace("-", "").ToLower();
+            return hashString == hashAlmacenado;
+        }
     }
 }

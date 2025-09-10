@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Input;
+using TiendaGlobosLaFiesta.Clientes;
 using TiendaGlobosLaFiesta.Data;
-using TiendaGlobosLaFiesta.Models;
 
 namespace TiendaGlobosLaFiesta
 {

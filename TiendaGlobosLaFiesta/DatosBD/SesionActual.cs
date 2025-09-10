@@ -6,8 +6,6 @@
         public static int EmpleadoId { get; set; }
         public static string Rol { get; set; }
         public static string Username { get; set; }
-
-        // Nueva propiedad
         public static string NombreEmpleadoCompleto { get; set; }
     }
 }

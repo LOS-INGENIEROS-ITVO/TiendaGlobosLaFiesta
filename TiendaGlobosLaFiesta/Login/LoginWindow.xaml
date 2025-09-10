@@ -9,7 +9,6 @@
 
     <Border CornerRadius="15" Background="White" BorderBrush="#DDD" BorderThickness="1" Padding="20">
         <Grid>
-            <!-- Botón cerrar (X) -->
             <Button Content="✖" Width="35" Height="35"
                     HorizontalAlignment="Right" VerticalAlignment="Top"
                     Background="Transparent" BorderThickness="0"
@@ -19,8 +18,6 @@
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="320">
                 <TextBlock Text="La Fiesta" FontSize="30" FontWeight="Bold"
                            Foreground="#2C3E50" HorizontalAlignment="Center" Margin="0,0,0,25"/>
-
-                <!-- Usuario -->
                 <TextBlock Text="Usuario" FontWeight="SemiBold" Margin="0,0,0,5" FontSize="16"/>
                 <Border CornerRadius="8" Background="#F5F5F5" BorderBrush="#CCC" BorderThickness="1" Padding="5">
                     <DockPanel>
@@ -32,7 +29,6 @@
                     </DockPanel>
                 </Border>
 
-                <!-- Contraseña -->
                 <TextBlock Text="Contraseña" FontWeight="SemiBold" Margin="0,15,0,5" FontSize="16"/>
                 <Border CornerRadius="8" Background="#F5F5F5" BorderBrush="#CCC" BorderThickness="1" Padding="5">
                     <DockPanel>
@@ -50,47 +46,17 @@
                     </DockPanel>
                 </Border>
 
-                <!-- Checkbox mostrar contraseña -->
                 <CheckBox x:Name="chkShowPassword" Content="Mostrar contraseña" Margin="0,12,0,5"
                           Checked="chkShowPassword_Checked" Unchecked="chkShowPassword_Unchecked"
                           Foreground="#444" FontSize="14"/>
-
-                <!-- Checkbox recordar usuario -->
                 <CheckBox x:Name="chkRemember" Content="Recordar usuario" Margin="0,0,0,12"
                           Foreground="#444" FontSize="14"/>
-
-                <!-- Mensaje de error -->
                 <TextBlock x:Name="txtMensaje" Foreground="Red" FontSize="14" TextAlignment="Center" Margin="0,5,0,0"/>
-
-                <!-- Indicador de carga -->
                 <ProgressBar x:Name="progressLogin" Height="5" IsIndeterminate="True" Visibility="Collapsed" Margin="0,5,0,0"/>
-
-                <!-- Botón ingresar -->
                 <Button x:Name="btnIngresar" Content="Ingresar" Height="42"
                         Background="#4CAF50" Foreground="White" FontWeight="Bold"
                         BorderThickness="0" Cursor="Hand" Margin="0,10,0,0"
-                        Click="BtnLogin_Click">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="Background" Value="#4CAF50"/>
-                            <Setter Property="Foreground" Value="White"/>
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border CornerRadius="8" Background="{TemplateBinding Background}">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#45A049"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
+                        Click="BtnLogin_Click"/>
             </StackPanel>
         </Grid>
     </Border>

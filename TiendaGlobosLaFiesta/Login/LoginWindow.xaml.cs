@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Data.SqlClient;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -107,10 +104,15 @@ namespace TiendaGlobosLaFiesta
 
                 Properties.Settings.Default.Save();
 
+                // Abrir la ventana correcta según el rol
                 if (SesionActual.Rol == "Gerente")
+                {
                     new MenuGerenteWindow(SesionActual.Rol).Show();
+                }
                 else
+                {
                     new EmpleadoWindow(SesionActual.Rol).Show();
+                }
 
                 this.Close();
             }

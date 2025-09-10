@@ -8,6 +8,7 @@ using Microsoft.Win32;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using TiendaGlobosLaFiesta.Clientes;
 using TiendaGlobosLaFiesta.Data;
 using TiendaGlobosLaFiesta.Models;
 using TiendaGlobosLaFiesta.Services;
@@ -18,6 +19,9 @@ namespace TiendaGlobosLaFiesta
     public partial class VentasControl : UserControl
     {
         public ModeloDeVistaVentas VM { get; set; }
+
+        // Evento para notificar que se realizó una venta
+        public event Action VentaRealizada;
 
         // Datos filtrados del historial
         private IEnumerable<VentaHistorial> historialFiltrado =>
@@ -117,6 +121,9 @@ namespace TiendaGlobosLaFiesta
 
                 ActualizarTotales();
                 MessageBox.Show("Venta registrada correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                // ⚡ Notificar al Dashboard que se realizó una venta
+                VentaRealizada?.Invoke();
             }
         }
 
