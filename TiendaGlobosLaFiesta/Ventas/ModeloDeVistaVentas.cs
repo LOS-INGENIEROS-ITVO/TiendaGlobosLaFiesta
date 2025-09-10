@@ -15,16 +15,18 @@ namespace TiendaGlobosLaFiesta.ViewModels
 {
     public class ModeloDeVistaVentas : INotifyPropertyChanged
     {
+        private readonly ProductoRepository _productoRepo = new();
+        private readonly GloboRepository _globoRepo = new();
+        private readonly ClienteRepository _clienteRepo = new();
+        private readonly VentasRepository _ventasRepo = new();
+
         public ObservableCollection<ProductoVenta> Productos { get; set; } = new();
         public ObservableCollection<GloboVenta> Globos { get; set; } = new();
         public ObservableCollection<Cliente> Clientes { get; set; } = new();
         public ObservableCollection<VentaHistorial> Historial { get; set; } = new();
-
         public ICollectionView HistorialView { get; set; }
 
-        // =========================
         // Para gráficas
-        // =========================
         public ObservableCollection<ISeries> Series { get; set; } = new();
         public string[] Labels { get; set; } = Array.Empty<string>();
 
@@ -42,15 +44,41 @@ namespace TiendaGlobosLaFiesta.ViewModels
 
         private void CargarDatos()
         {
-            Clientes = new ObservableCollection<Cliente>(ConexionBD.ObtenerClientes());
+            // Cargar clientes
+            Clientes = new ObservableCollection<Cliente>(_clienteRepo.ObtenerClientes());
 
-            Productos = new ObservableCollection<ProductoVenta>(ConexionBD.ObtenerProductos());
-            Globos = new ObservableCollection<GloboVenta>(ConexionBD.ObtenerGlobos());
+            // Mapear productos a ProductoVenta
+            Productos = new ObservableCollection<ProductoVenta>(
+                _productoRepo.ObtenerProductos().Select(p => new ProductoVenta
+                {
+                    ProductoId = p.ProductoId,
+                    Nombre = p.Nombre,
+                    Costo = p.Costo,  // Ahora coincide con tu BD
+                    Stock = p.Stock,
+                    Unidad = p.Unidad
+                })
+            );
+
+            // Mapear globos a GloboVenta
+            Globos = new ObservableCollection<GloboVenta>(
+                _globoRepo.ObtenerGlobos().Select(g => new GloboVenta
+                {
+                    GloboId = g.GloboId,
+                    Material = g.Material,
+                    Color = g.Color,
+                    Tamano = g.Tamano, // Obtenido desde Globo_Tamanio en el repositorio
+                    Forma = g.Forma,   // Obtenido desde Globo_Forma
+                    Tematica = g.Tematica, // Obtenido desde Tematica
+                    Costo = g.Costo,   // Ahora coincide con tu BD
+                    Stock = g.Stock
+                })
+            );
 
             foreach (var p in Productos) p.PropertyChanged += (_, __) => OnPropertyChanged(nameof(ImporteTotal));
             foreach (var g in Globos) g.PropertyChanged += (_, __) => OnPropertyChanged(nameof(ImporteTotal));
 
-            Historial = new ObservableCollection<VentaHistorial>(ConexionBD.ObtenerHistorialVentas());
+            // Historial de ventas
+            Historial = new ObservableCollection<VentaHistorial>(_ventasRepo.ObtenerHistorialVentas());
             HistorialView = CollectionViewSource.GetDefaultView(Historial);
         }
 
@@ -58,15 +86,11 @@ namespace TiendaGlobosLaFiesta.ViewModels
         public int TotalGlobos => Globos.Sum(g => g.Cantidad);
         public decimal ImporteTotal => Productos.Sum(p => p.Importe) + Globos.Sum(g => g.Importe);
 
-        // =========================
         // Comandos para UI
-        // =========================
         public ICommand IncrementarCommand => new RelayCommand<ItemVenta>(item => item.Incrementar());
         public ICommand DecrementarCommand => new RelayCommand<ItemVenta>(item => item.Decrementar());
 
-        // =========================
         // Filtrar historial
-        // =========================
         public void FiltrarHistorial(Cliente cliente = null, DateTime? desde = null, DateTime? hasta = null)
         {
             HistorialView.Filter = obj =>
@@ -89,9 +113,7 @@ namespace TiendaGlobosLaFiesta.ViewModels
             HistorialView.Refresh();
         }
 
-        // =========================
         // Actualizar gráfica
-        // =========================
         public void ActualizarGrafica(IEnumerable<VentaHistorial> historialFiltrado)
         {
             var datos = historialFiltrado
@@ -99,7 +121,7 @@ namespace TiendaGlobosLaFiesta.ViewModels
                 .Select(g => new
                 {
                     Cliente = g.Key,
-                    Total = g.Sum(x => (double)x.Total) // convertir a double
+                    Total = g.Sum(x => (double)x.Total)
                 })
                 .OrderByDescending(x => x.Total)
                 .ToList();
@@ -113,7 +135,6 @@ namespace TiendaGlobosLaFiesta.ViewModels
                 Name = "Ventas",
                 DataLabelsPaint = new LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SkiaSharp.SKColors.Black),
                 DataLabelsSize = 14,
-                // Ahora usamos directamente el valor
                 DataLabelsFormatter = value => $"{value:C}"
             });
 
