@@ -107,7 +107,7 @@
                                     <DataGridTextColumn Header="Tamaño 📏" Binding="{Binding Tamano}" Width="90" ElementStyle="{StaticResource CenteredCell}"/>
                                     <DataGridTextColumn Header="Forma 🔷" Binding="{Binding Forma}" Width="90" ElementStyle="{StaticResource CenteredCell}"/>
                                     <DataGridTextColumn Header="Temática 🎉" Binding="{Binding Tematica}" Width="120" ElementStyle="{StaticResource CenteredCell}"/>
-                                    <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad}" Width="90" ElementStyle="{StaticResource CenteredCell}"/>
+                                    <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad}" Width="Auto"/>
                                     <DataGridTextColumn Header="Stock" Binding="{Binding Stock}" Width="70" ElementStyle="{StaticResource CenteredCell}"/>
                                     <DataGridTemplateColumn Header="Cantidad" Width="140">
                                         <DataGridTemplateColumn.CellTemplate>

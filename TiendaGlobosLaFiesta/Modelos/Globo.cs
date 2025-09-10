@@ -15,5 +15,6 @@
         public string Tematica { get; set; }    // de Tematica
 
         public string Nombre => $"{Material} {Tamano} {Forma}".Trim();
+        public int VentasHoy { get; set; }
     }
 }

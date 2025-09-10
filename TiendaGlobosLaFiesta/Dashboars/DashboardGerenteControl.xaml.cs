@@ -134,9 +134,10 @@ namespace TiendaGlobosLaFiesta.Views
                 var prodSemana = _productoRepo.ObtenerProductoMasVendido("SEMANA");
                 var prodMes = _productoRepo.ObtenerProductoMasVendido("MES");
 
-                txtProductoMasVendidoDia.Text = $"Hoy: {prodDia?.Nombre ?? "-"} ({prodDia?.Cantidad ?? 0})";
-                txtProductoMasVendidoSemana.Text = $"Semana: {prodSemana?.Nombre ?? "-"} ({prodSemana?.Cantidad ?? 0})";
-                txtProductoMasVendidoMes.Text = $"Mes: {prodMes?.Nombre ?? "-"} ({prodMes?.Cantidad ?? 0})";
+                txtProductoMasVendidoDia.Text = $"Hoy: {prodDia?.Nombre ?? "-"} ({prodDia?.VentasHoy ?? 0})";
+                txtProductoMasVendidoSemana.Text = $"Semana: {prodSemana?.Nombre ?? "-"} ({prodSemana?.VentasHoy ?? 0})";
+                txtProductoMasVendidoMes.Text = $"Mes: {prodMes?.Nombre ?? "-"} ({prodMes?.VentasHoy ?? 0})";
+
             }
             catch (Exception ex)
             {

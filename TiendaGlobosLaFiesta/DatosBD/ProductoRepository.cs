@@ -64,46 +64,45 @@ namespace TiendaGlobosLaFiesta.Data
                     Nombre = row["nombre"].ToString(),
                     Unidad = Convert.ToInt32(row["unidad"]),
                     Costo = Convert.ToDecimal(row["costo"]),
-                    Stock = Convert.ToInt32(row["stock"])
+                    Stock = Convert.ToInt32(row["stock"]),
+                    VentasHoy = 0 // por defecto
                 });
             }
             return lista;
         }
 
-        public class ProductoMasVendido
+        public Producto? ObtenerProductoMasVendido(string periodo)
         {
-            public string Nombre { get; set; }
-            public int Cantidad { get; set; }
-        }
-
-        public ProductoMasVendido ObtenerProductoMasVendido(string periodo)
-        {
-            string where = periodo switch
+            string filtroFecha = periodo switch
             {
-                "DIA" => "CAST(v.fecha AS DATE) = CAST(GETDATE() AS DATE)",
-                "SEMANA" => "v.fecha >= DATEADD(DAY,-6,CAST(GETDATE() AS DATE))",
-                "MES" => "MONTH(v.fecha) = MONTH(GETDATE()) AND YEAR(v.fecha) = YEAR(GETDATE())",
-                _ => "1=0"
+                "DIA" => "CAST(v.fechaVenta AS DATE) = CAST(GETDATE() AS DATE)",
+                "SEMANA" => "v.fechaVenta >= DATEADD(DAY, -7, CAST(GETDATE() AS DATE))",
+                "MES" => "MONTH(v.fechaVenta) = MONTH(GETDATE()) AND YEAR(v.fechaVenta) = YEAR(GETDATE())",
+                _ => "1=1" // sin filtro
             };
 
             string query = $@"
-            SELECT TOP 1 p.nombre, SUM(vd.cantidad) AS Cantidad
-            FROM VentaDetalle vd
-            JOIN Venta v ON vd.ventaId = v.ventaId
-            JOIN Producto p ON vd.productoId = p.productoId
-            WHERE {where}
-            GROUP BY p.nombre
-            ORDER BY SUM(vd.cantidad) DESC";
+        SELECT TOP 1 p.productoId, p.nombre, SUM(dvp.cantidad) AS Cantidad
+        FROM Detalle_Venta_Producto dvp
+        INNER JOIN Producto p ON dvp.productoId = p.productoId
+        INNER JOIN Venta v ON dvp.ventaId = v.ventaId
+        WHERE {filtroFecha}
+        GROUP BY p.productoId, p.nombre
+        ORDER BY SUM(dvp.cantidad) DESC";
 
-            DataTable dt = DbHelper.ExecuteQuery(query);
+            var dt = DbHelper.ExecuteQuery(query);
+
             if (dt.Rows.Count == 0) return null;
 
-            return new ProductoMasVendido
+            return new Producto
             {
+                ProductoId = dt.Rows[0]["productoId"].ToString(),
                 Nombre = dt.Rows[0]["nombre"].ToString(),
-                Cantidad = Convert.ToInt32(dt.Rows[0]["Cantidad"])
+                VentasHoy = Convert.ToInt32(dt.Rows[0]["Cantidad"]),
+                Stock = 0
             };
         }
+
 
         public Producto? ObtenerProductoPorId(string productoId)
         {
@@ -122,7 +121,8 @@ namespace TiendaGlobosLaFiesta.Data
                 Nombre = row["nombre"].ToString(),
                 Unidad = Convert.ToInt32(row["unidad"]),
                 Costo = Convert.ToDecimal(row["costo"]),
-                Stock = Convert.ToInt32(row["stock"])
+                Stock = Convert.ToInt32(row["stock"]),
+                VentasHoy = 0
             };
         }
     }

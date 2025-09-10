@@ -118,6 +118,7 @@ namespace TiendaGlobosLaFiesta
 
                 this.Close();
             }
+
             else
             {
                 intentosFallidos++;

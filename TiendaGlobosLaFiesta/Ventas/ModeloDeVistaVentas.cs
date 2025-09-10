@@ -61,18 +61,19 @@ namespace TiendaGlobosLaFiesta.ViewModels
 
             // Mapear globos a GloboVenta
             Globos = new ObservableCollection<GloboVenta>(
-                _globoRepo.ObtenerGlobos().Select(g => new GloboVenta
-                {
-                    GloboId = g.GloboId,
-                    Material = g.Material,
-                    Color = g.Color,
-                    Tamano = g.Tamano, // Obtenido desde Globo_Tamanio en el repositorio
-                    Forma = g.Forma,   // Obtenido desde Globo_Forma
-                    Tematica = g.Tematica, // Obtenido desde Tematica
-                    Costo = g.Costo,   // Ahora coincide con tu BD
-                    Stock = g.Stock
-                })
-            );
+    _globoRepo.ObtenerGlobos().Select(g => new GloboVenta
+    {
+        GloboId = g.GloboId,
+        Material = g.Material,
+        Color = g.Color,
+        Tamano = g.Tamano,       // Obtenido desde Globo_Tamanio en el repositorio
+        Forma = g.Forma,         // Obtenido desde Globo_Forma
+        Tematica = g.Tematica,   // Obtenido desde Tematica
+        Unidad = g.Unidad,       // <--- CORREGIDO: ahora se asigna la unidad
+        Costo = g.Costo,
+        Stock = g.Stock
+    })
+);
 
             foreach (var p in Productos) p.PropertyChanged += (_, __) => OnPropertyChanged(nameof(ImporteTotal));
             foreach (var g in Globos) g.PropertyChanged += (_, __) => OnPropertyChanged(nameof(ImporteTotal));

@@ -121,11 +121,15 @@ namespace TiendaGlobosLaFiesta.Data
         public List<VentaHistorial> ObtenerHistorialVentas()
         {
             string query = @"
-        SELECT v.ventaId, v.clienteId, v.empleadoId, v.fechaVenta AS fecha, v.importeTotal AS total,
-               c.primerNombre, c.segundoNombre, c.apellidoP, c.apellidoM
-        FROM Venta v
-        JOIN Cliente c ON v.clienteId = c.clienteId
-        ORDER BY v.fechaVenta DESC";
+    SELECT v.ventaId, v.clienteId, v.empleadoId, v.fechaVenta AS fecha, v.importeTotal AS total,
+           c.primerNombre AS primerNombreCliente, c.segundoNombre AS segundoNombreCliente, 
+           c.apellidoP AS apellidoPCliente, c.apellidoM AS apellidoMCliente,
+           e.primerNombre AS primerNombreEmpleado, e.segundoNombre AS segundoNombreEmpleado,
+           e.apellidoP AS apellidoPEmpleado, e.apellidoM AS apellidoMEmpleado
+    FROM Venta v
+    JOIN Cliente c ON v.clienteId = c.clienteId
+    JOIN Empleado e ON v.empleadoId = e.empleadoId
+    ORDER BY v.fechaVenta DESC";
 
             DataTable dt = DbHelper.ExecuteQuery(query);
             var lista = new List<VentaHistorial>();
@@ -136,8 +140,10 @@ namespace TiendaGlobosLaFiesta.Data
                 {
                     VentaId = row["ventaId"].ToString(),
                     ClienteId = row["clienteId"].ToString(),
-                    ClienteNombre = $"{row["primerNombre"]} {row["segundoNombre"]} {row["apellidoP"]} {row["apellidoM"]}"
+                    ClienteNombre = $"{row["primerNombreCliente"]} {row["segundoNombreCliente"]} {row["apellidoPCliente"]} {row["apellidoMCliente"]}"
                                     .Replace("  ", " ").Trim(),
+                    NombreEmpleado = $"{row["primerNombreEmpleado"]} {row["segundoNombreEmpleado"]} {row["apellidoPEmpleado"]} {row["apellidoMEmpleado"]}"
+                                     .Replace("  ", " ").Trim(),
                     FechaVenta = Convert.ToDateTime(row["fecha"]),
                     Total = Convert.ToDecimal(row["total"]),
                     Productos = new ObservableCollection<ProductoVenta>(),
