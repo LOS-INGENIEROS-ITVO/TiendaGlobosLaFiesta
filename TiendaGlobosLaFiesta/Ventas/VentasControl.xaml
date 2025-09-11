@@ -68,7 +68,7 @@
                                       SelectionMode="Single" SelectionUnit="FullRow"
                                       HorizontalAlignment="Stretch" ColumnWidth="*">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="ID" Binding="{Binding ProductoId}" Width="90" ElementStyle="{StaticResource CenteredCell}"/>
+                                    <DataGridTextColumn Header="ID" Binding="{Binding ProductoId}" Width="170" ElementStyle="{StaticResource CenteredCell}"/>
                                     <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
                                     <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad}" Width="120" ElementStyle="{StaticResource CenteredCell}"/>
                                     <DataGridTextColumn Header="Stock" Binding="{Binding Stock}" Width="100" ElementStyle="{StaticResource CenteredCell}"/>
@@ -204,7 +204,7 @@
                               SelectionMode="Single" SelectionUnit="FullRow"
                               HorizontalAlignment="Stretch" ColumnWidth="*">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="ID Venta" Binding="{Binding VentaId}" Width="130" ElementStyle="{StaticResource CenteredCell}"/>
+                            <DataGridTextColumn Header="ID Venta" Binding="{Binding VentaId}" Width="180" ElementStyle="{StaticResource CenteredCell}"/>
                             <DataGridTextColumn Header="Cliente 🎁" Binding="{Binding ClienteNombre}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
                             <DataGridTextColumn Header="Empleado 👤" Binding="{Binding NombreEmpleado}" Width="290" ElementStyle="{StaticResource CenteredCell}"/>
                             <DataGridTextColumn Header="Fecha 📅" Binding="{Binding FechaVenta, StringFormat=d}" Width="120" ElementStyle="{StaticResource CenteredCell}"/>

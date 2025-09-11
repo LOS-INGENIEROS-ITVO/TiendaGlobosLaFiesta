@@ -65,6 +65,9 @@ namespace TiendaGlobosLaFiesta
                 item.Decrementar();
         }
 
+
+
+
         private void BtnRegistrarVenta_Click(object sender, RoutedEventArgs e)
         {
             if (cmbClientes.SelectedItem is not Cliente cliente)
@@ -83,8 +86,7 @@ namespace TiendaGlobosLaFiesta
             }
 
             // 🔹 Generar ID de venta seguro
-            int ultimoNumero = _ventasRepo.ObtenerUltimoNumeroVenta();
-            string ventaId = $"VEN{(ultimoNumero + 1):D4}";
+            string ventaId = $"VEN{DateTime.Now:yyMMddHHmmss}";
 
             var venta = new Venta
             {

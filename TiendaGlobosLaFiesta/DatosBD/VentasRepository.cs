@@ -119,17 +119,6 @@ namespace TiendaGlobosLaFiesta.Data
 
 
 
-        public int ObtenerUltimoNumeroVenta()
-        {
-            using var conn = DbHelper.ObtenerConexion();
-            string query = "SELECT MAX(CAST(SUBSTRING(ventaId,4,LEN(ventaId)-3) AS INT)) FROM Venta";
-            using var cmd = new SqlCommand(query, conn);
-            var result = cmd.ExecuteScalar();
-            return result != DBNull.Value ? Convert.ToInt32(result) : 0;
-        }
-
-
-
         // Historial de ventas
 
 
