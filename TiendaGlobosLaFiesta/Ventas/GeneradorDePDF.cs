@@ -94,7 +94,7 @@ namespace TiendaGlobosLaFiesta.Services
                                 {
                                     table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(venta.VentaId);
                                     table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(venta.ClienteNombre);
-                                    table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(venta.Empleado);
+                                    table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(venta.NombreEmpleado);
                                     table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(venta.FechaVenta.ToShortDateString());
                                     table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(venta.Total.ToString("C"));
                                 }

@@ -13,7 +13,7 @@ namespace TiendaGlobosLaFiesta.Services
             // Hoja Resumen
             CrearHoja(workbook, "Resumen", historial,
                 new[] { "ID Venta", "Cliente", "Empleado", "Fecha", "Total" },
-                v => new object[] { v.VentaId, v.ClienteNombre, v.Empleado, v.FechaVenta, v.Total },
+                v => new object[] { v.VentaId, v.ClienteNombre, v.NombreEmpleado, v.FechaVenta, v.Total },
                 (cell, col) =>
                 {
                     if (col == 4) cell.Style.DateFormat.Format = "dd/MM/yyyy";

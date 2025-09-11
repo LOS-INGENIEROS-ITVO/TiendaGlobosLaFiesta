@@ -124,36 +124,93 @@ namespace TiendaGlobosLaFiesta.Data
 
         public List<VentaHistorial> ObtenerHistorialVentas()
         {
-            string query = @"
-    SELECT v.ventaId, v.clienteId, v.empleadoId, v.fechaVenta AS fecha, v.importeTotal AS total,
-           c.primerNombre AS primerNombreCliente, c.segundoNombre AS segundoNombreCliente,
-           c.apellidoP AS apellidoPCliente, c.apellidoM AS apellidoMCliente,
-           e.primerNombre AS primerNombreEmpleado, e.segundoNombre AS segundoNombreEmpleado,
-           e.apellidoP AS apellidoPEmpleado, e.apellidoM AS apellidoMEmpleado
-    FROM Venta v
-    JOIN Cliente c ON v.clienteId = c.clienteId
-    JOIN Empleado e ON v.empleadoId = e.empleadoId
-    ORDER BY v.fechaVenta DESC";
+            // 1. Obtener las ventas principales con nombres completos de clientes y empleados
+            string queryVentas = @"
+        SELECT v.ventaId, v.clienteId, v.empleadoId, v.fechaVenta, v.importeTotal,
+               c.primerNombre AS primerNombreCliente, c.segundoNombre AS segundoNombreCliente,
+               c.apellidoP AS apellidoPCliente, c.apellidoM AS apellidoMCliente,
+               e.primerNombre AS primerNombreEmpleado, e.segundoNombre AS segundoNombreEmpleado,
+               e.apellidoP AS apellidoPEmpleado, e.apellidoM AS apellidoMEmpleado
+        FROM Venta v
+        JOIN Cliente c ON v.clienteId = c.clienteId
+        JOIN Empleado e ON v.empleadoId = e.empleadoId
+        ORDER BY v.fechaVenta DESC";
 
-            DataTable dt = DbHelper.ExecuteQuery(query);
-            var lista = new List<VentaHistorial>();
+            DataTable dtVentas = DbHelper.ExecuteQuery(queryVentas);
+            var historial = new List<VentaHistorial>();
 
-            foreach (DataRow row in dt.Rows)
+            foreach (DataRow row in dtVentas.Rows)
             {
-                lista.Add(new VentaHistorial
+                historial.Add(new VentaHistorial
                 {
                     VentaId = row["ventaId"].ToString(),
                     ClienteId = row["clienteId"].ToString(),
                     ClienteNombre = $"{row["primerNombreCliente"]} {row["segundoNombreCliente"]} {row["apellidoPCliente"]} {row["apellidoMCliente"]}".Trim(),
                     NombreEmpleado = $"{row["primerNombreEmpleado"]} {row["segundoNombreEmpleado"]} {row["apellidoPEmpleado"]} {row["apellidoMEmpleado"]}".Trim(),
-                    FechaVenta = Convert.ToDateTime(row["fecha"]),
-                    Total = Convert.ToDecimal(row["total"]),
+                    FechaVenta = Convert.ToDateTime(row["fechaVenta"]),
+                    Total = Convert.ToDecimal(row["importeTotal"]),
                     Productos = new ObservableCollection<ProductoVenta>(),
                     Globos = new ObservableCollection<GloboVenta>()
                 });
             }
 
-            return lista;
+            // 2. Obtener los globos de todas las ventas
+            string queryGlobos = @"
+        SELECT dvg.ventaId, g.globoId, g.material, g.color, g.unidad, g.costo,
+               gt.tamanio, gf.forma, t.nombre AS tematica, dvg.cantidad, dvg.importe
+        FROM Detalle_Venta_Globo dvg
+        JOIN Globo g ON dvg.globoId = g.globoId
+        LEFT JOIN Globo_Tamanio gt ON g.globoId = gt.globoId
+        LEFT JOIN Globo_Forma gf ON g.globoId = gf.globoId
+        LEFT JOIN Tematica t ON g.globoId = t.globoId
+        ORDER BY dvg.ventaId";
+
+            DataTable dtGlobos = DbHelper.ExecuteQuery(queryGlobos);
+
+            foreach (DataRow row in dtGlobos.Rows)
+            {
+                var venta = historial.FirstOrDefault(v => v.VentaId == row["ventaId"].ToString());
+                if (venta == null) continue;
+
+                venta.Globos.Add(new GloboVenta
+                {
+                    GloboId = row["globoId"].ToString(),
+                    Material = row["material"].ToString(),
+                    Color = row["color"].ToString(),
+                    Unidad = row["unidad"].ToString(),
+                    Costo = Convert.ToDecimal(row["costo"]),
+                    Tamano = row["tamanio"]?.ToString(),
+                    Forma = row["forma"]?.ToString(),
+                    Tematica = row["tematica"]?.ToString(),
+                    Cantidad = Convert.ToInt32(row["cantidad"])
+                });
+            }
+
+            // 3. Obtener los productos de todas las ventas
+            string queryProductos = @"
+        SELECT dvp.ventaId, p.productoId, p.nombre, p.unidad, p.costo, dvp.cantidad, dvp.importe
+        FROM Detalle_Venta_Producto dvp
+        JOIN Producto p ON dvp.productoId = p.productoId
+        ORDER BY dvp.ventaId";
+
+            DataTable dtProductos = DbHelper.ExecuteQuery(queryProductos);
+
+            foreach (DataRow row in dtProductos.Rows)
+            {
+                var venta = historial.FirstOrDefault(v => v.VentaId == row["ventaId"].ToString());
+                if (venta == null) continue;
+
+                venta.Productos.Add(new ProductoVenta
+                {
+                    ProductoId = row["productoId"].ToString(),
+                    Nombre = row["nombre"].ToString(),
+                    Unidad = Convert.ToInt32(row["unidad"]),
+                    Costo = Convert.ToDecimal(row["costo"]),
+                    Cantidad = Convert.ToInt32(row["cantidad"])
+                });
+            }
+
+            return historial;
         }
     }
 }
