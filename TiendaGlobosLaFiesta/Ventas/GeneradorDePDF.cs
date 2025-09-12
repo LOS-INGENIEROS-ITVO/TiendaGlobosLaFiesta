@@ -62,7 +62,7 @@ namespace TiendaGlobosLaFiesta.Services
                             // ----- Resumen de Ventas -----
                             col.Item().PaddingVertical(10).AlignCenter()
                                 .Text("📄 Resumen de Ventas")
-                                .FontSize(16)
+                                .FontSize(20)
                                 .Bold()
                                 .FontColor(Colors.Blue.Darken1);
 
@@ -70,10 +70,10 @@ namespace TiendaGlobosLaFiesta.Services
                             {
                                 table.ColumnsDefinition(c =>
                                 {
-                                    c.ConstantColumn(50);  // ID Venta → modificar ancho aquí
+                                    c.ConstantColumn(120);  // ID Venta → modificar ancho aquí
                                     c.RelativeColumn(1);   // Cliente → ajustable automáticamente
                                     c.RelativeColumn(1);   // Empleado → ajustable automáticamente
-                                    c.ConstantColumn(70);  // Fecha
+                                    c.ConstantColumn(60);  // Fecha
                                     c.ConstantColumn(60);  // Total
                                 });
 
@@ -110,7 +110,7 @@ namespace TiendaGlobosLaFiesta.Services
                             // ----- Productos -----
                             col.Item().PaddingVertical(10).AlignCenter()
                                 .Text("🛒 Productos")
-                                .FontSize(16)
+                                .FontSize(20)
                                 .Bold()
                                 .FontColor(Colors.Green.Darken1);
 
@@ -119,7 +119,7 @@ namespace TiendaGlobosLaFiesta.Services
                             {
                                 table.ColumnsDefinition(c =>
                                 {
-                                    c.ConstantColumn(50);  // ID Venta
+                                    c.ConstantColumn(120);  // ID Venta
                                     c.RelativeColumn(1);   // Producto → ajustable
                                     c.ConstantColumn(50);  // Unidad
                                     c.ConstantColumn(50);  // Cantidad
@@ -157,7 +157,7 @@ namespace TiendaGlobosLaFiesta.Services
                             // ----- Globos -----
                             col.Item().PaddingVertical(10).AlignCenter()
                                 .Text("🎈 Globos")
-                                .FontSize(16)
+                                .FontSize(20)
                                 .Bold()
                                 .FontColor(Colors.Red.Darken1);
 
@@ -166,7 +166,7 @@ namespace TiendaGlobosLaFiesta.Services
                             {
                                 table.ColumnsDefinition(c =>
                                 {
-                                    c.ConstantColumn(50);  // ID Venta
+                                    c.ConstantColumn(100);  // ID Venta
                                     c.RelativeColumn(1);   // Material → ajustable
                                     c.ConstantColumn(50);  // Color
                                     c.ConstantColumn(50);  // Tamaño
@@ -174,8 +174,8 @@ namespace TiendaGlobosLaFiesta.Services
                                     c.RelativeColumn(1);   // Temática → ajustable
                                     c.ConstantColumn(50);  // Unidad
                                     c.ConstantColumn(50);  // Cantidad
-                                    c.ConstantColumn(60);  // Costo
-                                    c.ConstantColumn(60);  // Importe
+                                    c.ConstantColumn(40);  // Costo
+                                    c.ConstantColumn(40);  // Importe
                                 });
 
                                 table.Header(header =>
@@ -203,7 +203,7 @@ namespace TiendaGlobosLaFiesta.Services
                                 }
 
                                 // Total globos
-                                table.Cell().ColumnSpan(8).Border(0.5f).Padding(3).AlignRight().Text("Total Globos:").SemiBold();
+                                table.Cell().ColumnSpan(9).Border(0.5f).Padding(3).AlignRight().Text("Total Globos:").SemiBold();
                                 table.Cell().Border(0.5f).Padding(3).AlignCenter()
                                     .Text(todosGlobos.Sum(g => g.Globo.Importe).ToString("C", CultureInfo.CurrentCulture)).SemiBold();
                             });

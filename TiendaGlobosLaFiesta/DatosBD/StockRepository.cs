@@ -9,14 +9,14 @@ namespace TiendaGlobosLaFiesta.Data
     {
         public class ProductoStockCritico
         {
+            public string ProductoId { get; set; } // ⬅️ AÑADE ESTA LÍNEA
             public string Nombre { get; set; }
             public int Stock { get; set; }
         }
 
-        // Productos con stock crítico (ejemplo: stock <= 5)
         public List<ProductoStockCritico> ObtenerProductosStockCritico()
         {
-            string query = "SELECT nombre, stock FROM Producto WHERE stock <= 5 ORDER BY stock ASC";
+            string query = "SELECT productoId, nombre, stock FROM Producto WHERE stock <= 10 ORDER BY stock ASC";
             DataTable dt = DbHelper.ExecuteQuery(query);
 
             var lista = new List<ProductoStockCritico>();
@@ -24,11 +24,11 @@ namespace TiendaGlobosLaFiesta.Data
             {
                 lista.Add(new ProductoStockCritico
                 {
+                    ProductoId = row["productoId"].ToString(), // ⬅️ AÑADE ESTA LÍNEA
                     Nombre = row["nombre"].ToString(),
                     Stock = Convert.ToInt32(row["stock"])
                 });
             }
-
             return lista;
         }
 

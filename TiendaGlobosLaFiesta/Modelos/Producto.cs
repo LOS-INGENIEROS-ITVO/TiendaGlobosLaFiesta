@@ -1,4 +1,4 @@
-﻿namespace TiendaGlobosLaFiesta.Models
+﻿namespace TiendaGlobosLaFiesta.Modelos
 {
     public class Producto
     {
@@ -7,8 +7,12 @@
         public int Unidad { get; set; }
         public decimal Costo { get; set; }
         public int Stock { get; set; }
-
-        // Nueva propiedad para reportes de ventas (no relacionada al inventario real)
         public int VentasHoy { get; set; }
+
+        // 🔹 ASEGÚRATE DE QUE ESTE MÉTODO EXISTA 🔹
+        public Producto Clone()
+        {
+            return (Producto)this.MemberwiseClone();
+        }
     }
 }
