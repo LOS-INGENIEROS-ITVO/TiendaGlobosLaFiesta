@@ -14,6 +14,7 @@
     <None Remove="Recursos\Fondo3.png" />
     <None Remove="Recursos\FondoGerente.png" />
     <None Remove="Recursos\lock32.png" />
+    <None Remove="Recursos\Logo_App.png" />
     <None Remove="Recursos\user32.png" />
   </ItemGroup>
 
@@ -31,6 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="ClosedXML" Version="0.105.0" />
     <PackageReference Include="LiveCharts.Wpf" Version="0.9.7" />
     <PackageReference Include="LiveChartsCore" Version="2.0.0-rc5.4" />
@@ -45,7 +47,13 @@
     <Resource Include="Recursos\Fondo3.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
+    <Resource Include="Recursos\la_fiesta_logo.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Recursos\lock32.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Recursos\Logo_App.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Recursos\user32.png">

@@ -1,7 +1,10 @@
-﻿using System;
+﻿// Archivo: AuthService.cs (Versión final y limpia)
+
+using System;
 using System.Data;
 using System.Data.SqlClient;
 using TiendaGlobosLaFiesta.Modelos;
+using TiendaGlobosLaFiesta.Services; // Asegúrate de que este using esté presente
 
 namespace TiendaGlobosLaFiesta.Data
 {
@@ -37,10 +40,10 @@ namespace TiendaGlobosLaFiesta.Data
                 }
 
                 DataRow row = dt.Rows[0];
-
-                // Validar contraseña (SHA256 hash en tu DB)
                 string passwordHash = row["passwordHash"].ToString();
-                if (!VerifyPasswordHash(password, passwordHash))
+
+                // Se utiliza el nuevo servicio de contraseñas con BCrypt
+                if (!PasswordService.VerifyPassword(password, passwordHash))
                 {
                     mensaje = "Contraseña incorrecta.";
                     return false;
@@ -61,16 +64,6 @@ namespace TiendaGlobosLaFiesta.Data
                 mensaje = $"Error en login: {ex.Message}";
                 return false;
             }
-        }
-
-        // Método para comparar la contraseña ingresada con el hash SHA256 almacenado
-        private static bool VerifyPasswordHash(string password, string storedHash)
-        {
-            using var sha = System.Security.Cryptography.SHA256.Create();
-            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(password);
-            byte[] hash = sha.ComputeHash(bytes);
-            string hashString = BitConverter.ToString(hash).Replace("-", "").ToLower();
-            return hashString == storedHash.ToLower();
         }
     }
 }

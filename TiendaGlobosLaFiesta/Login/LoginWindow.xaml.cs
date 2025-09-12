@@ -1,129 +1,89 @@
-﻿using System;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
+﻿using System.Windows;
 using System.Windows.Input;
-using TiendaGlobosLaFiesta.Data;
+using TiendaGlobosLaFiesta.ViewModels;
 
 namespace TiendaGlobosLaFiesta
 {
     public partial class LoginWindow : Window
     {
-        private int intentosFallidos = 0;
-        private const int MAX_INTENTOS = 5;
-        private const int BLOQUEO_SEGUNDOS = 30;
-
         public LoginWindow()
         {
             InitializeComponent();
-            txtPasswordVisible.TextChanged += TxtPasswordVisible_TextChanged;
-        }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            txtUsername.Focus();
-
-            if (!string.IsNullOrEmpty(Properties.Settings.Default.UsuarioGuardado))
+            if (DataContext is LoginViewModel viewModel)
             {
-                txtUsername.Text = Properties.Settings.Default.UsuarioGuardado;
-                txtPassword.Focus();
-                chkRemember.IsChecked = true;
+                viewModel.OnLoginSuccess += (rolDelUsuario) =>
+                {
+                    if (rolDelUsuario == "Gerente")
+                    {
+                        var menuGerente = new MenuGerenteWindow(rolDelUsuario);
+                        menuGerente.Show();
+                    }
+                    else
+                    {
+                        var menuEmpleado = new EmpleadoWindow(rolDelUsuario);
+                        menuEmpleado.Show();
+                    }
+                    this.Close();
+                };
             }
         }
 
-        private void TxtUsername_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter)
-                txtPassword.Focus();
-        }
-
-        private void TxtPassword_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter)
-                BtnLogin_Click(sender, new RoutedEventArgs());
-        }
-
-        private void chkShowPassword_Checked(object sender, RoutedEventArgs e)
-        {
-            txtPasswordVisible.Text = txtPassword.Password;
-            txtPasswordVisible.Visibility = Visibility.Visible;
-            txtPassword.Visibility = Visibility.Collapsed;
-        }
-
-        private void chkShowPassword_Unchecked(object sender, RoutedEventArgs e)
-        {
-            txtPassword.Password = txtPasswordVisible.Text;
-            txtPassword.Visibility = Visibility.Visible;
-            txtPasswordVisible.Visibility = Visibility.Collapsed;
-        }
-
-        private void TxtPasswordVisible_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            txtPassword.Password = txtPasswordVisible.Text;
-        }
+        // --- MANEJADORES DE EVENTOS DE LA VISTA ---
 
         private void BtnCerrar_Click(object sender, RoutedEventArgs e)
         {
             Application.Current.Shutdown();
         }
 
-        private async void BtnLogin_Click(object sender, RoutedEventArgs e)
+        // Flujo con la tecla Enter
+        private void TxtUsername_KeyDown(object sender, KeyEventArgs e)
         {
-            string username = txtUsername.Text.Trim();
-            string password = chkShowPassword.IsChecked == true ? txtPasswordVisible.Text : txtPassword.Password;
-
-            txtMensaje.Text = "";
-            progressLogin.Visibility = Visibility.Visible;
-
-            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            if (e.Key == Key.Enter)
             {
-                txtMensaje.Text = "Por favor, ingresa usuario y contraseña.";
-                progressLogin.Visibility = Visibility.Collapsed;
-                return;
+                txtPassword.Focus();
             }
+        }
 
-            if (intentosFallidos >= MAX_INTENTOS)
+        private void TxtPassword_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
             {
-                txtMensaje.Text = $"Has excedido {MAX_INTENTOS} intentos. Intenta de nuevo en {BLOQUEO_SEGUNDOS} segundos.";
-                await Task.Delay(BLOQUEO_SEGUNDOS * 1000);
-                intentosFallidos = 0;
-                txtMensaje.Text = "";
-                progressLogin.Visibility = Visibility.Collapsed;
-                return;
+                if (btnIngresar.Command.CanExecute(txtPassword))
+                {
+                    // Al presionar Enter, se actualiza el Password del PasswordBox antes de ejecutar el comando
+                    txtPassword.Password = chkShowPassword.IsChecked == true ? txtPasswordVisible.Text : txtPassword.Password;
+                    btnIngresar.Command.Execute(txtPassword);
+                }
             }
+        }
 
-            // 🔹 Inicializamos las variables antes de pasarlas al método
-            string rol = string.Empty;
-            string mensaje = string.Empty;
-
-            bool loginExitoso = await Task.Run(() => AuthService.Login(username, password, out rol, out mensaje));
-
-            progressLogin.Visibility = Visibility.Collapsed;
-
-            if (loginExitoso)
+        // Funcionalidad para Mostrar/Ocultar contraseña
+        private void chkShowPassword_Handler(object sender, RoutedEventArgs e)
+        {
+            if (chkShowPassword.IsChecked == true)
             {
-                // Guardar usuario si se marca recordar
-                if (chkRemember.IsChecked == true)
-                    Properties.Settings.Default.UsuarioGuardado = username;
-                else
-                    Properties.Settings.Default.UsuarioGuardado = string.Empty;
-
-                Properties.Settings.Default.Save();
-
-                // Abrir la ventana según rol
-                if (rol == "Gerente")
-                    new MenuGerenteWindow(rol).Show();
-                else
-                    new EmpleadoWindow(rol).Show();
-
-                this.Close();
+                txtPasswordVisible.Text = txtPassword.Password;
+                txtPasswordVisible.Visibility = Visibility.Visible;
+                txtPassword.Visibility = Visibility.Collapsed;
             }
-
             else
             {
-                intentosFallidos++;
-                txtMensaje.Text = mensaje != string.Empty ? mensaje : $"Usuario o contraseña incorrectos. Intento {intentosFallidos}/{MAX_INTENTOS}";
+                txtPassword.Password = txtPasswordVisible.Text;
+                txtPassword.Visibility = Visibility.Visible;
+                txtPasswordVisible.Visibility = Visibility.Collapsed;
             }
+        }
+
+        // Funcionalidad para Recuperar Contraseña
+        private void RecuperarContrasena_Click(object sender, RoutedEventArgs e)
+        {
+            // Aquí iría la lógica para abrir la nueva ventana de recuperación.
+            // Por ejemplo:
+            // var ventanaRecuperacion = new RecuperarContrasenaWindow();
+            // ventanaRecuperacion.ShowDialog();
+
+            MessageBox.Show("Funcionalidad de 'Recuperar Contraseña' por implementar.", "En Desarrollo", MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 }
