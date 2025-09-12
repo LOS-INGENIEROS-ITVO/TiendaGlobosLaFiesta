@@ -65,5 +65,63 @@ namespace TiendaGlobosLaFiesta.Data
                 return false;
             }
         }
+
+
+
+public static bool RestablecerContrasena(string username, long telefono, string nuevaContrasena, out string mensaje)
+        {
+            try
+            {
+                // Primero, verificamos que el usuario y el teléfono coincidan.
+                string queryVerificacion = @"
+            SELECT e.telefono 
+            FROM Usuarios u
+            INNER JOIN Empleado e ON u.empleadoId = e.empleadoId
+            WHERE u.username = @username";
+
+                var paramVerificacion = new[] { new SqlParameter("@username", username) };
+                object telefonoResult = DbHelper.ExecuteScalar(queryVerificacion, paramVerificacion);
+
+                if (telefonoResult == null || telefonoResult == DBNull.Value)
+                {
+                    mensaje = "El nombre de usuario no fue encontrado.";
+                    return false;
+                }
+
+                if (Convert.ToInt64(telefonoResult) != telefono)
+                {
+                    mensaje = "El número de teléfono no coincide con el registrado.";
+                    return false;
+                }
+
+                // Si la verificación es exitosa, procedemos a actualizar la contraseña.
+                string nuevoHash = Services.PasswordService.HashPassword(nuevaContrasena);
+
+                string queryUpdate = "UPDATE Usuarios SET passwordHash = @hash WHERE username = @username";
+                var paramUpdate = new[]
+                {
+            new SqlParameter("@hash", nuevoHash),
+            new SqlParameter("@username", username)
+        };
+
+                int filasAfectadas = DbHelper.ExecuteNonQuery(queryUpdate, paramUpdate);
+
+                if (filasAfectadas > 0)
+                {
+                    mensaje = "Contraseña actualizada exitosamente.";
+                    return true;
+                }
+                else
+                {
+                    mensaje = "No se pudo actualizar la contraseña.";
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                mensaje = $"Error en la base de datos: {ex.Message}";
+                return false;
+            }
+        }
     }
 }

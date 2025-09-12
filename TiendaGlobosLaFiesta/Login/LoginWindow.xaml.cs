@@ -78,12 +78,9 @@ namespace TiendaGlobosLaFiesta
         // Funcionalidad para Recuperar Contraseña
         private void RecuperarContrasena_Click(object sender, RoutedEventArgs e)
         {
-            // Aquí iría la lógica para abrir la nueva ventana de recuperación.
-            // Por ejemplo:
-            // var ventanaRecuperacion = new RecuperarContrasenaWindow();
-            // ventanaRecuperacion.ShowDialog();
-
-            MessageBox.Show("Funcionalidad de 'Recuperar Contraseña' por implementar.", "En Desarrollo", MessageBoxButton.OK, MessageBoxImage.Information);
+            // Se crea y muestra la nueva ventana de recuperación.
+            var ventanaRecuperacion = new RecuperarContrasenaWindow();
+            ventanaRecuperacion.ShowDialog(); // ShowDialog la muestra de forma modal
         }
     }
 }
