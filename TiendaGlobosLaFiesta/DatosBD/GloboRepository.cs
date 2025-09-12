@@ -52,6 +52,23 @@ namespace TiendaGlobosLaFiesta.Data
             return DbHelper.ExecuteNonQuery(query, parametros) > 0;
         }
 
+
+        // ... (Dentro de la clase GloboRepository, junto a los métodos existentes) ...
+
+        /// <summary>
+        /// Actualiza el stock de un globo restando la cantidad vendida.
+        /// Debe ser llamado dentro de una transacción existente.
+        /// </summary>
+        public void ActualizarStock(string globoId, int cantidadVendida, SqlConnection conn, SqlTransaction tran)
+        {
+            string query = "UPDATE Globo SET stock = stock - @cantidad WHERE globoId = @globoId";
+            using var cmd = new SqlCommand(query, conn, tran);
+            cmd.Parameters.AddWithValue("@cantidad", cantidadVendida);
+            cmd.Parameters.AddWithValue("@globoId", globoId);
+            cmd.ExecuteNonQuery();
+        }
+
+
         public List<Globo> ObtenerGlobos()
         {
             string query = @"

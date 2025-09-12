@@ -50,6 +50,23 @@ namespace TiendaGlobosLaFiesta.Data
             return DbHelper.ExecuteNonQuery(query, parametros) > 0;
         }
 
+
+        // ... (Dentro de la clase ProductoRepository, junto a los métodos existentes) ...
+
+        /// <summary>
+        /// Actualiza el stock de un producto restando la cantidad vendida.
+        /// Debe ser llamado dentro de una transacción existente.
+        /// </summary>
+        public void ActualizarStock(string productoId, int cantidadVendida, SqlConnection conn, SqlTransaction tran)
+        {
+            string query = "UPDATE Producto SET stock = stock - @cantidad WHERE productoId = @productoId";
+            using var cmd = new SqlCommand(query, conn, tran);
+            cmd.Parameters.AddWithValue("@cantidad", cantidadVendida);
+            cmd.Parameters.AddWithValue("@productoId", productoId);
+            cmd.ExecuteNonQuery();
+        }
+
+
         public List<Producto> ObtenerProductos()
         {
             string query = "SELECT productoId, nombre, unidad, costo, stock FROM Producto";

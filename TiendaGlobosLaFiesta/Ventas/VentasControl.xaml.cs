@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -18,10 +17,7 @@ namespace TiendaGlobosLaFiesta
     public partial class VentasControl : UserControl
     {
         public ModeloDeVistaVentas VM { get; set; }
-        private readonly VentaService _ventaService = new();
-        private readonly VentasRepository _ventasRepo = new();
-        private readonly ProductoRepository _productoRepo = new();
-        private readonly GloboRepository _globoRepo = new();
+        private readonly VentaService _ventaService = new(); // Se usa para la lógica de negocio.
 
         public event Action VentaRealizada;
 
@@ -34,12 +30,14 @@ namespace TiendaGlobosLaFiesta
             VM = new ModeloDeVistaVentas();
             DataContext = VM;
 
+            // Enlazado de datos inicial
             cmbClientes.ItemsSource = VM.Clientes;
             cmbFiltroCliente.ItemsSource = VM.Clientes;
             dgProductos.ItemsSource = VM.Productos;
             dgGlobos.ItemsSource = VM.Globos;
             dgHistorial.ItemsSource = VM.HistorialView;
 
+            // Suscripción a eventos para actualizar totales
             foreach (var p in VM.Productos) p.PropertyChanged += (_, __) => ActualizarTotales();
             foreach (var g in VM.Globos) g.PropertyChanged += (_, __) => ActualizarTotales();
 
@@ -66,13 +64,14 @@ namespace TiendaGlobosLaFiesta
         }
 
 
-
+        // En el archivo: VentasControl.cs
 
         private void BtnRegistrarVenta_Click(object sender, RoutedEventArgs e)
         {
+            // --- 1. Validaciones de la UI ---
             if (cmbClientes.SelectedItem is not Cliente cliente)
             {
-                MessageBox.Show("Selecciona un cliente.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Selecciona un cliente.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -81,27 +80,29 @@ namespace TiendaGlobosLaFiesta
 
             if (!productosSeleccionados.Any() && !globosSeleccionados.Any())
             {
-                MessageBox.Show("Debes seleccionar al menos un producto o globo.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Debes seleccionar al menos un producto o globo.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            // 🔹 Generar ID de venta seguro
-            string ventaId = $"VEN{DateTime.Now:yyMMddHHmmss}";
-
+            // --- 2. Crear el objeto Venta ---
             var venta = new Venta
             {
-                VentaId = ventaId,
+                VentaId = $"VEN{DateTime.Now:yyMMddHHmmss}",
                 ClienteId = cliente.ClienteId,
                 EmpleadoId = SesionActual.EmpleadoId,
                 FechaVenta = DateTime.Now,
-                ImporteTotal = productosSeleccionados.Sum(p => p.Importe) + globosSeleccionados.Sum(g => g.Importe),
+                ImporteTotal = VM.ImporteTotal,
                 Productos = new ObservableCollection<ProductoVenta>(productosSeleccionados),
                 Globos = new ObservableCollection<GloboVenta>(globosSeleccionados)
             };
 
-            if (RegistrarVentaConStock(venta))
+            // --- 3. Delegar toda la lógica al VentaService ---
+            if (_ventaService.RegistrarVentaCompleta(venta, out string mensajeError))
             {
-                // 🔹 Actualizar stock en la UI
+                // --- 4. Actualizar la UI si la operación fue exitosa ---
+
+                // 🔹 CÓDIGO RESTAURADO PARA ACTUALIZAR EL STOCK VISUAL 🔹
+                // Se actualiza el stock en la colección del ViewModel para que la UI lo refleje inmediatamente.
                 foreach (var p in venta.Productos)
                 {
                     var prodVM = VM.Productos.FirstOrDefault(x => x.ProductoId == p.ProductoId);
@@ -113,16 +114,16 @@ namespace TiendaGlobosLaFiesta
                     if (globoVM != null) globoVM.Stock -= g.Cantidad;
                 }
 
-                VM.CargarHistorial();
-                VentaRealizada?.Invoke();
-                LimpiarFormulario();
-                ActualizarTotales();
+                VM.CargarHistorial();    // Recargar el historial de ventas
+                VentaRealizada?.Invoke(); // Notificar al dashboard
+                LimpiarFormulario();      // Limpiar el carrito de compras
 
                 MessageBox.Show("Venta registrada correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else
             {
-                MessageBox.Show("Ocurrió un error al registrar la venta.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Mostrar el mensaje de error específico que devolvió el servicio
+                MessageBox.Show($"No se pudo registrar la venta:\n{mensajeError}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -135,67 +136,9 @@ namespace TiendaGlobosLaFiesta
             ActualizarTotales();
         }
 
-        public bool RegistrarVentaConStock(Venta venta)
-        {
-            using var conn = DbHelper.ObtenerConexion();
-            using var tran = conn.BeginTransaction();
+        // --- El método "RegistrarVentaConStock" se ha eliminado completamente de esta clase. ---
 
-            try
-            {
-                // Insertar venta
-                string queryVenta = @"INSERT INTO Venta (ventaId, clienteId, empleadoId, fechaVenta, importeTotal)
-                              VALUES (@ventaId, @clienteId, @empleadoId, @fecha, @total)";
-                using (var cmd = new SqlCommand(queryVenta, conn, tran))
-                {
-                    cmd.Parameters.AddWithValue("@ventaId", venta.VentaId);
-                    cmd.Parameters.AddWithValue("@clienteId", venta.ClienteId);
-                    cmd.Parameters.AddWithValue("@empleadoId", venta.EmpleadoId);
-                    cmd.Parameters.AddWithValue("@fecha", venta.FechaVenta);
-                    cmd.Parameters.AddWithValue("@total", venta.ImporteTotal);
-                    cmd.ExecuteNonQuery();
-                }
-
-                // Insertar detalle y actualizar stock de productos
-                foreach (var p in venta.Productos)
-                {
-                    string queryProd = @"INSERT INTO Detalle_Venta_Producto (ventaId, productoId, cantidad, costo, importe)
-                                 VALUES (@ventaId, @productoId, @cantidad, @costo, @importe);
-                                 UPDATE Producto SET stock = stock - @cantidad WHERE productoId = @productoId;";
-                    using var cmd = new SqlCommand(queryProd, conn, tran);
-                    cmd.Parameters.AddWithValue("@ventaId", venta.VentaId);
-                    cmd.Parameters.AddWithValue("@productoId", p.ProductoId);
-                    cmd.Parameters.AddWithValue("@cantidad", p.Cantidad);
-                    cmd.Parameters.AddWithValue("@costo", p.Costo);
-                    cmd.Parameters.AddWithValue("@importe", p.Importe);
-                    cmd.ExecuteNonQuery();
-                }
-
-                // Insertar detalle y actualizar stock de globos
-                foreach (var g in venta.Globos)
-                {
-                    string queryGlobo = @"INSERT INTO Detalle_Venta_Globo (ventaId, globoId, cantidad, costo, importe)
-                                  VALUES (@ventaId, @globoId, @cantidad, @costo, @importe);
-                                  UPDATE Globo SET stock = stock - @cantidad WHERE globoId = @globoId;";
-                    using var cmd = new SqlCommand(queryGlobo, conn, tran);
-                    cmd.Parameters.AddWithValue("@ventaId", venta.VentaId);
-                    cmd.Parameters.AddWithValue("@globoId", g.GloboId);
-                    cmd.Parameters.AddWithValue("@cantidad", g.Cantidad);
-                    cmd.Parameters.AddWithValue("@costo", g.Costo);
-                    cmd.Parameters.AddWithValue("@importe", g.Importe);
-                    cmd.ExecuteNonQuery();
-                }
-
-                tran.Commit();
-                return true;
-            }
-            catch
-            {
-                tran.Rollback();
-                return false;
-            }
-        }
-
-
+        // ... (Aquí continúan los métodos para filtrar y exportar el historial, que no se modifican) ...
         private void BtnFiltrarHistorial_Click(object sender, RoutedEventArgs e)
         {
             VM.FiltrarHistorial(cmbFiltroCliente.SelectedItem as Cliente, dpFechaDesde.SelectedDate, dpFechaHasta.SelectedDate);
@@ -209,7 +152,8 @@ namespace TiendaGlobosLaFiesta
             VM.LimpiarFiltros();
         }
 
-        private void BtnExportarExcel_Click(object sender, RoutedEventArgs e)
+
+private void BtnExportarExcel_Click(object sender, RoutedEventArgs e)
         {
             if (!historialFiltrado.Any())
             {
