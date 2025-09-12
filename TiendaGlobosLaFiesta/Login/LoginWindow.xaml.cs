@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 using TiendaGlobosLaFiesta.ViewModels;
 
 namespace TiendaGlobosLaFiesta
@@ -26,6 +27,13 @@ namespace TiendaGlobosLaFiesta
                     }
                     this.Close();
                 };
+                txtPassword.GotFocus += PasswordBox_FocusChanged;
+                txtPassword.LostFocus += PasswordBox_FocusChanged;
+                txtPassword.KeyDown += PasswordBox_KeyDown_CapsLock;
+
+                txtPasswordVisible.GotFocus += PasswordBox_FocusChanged;
+                txtPasswordVisible.LostFocus += PasswordBox_FocusChanged;
+                txtPasswordVisible.KeyDown += PasswordBox_KeyDown_CapsLock;
             }
         }
 
@@ -81,6 +89,39 @@ namespace TiendaGlobosLaFiesta
             // Se crea y muestra la nueva ventana de recuperación.
             var ventanaRecuperacion = new RecuperarContrasenaWindow();
             ventanaRecuperacion.ShowDialog(); // ShowDialog la muestra de forma modal
+        }
+
+        private void ActualizarAvisoCapsLock()
+        {
+            if (Console.CapsLock)
+            {
+                avisoCapsLock.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                avisoCapsLock.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void PasswordBox_FocusChanged(object sender, RoutedEventArgs e)
+        {
+            var passwordBox = sender as FrameworkElement; // Funciona para TextBox y PasswordBox
+            if (passwordBox.IsKeyboardFocusWithin)
+            {
+                // Si el usuario entra al campo, comprueba el estado
+                ActualizarAvisoCapsLock();
+            }
+            else
+            {
+                // Si el usuario sale del campo, siempre oculta el aviso
+                avisoCapsLock.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void PasswordBox_KeyDown_CapsLock(object sender, KeyEventArgs e)
+        {
+            // Comprueba el estado de Bloq Mayús después de que la tecla ha sido presionada
+            Dispatcher.BeginInvoke(new Action(() => ActualizarAvisoCapsLock()), DispatcherPriority.Input);
         }
     }
 }

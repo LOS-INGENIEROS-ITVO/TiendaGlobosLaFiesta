@@ -51,12 +51,6 @@ namespace TiendaGlobosLaFiesta.Data
         }
 
 
-        // ... (Dentro de la clase ProductoRepository, junto a los métodos existentes) ...
-
-        /// <summary>
-        /// Actualiza el stock de un producto restando la cantidad vendida.
-        /// Debe ser llamado dentro de una transacción existente.
-        /// </summary>
         public void ActualizarStock(string productoId, int cantidadVendida, SqlConnection conn, SqlTransaction tran)
         {
             string query = "UPDATE Producto SET stock = stock - @cantidad WHERE productoId = @productoId";
@@ -87,39 +81,6 @@ namespace TiendaGlobosLaFiesta.Data
             }
             return lista;
         }
-
-        public Producto? ObtenerProductoMasVendido(string periodo)
-        {
-            string filtroFecha = periodo switch
-            {
-                "DIA" => "CAST(v.fechaVenta AS DATE) = CAST(GETDATE() AS DATE)",
-                "SEMANA" => "v.fechaVenta >= DATEADD(DAY, -7, CAST(GETDATE() AS DATE))",
-                "MES" => "MONTH(v.fechaVenta) = MONTH(GETDATE()) AND YEAR(v.fechaVenta) = YEAR(GETDATE())",
-                _ => "1=1" // sin filtro
-            };
-
-            string query = $@"
-        SELECT TOP 1 p.productoId, p.nombre, SUM(dvp.cantidad) AS Cantidad
-        FROM Detalle_Venta_Producto dvp
-        INNER JOIN Producto p ON dvp.productoId = p.productoId
-        INNER JOIN Venta v ON dvp.ventaId = v.ventaId
-        WHERE {filtroFecha}
-        GROUP BY p.productoId, p.nombre
-        ORDER BY SUM(dvp.cantidad) DESC";
-
-            var dt = DbHelper.ExecuteQuery(query);
-
-            if (dt.Rows.Count == 0) return null;
-
-            return new Producto
-            {
-                ProductoId = dt.Rows[0]["productoId"].ToString(),
-                Nombre = dt.Rows[0]["nombre"].ToString(),
-                VentasHoy = Convert.ToInt32(dt.Rows[0]["Cantidad"]),
-                Stock = 0
-            };
-        }
-
 
         public Producto? ObtenerProductoPorId(string productoId)
         {

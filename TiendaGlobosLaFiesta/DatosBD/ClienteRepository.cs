@@ -55,62 +55,6 @@ namespace TiendaGlobosLaFiesta.Data
         }
 
 
-        public class TopCliente
-        {
-            public string Nombre { get; set; }
-            public decimal Total { get; set; }
-        }
-
-        public TopCliente ObtenerTopClienteMes()
-        {
-            string query = @"
-    SELECT TOP 1 c.primerNombre + ' ' + c.apellidoP AS Nombre, SUM(v.importeTotal) AS Total
-    FROM Cliente c
-    JOIN Venta v ON c.clienteId = v.clienteId
-    WHERE MONTH(v.fechaVenta) = MONTH(GETDATE()) AND YEAR(v.fechaVenta) = YEAR(GETDATE())
-    GROUP BY c.primerNombre, c.apellidoP
-    ORDER BY SUM(v.importeTotal) DESC";
-
-            DataTable dt = DbHelper.ExecuteQuery(query);
-            if (dt.Rows.Count == 0) return null;
-
-            return new TopCliente
-            {
-                Nombre = dt.Rows[0]["Nombre"].ToString(),
-                Total = Convert.ToDecimal(dt.Rows[0]["Total"])
-            };
-        }
-
-        public class ClienteFrecuente
-        {
-            public string Nombre { get; set; }
-            public string Apellido { get; set; }
-            public string NombreCompleto() => $"{Nombre} {Apellido}";
-        }
-
-        public List<ClienteFrecuente> ObtenerClientesFrecuentesDetalle()
-        {
-            string query = @"
-    SELECT TOP 10 c.primerNombre, c.apellidoP, COUNT(v.ventaId) AS Compras
-    FROM Cliente c
-    JOIN Venta v ON c.clienteId = v.clienteId
-    GROUP BY c.primerNombre, c.apellidoP
-    HAVING COUNT(v.ventaId) > 2
-    ORDER BY COUNT(v.ventaId) DESC";
-
-            DataTable dt = DbHelper.ExecuteQuery(query);
-            var lista = new List<ClienteFrecuente>();
-            foreach (DataRow row in dt.Rows)
-            {
-                lista.Add(new ClienteFrecuente
-                {
-                    Nombre = row["primerNombre"].ToString(),
-                    Apellido = row["apellidoP"].ToString()
-                });
-            }
-            return lista;
-        }
-
         public List<Cliente> ObtenerClientes()
         {
             string query = "SELECT clienteId, primerNombre, segundoNombre, apellidoP, apellidoM, telefono FROM Cliente";

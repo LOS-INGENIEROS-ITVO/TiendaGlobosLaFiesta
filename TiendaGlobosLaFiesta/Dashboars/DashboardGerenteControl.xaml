@@ -1,45 +1,53 @@
 ﻿<UserControl x:Class="TiendaGlobosLaFiesta.Views.DashboardGerenteControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
-             Background="#F7F8FA">
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1200"
+             Background="#F4F7FC">
 
     <UserControl.Resources>
-        <!-- Sombra -->
-        <DropShadowEffect x:Key="CardShadow" Color="#888" BlurRadius="8" ShadowDepth="2"/>
+        <Style TargetType="TextBlock" x:Key="KpiTitleStyle">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="Opacity" Value="0.8"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="TextBlock" x:Key="KpiValueStyle">
+            <Setter Property="FontSize" Value="28"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,8,0,0"/>
+        </Style>
+        <Style TargetType="TextBlock" x:Key="KpiSubTextStyle">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Opacity" Value="0.9"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,6,0,0"/>
+        </Style>
 
-        <!-- Animación de aparición (x:Shared="False" para instancias independientes) -->
-        <Storyboard x:Key="CardAppearStoryboard" x:Shared="False">
-            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.6"/>
-            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)" From="0.8" To="1" Duration="0:0:0.6"/>
-            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleY)" From="0.8" To="1" Duration="0:0:0.6"/>
-        </Storyboard>
-
-        <!-- Estilo KPI -->
         <Style TargetType="Border" x:Key="KpiCardStyle">
             <Setter Property="CornerRadius" Value="12"/>
-            <Setter Property="Padding" Value="16"/>
-            <Setter Property="Margin" Value="10"/>
-            <Setter Property="Effect" Value="{StaticResource CardShadow}"/>
-            <Setter Property="Width" Value="280"/>
-            <Setter Property="Height" Value="140"/>
-            <Setter Property="Opacity" Value="0"/>
-            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
-            <Setter Property="RenderTransform">
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Margin" Value="12"/>
+            <Setter Property="Width" Value="265"/>
+            <Setter Property="MinHeight" Value="130"/>
+            <Setter Property="Effect">
                 <Setter.Value>
-                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                    <DropShadowEffect ShadowDepth="2" BlurRadius="15" Color="{Binding Background.Color, RelativeSource={RelativeSource Self}}" Opacity="0.3"/>
                 </Setter.Value>
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="RenderTransform">
-                        <Setter.Value>
-                            <ScaleTransform ScaleX="1.05" ScaleY="1.05"/>
-                        </Setter.Value>
-                    </Setter>
                     <Setter Property="Effect">
                         <Setter.Value>
-                            <DropShadowEffect Color="#666" BlurRadius="12" ShadowDepth="4"/>
+                            <DropShadowEffect ShadowDepth="4" BlurRadius="18" Color="{Binding Background.Color, RelativeSource={RelativeSource Self}}" Opacity="0.4"/>
                         </Setter.Value>
                     </Setter>
                 </Trigger>
@@ -47,159 +55,91 @@
         </Style>
     </UserControl.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="20" HorizontalAlignment="Center" VerticalAlignment="Top">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="10">
+            <TextBlock Text="Dashboard Gerente" FontSize="32" FontWeight="Bold" Foreground="#1B2B4E" Margin="20,10,0,20" Width="291"/>
 
-            <!-- Título -->
-            <TextBlock Text="📊 Dashboard Gerente"
-                       FontSize="32"
-                       FontWeight="Bold"
-                       Foreground="#2E3A59"
-                       HorizontalAlignment="Center"
-                       Margin="0,0,0,24"/>
-
-            <!-- KPIs -->
-            <UniformGrid Columns="4" HorizontalAlignment="Center" Margin="0,0,0,24">
-
-                <!-- Ventas Hoy -->
-                <Border x:Name="BorderVentasHoy" Style="{StaticResource KpiCardStyle}" Background="#1E88E5">
-                    <Border.Triggers>
-                        <EventTrigger RoutedEvent="Loaded">
-                            <BeginStoryboard Storyboard="{StaticResource CardAppearStoryboard}"/>
-                        </EventTrigger>
-                    </Border.Triggers>
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <TextBlock Text="💰 Ventas Hoy" FontWeight="SemiBold" FontSize="14" Foreground="White"/>
-                        <TextBlock x:Name="txtVentasHoy" Text="$0.00" FontSize="22" FontWeight="Bold" Foreground="White" Margin="0,6,0,0"/>
+            <WrapPanel HorizontalAlignment="Center">
+                <Border Style="{StaticResource KpiCardStyle}" Background="#28a745">
+                    <StackPanel>
+                        <TextBlock Text="💰 Ventas Hoy" Style="{StaticResource KpiTitleStyle}"/>
+                        <TextBlock x:Name="txtVentasHoy" Text="$0.00" Style="{StaticResource KpiValueStyle}"/>
                     </StackPanel>
                 </Border>
-
-                <!-- Ventas 7 días -->
-                <Border x:Name="BorderVentas7Dias" Style="{StaticResource KpiCardStyle}" Background="#43A047">
-                    <Border.Triggers>
-                        <EventTrigger RoutedEvent="Loaded">
-                            <BeginStoryboard Storyboard="{StaticResource CardAppearStoryboard}"/>
-                        </EventTrigger>
-                    </Border.Triggers>
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <TextBlock Text="📅 Ventas Últimos 7 días" FontWeight="SemiBold" FontSize="14" Foreground="White"/>
-                        <TextBlock x:Name="txtVentas7Dias" Text="$0.00" FontSize="22" FontWeight="Bold" Foreground="White" Margin="0,6,0,0"/>
+                <Border Style="{StaticResource KpiCardStyle}" Background="#17a2b8">
+                    <StackPanel>
+                        <TextBlock Text="📅 Ventas Últimos 7 Días" Style="{StaticResource KpiTitleStyle}"/>
+                        <TextBlock x:Name="txtVentas7Dias" Text="$0.00" Style="{StaticResource KpiValueStyle}"/>
                     </StackPanel>
                 </Border>
-
-                <!-- Ventas Mes -->
-                <Border x:Name="BorderVentasMes" Style="{StaticResource KpiCardStyle}" Background="#FDD835">
-                    <Border.Triggers>
-                        <EventTrigger RoutedEvent="Loaded">
-                            <BeginStoryboard Storyboard="{StaticResource CardAppearStoryboard}"/>
-                        </EventTrigger>
-                    </Border.Triggers>
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <TextBlock Text="🗓️ Ventas Mes" FontWeight="SemiBold" FontSize="14" Foreground="#212121"/>
-                        <TextBlock x:Name="txtVentasMes" Text="$0.00" FontSize="22" FontWeight="Bold" Foreground="#212121" Margin="0,6,0,0"/>
+                <Border Style="{StaticResource KpiCardStyle}" Background="#ffc107">
+                    <StackPanel>
+                        <TextBlock Text="🗓️ Ventas del Mes" Style="{StaticResource KpiTitleStyle}" Foreground="#343a40"/>
+                        <TextBlock x:Name="txtVentasMes" Text="$0.00" Style="{StaticResource KpiValueStyle}" Foreground="#343a40"/>
                     </StackPanel>
                 </Border>
-
-                <!-- Ticket Promedio -->
-                <Border Style="{StaticResource KpiCardStyle}" Background="#8E24AA">
-                    <Border.Triggers>
-                        <EventTrigger RoutedEvent="Loaded">
-                            <BeginStoryboard Storyboard="{StaticResource CardAppearStoryboard}"/>
-                        </EventTrigger>
-                    </Border.Triggers>
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <TextBlock Text="🎟️ Ticket Promedio" FontWeight="SemiBold" FontSize="14" Foreground="White"/>
-                        <TextBlock x:Name="txtTicketPromedioHoy" Text="$0.00" FontSize="22" FontWeight="Bold" Foreground="White" Margin="0,6,0,0"/>
+                <Border Style="{StaticResource KpiCardStyle}" Background="#6f42c1">
+                    <StackPanel>
+                        <TextBlock Text="🎟️ Ticket Promedio (Hoy)" Style="{StaticResource KpiTitleStyle}"/>
+                        <TextBlock x:Name="txtTicketPromedioHoy" Text="$0.00" Style="{StaticResource KpiValueStyle}"/>
                     </StackPanel>
                 </Border>
-
-                <!-- Stock Crítico -->
-                <Border Style="{StaticResource KpiCardStyle}" Background="#FB8C00">
-                    <Border.Triggers>
-                        <EventTrigger RoutedEvent="Loaded">
-                            <BeginStoryboard Storyboard="{StaticResource CardAppearStoryboard}"/>
-                        </EventTrigger>
-                    </Border.Triggers>
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <TextBlock Text="⚠️ Stock Crítico" FontWeight="SemiBold" FontSize="14" Foreground="White"/>
-                        <TextBlock x:Name="txtStockCriticoNumero" Text="0 productos" FontSize="18" FontWeight="Bold" Foreground="White" Margin="0,6,0,0"/>
-                        <TextBlock x:Name="txtStockCriticoLista" Text="-" FontSize="12" Foreground="White" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                <Border Style="{StaticResource KpiCardStyle}" Background="#dc3545">
+                    <StackPanel>
+                        <TextBlock Text="⚠️ Stock Crítico" Style="{StaticResource KpiTitleStyle}"/>
+                        <TextBlock x:Name="txtStockCriticoNumero" Text="0 productos" Style="{StaticResource KpiValueStyle}" FontSize="24"/>
+                        <TextBlock x:Name="txtStockCriticoLista" Text="-" Style="{StaticResource KpiSubTextStyle}"/>
                     </StackPanel>
                 </Border>
-
-                <!-- Clientes Frecuentes -->
-                <Border Style="{StaticResource KpiCardStyle}" Background="#039BE5">
-                    <Border.Triggers>
-                        <EventTrigger RoutedEvent="Loaded">
-                            <BeginStoryboard Storyboard="{StaticResource CardAppearStoryboard}"/>
-                        </EventTrigger>
-                    </Border.Triggers>
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <TextBlock Text="👥 Clientes Frecuentes" FontWeight="SemiBold" FontSize="14" Foreground="White"/>
-                        <TextBlock x:Name="txtClientesFrecuentesNumero" Text="0 clientes" FontSize="18" FontWeight="Bold" Foreground="White" Margin="0,6,0,0"/>
-                        <TextBlock x:Name="txtClientesFrecuentesNombres" Text="-" FontSize="12" Foreground="White" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                <Border Style="{StaticResource KpiCardStyle}" Background="#007bff">
+                    <StackPanel>
+                        <TextBlock Text="👥 Clientes Frecuentes" Style="{StaticResource KpiTitleStyle}"/>
+                        <TextBlock x:Name="txtClientesFrecuentesNumero" Text="0 clientes" Style="{StaticResource KpiValueStyle}" FontSize="24"/>
+                        <TextBlock x:Name="txtClientesFrecuentesNombres" Text="-" Style="{StaticResource KpiSubTextStyle}"/>
                     </StackPanel>
                 </Border>
-
-                <!-- Top Cliente -->
-                <Border Style="{StaticResource KpiCardStyle}" Background="#7B1FA2">
-                    <Border.Triggers>
-                        <EventTrigger RoutedEvent="Loaded">
-                            <BeginStoryboard Storyboard="{StaticResource CardAppearStoryboard}"/>
-                        </EventTrigger>
-                    </Border.Triggers>
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <TextBlock Text="🏆 Top Cliente" FontWeight="SemiBold" FontSize="14" Foreground="White"/>
-                        <TextBlock x:Name="txtTopClienteMesNombre" Text="-" FontSize="16" FontWeight="Bold" Foreground="White" Margin="0,6,0,0"/>
-                        <TextBlock x:Name="txtTopClienteMesTotal" Text="$0.00" FontSize="14" FontWeight="Bold" Foreground="White" Margin="0,4,0,0"/>
-                        <TextBlock x:Name="txtTopClienteMesMes" Text="-" FontSize="12" Foreground="White" Margin="0,2,0,0"/>
+                <Border Style="{StaticResource KpiCardStyle}" Background="#fd7e14">
+                    <StackPanel>
+                        <TextBlock Text="🏆 Top Cliente del Mes" Style="{StaticResource KpiTitleStyle}"/>
+                        <TextBlock x:Name="txtTopClienteMesNombre" Text="-" Style="{StaticResource KpiValueStyle}" FontSize="22"/>
+                        <TextBlock x:Name="txtTopClienteMesTotal" Text="$0.00" Style="{StaticResource KpiSubTextStyle}" FontWeight="SemiBold" FontSize="14"/>
                     </StackPanel>
                 </Border>
-
-                <!-- Producto más vendido -->
-                <Border Style="{StaticResource KpiCardStyle}" Background="#F4511E">
-                    <Border.Triggers>
-                        <EventTrigger RoutedEvent="Loaded">
-                            <BeginStoryboard Storyboard="{StaticResource CardAppearStoryboard}"/>
-                        </EventTrigger>
-                    </Border.Triggers>
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <TextBlock Text="🔥 Producto más vendido" FontWeight="SemiBold" FontSize="14" Foreground="White"/>
-                        <TextBlock x:Name="txtProductoMasVendidoDia" Text="Hoy: -" FontSize="14" Foreground="White" Margin="0,4,0,0"/>
-                        <TextBlock x:Name="txtProductoMasVendidoSemana" Text="Semana: -" FontSize="14" Foreground="White" Margin="0,2,0,0"/>
-                        <TextBlock x:Name="txtProductoMasVendidoMes" Text="Mes: -" FontSize="14" Foreground="White" Margin="0,2,0,0"/>
+                <Border Style="{StaticResource KpiCardStyle}" Background="#343a40">
+                    <StackPanel>
+                        <TextBlock Text="🔥 Producto Más Vendido" Style="{StaticResource KpiTitleStyle}"/>
+                        <TextBlock x:Name="txtProductoMasVendidoDia" Text="Hoy: -" Style="{StaticResource KpiSubTextStyle}" Margin="0,8,0,0" FontSize="13"/>
+                        <TextBlock x:Name="txtProductoMasVendidoSemana" Text="Semana: -" Style="{StaticResource KpiSubTextStyle}" Margin="0,4,0,0" FontSize="13"/>
+                        <TextBlock x:Name="txtProductoMasVendidoMes" Text="Mes: -" Style="{StaticResource KpiSubTextStyle}" Margin="0,4,0,0" FontSize="13"/>
                     </StackPanel>
                 </Border>
+            </WrapPanel>
 
-            </UniformGrid>
-
-            <!-- 📈 Gráfica -->
-            <Border Background="White" CornerRadius="12" Padding="16" Margin="10"
-                    BorderBrush="#5E35B1" BorderThickness="2" Effect="{StaticResource CardShadow}"
-                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <Border Background="White" CornerRadius="12" Padding="25,25,25,10" Margin="24,20,24,20">
+                <Border.Effect>
+                    <DropShadowEffect ShadowDepth="1" BlurRadius="15" Color="#000" Opacity="0.08"/>
+                </Border.Effect>
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
+                    <TextBlock Text="📈 Ventas de los Últimos 7 Días" Grid.Row="0"
+                               FontSize="20" FontWeight="Bold" Foreground="#1B2B4E"
+                               HorizontalAlignment="Left" Margin="0,0,0,20"/>
 
-                    <TextBlock Text="📈 Ventas Últimos 7 Días"
-                               FontSize="20" FontWeight="Bold"
-                               Foreground="#5E35B1"
-                               HorizontalAlignment="Center"
-                               Margin="0,0,0,12"
-                               Grid.Row="0"/>
-
-                    <lvc:CartesianChart x:Name="cartesianChartVentas"
-                                        Grid.Row="1"
-                                        LegendLocation="Right"
-                                        HorizontalAlignment="Stretch"
-                                        VerticalAlignment="Stretch"
-                                        MinHeight="400"
-                                        Margin="10"/>
+                    <lvc:CartesianChart Grid.Row="1" MinHeight="300" AnimationsSpeed="0:0:0.5"
+                                        Series="{Binding SeriesCollection}" 
+                                        LegendLocation="None">
+                        <lvc:CartesianChart.AxisX>
+                            <lvc:Axis Labels="{Binding LabelsGrafica}" Foreground="#6c757d" Separator="{x:Static lvc:DefaultAxes.CleanSeparator}"/>
+                        </lvc:CartesianChart.AxisX>
+                        <lvc:CartesianChart.AxisY>
+                            <lvc:Axis LabelFormatter="{Binding Formatter}" Foreground="#6c757d" MinValue="0" Separator="{x:Static lvc:DefaultAxes.CleanSeparator}"/>
+                        </lvc:CartesianChart.AxisY>
+                    </lvc:CartesianChart>
                 </Grid>
             </Border>
-
         </StackPanel>
     </ScrollViewer>
 </UserControl>

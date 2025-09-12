@@ -4,73 +4,12 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Collections.ObjectModel;
 using TiendaGlobosLaFiesta.Models;
-using System.Linq; // Necesario para FirstOrDefault
 
 namespace TiendaGlobosLaFiesta.Data
 {
     public class VentasRepository
     {
-        // ===================================================================
-        // ===== MÉTODOS DE CONSULTA PARA KPIs (LOS QUE FALTABAN) =====
-        // ===================================================================
 
-        public decimal ObtenerVentasHoy()
-        {
-            string query = "SELECT ISNULL(SUM(importeTotal),0) FROM Venta WHERE CAST(fechaVenta AS DATE) = CAST(GETDATE() AS DATE)";
-            return Convert.ToDecimal(DbHelper.ExecuteScalar(query) ?? 0);
-        }
-
-        public decimal ObtenerVentasUltimos7DiasTotal()
-        {
-            string query = "SELECT ISNULL(SUM(importeTotal),0) FROM Venta WHERE fechaVenta >= DATEADD(DAY,-6,CAST(GETDATE() AS DATE))";
-            return Convert.ToDecimal(DbHelper.ExecuteScalar(query) ?? 0);
-        }
-
-        public decimal ObtenerVentasMes()
-        {
-            string query = "SELECT ISNULL(SUM(importeTotal),0) FROM Venta WHERE MONTH(fechaVenta) = MONTH(GETDATE()) AND YEAR(fechaVenta) = YEAR(GETDATE())";
-            return Convert.ToDecimal(DbHelper.ExecuteScalar(query) ?? 0);
-        }
-
-        public decimal ObtenerTicketPromedioHoy()
-        {
-            string query = "SELECT ISNULL(AVG(importeTotal),0) FROM Venta WHERE CAST(fechaVenta AS DATE) = CAST(GETDATE() AS DATE)";
-            return Convert.ToDecimal(DbHelper.ExecuteScalar(query) ?? 0);
-        }
-
-        public Dictionary<DateTime, decimal> ObtenerVentasUltimos7DiasDetalle()
-        {
-            string query = @"
-            SELECT CAST(fechaVenta AS DATE) AS Fecha, ISNULL(SUM(importeTotal),0) AS Total
-            FROM Venta
-            WHERE fechaVenta >= DATEADD(DAY,-6,CAST(GETDATE() AS DATE))
-            GROUP BY CAST(fechaVenta AS DATE)
-            ORDER BY CAST(fechaVenta AS DATE)";
-
-            DataTable dt = DbHelper.ExecuteQuery(query);
-            var resultado = new Dictionary<DateTime, decimal>();
-            // Inicializar todos los días con 0 para que la gráfica no tenga huecos
-            for (int i = 0; i < 7; i++)
-                resultado[DateTime.Today.AddDays(-6 + i)] = 0m;
-
-            foreach (DataRow row in dt.Rows)
-            {
-                DateTime fecha = Convert.ToDateTime(row["Fecha"]);
-                decimal total = Convert.ToDecimal(row["Total"]);
-                if (resultado.ContainsKey(fecha)) resultado[fecha] = total;
-            }
-
-            return resultado;
-        }
-
-        // ===================================================================
-        // ===== MÉTODOS SIMPLES PARA TRANSACCIONES (LOS NUEVOS) =====
-        // ===================================================================
-
-        /// <summary>
-        /// Inserta el registro maestro de una venta en la base de datos.
-        /// Debe ser llamado dentro de una transacción existente.
-        /// </summary>
         public void InsertarVentaMaestro(Venta venta, SqlConnection conn, SqlTransaction tran)
         {
             string queryVenta = @"INSERT INTO Venta (ventaId, clienteId, empleadoId, fechaVenta, importeTotal)
@@ -84,10 +23,7 @@ namespace TiendaGlobosLaFiesta.Data
             cmd.ExecuteNonQuery();
         }
 
-        /// <summary>
-        /// Inserta una línea de detalle para un producto vendido.
-        /// Debe ser llamado dentro de una transacción existente.
-        /// </summary>
+
         public void InsertarDetalleProducto(string ventaId, ProductoVenta p, SqlConnection conn, SqlTransaction tran)
         {
             string queryProd = @"INSERT INTO Detalle_Venta_Producto (ventaId, productoId, cantidad, costo, importe)
@@ -101,10 +37,7 @@ namespace TiendaGlobosLaFiesta.Data
             cmd.ExecuteNonQuery();
         }
 
-        /// <summary>
-        /// Inserta una línea de detalle para un globo vendido.
-        /// Debe ser llamado dentro de una transacción existente.
-        /// </summary>
+
         public void InsertarDetalleGlobo(string ventaId, GloboVenta g, SqlConnection conn, SqlTransaction tran)
         {
             string queryGlobo = @"INSERT INTO Detalle_Venta_Globo (ventaId, globoId, cantidad, costo, importe)
@@ -117,10 +50,6 @@ namespace TiendaGlobosLaFiesta.Data
             cmd.Parameters.AddWithValue("@importe", g.Importe);
             cmd.ExecuteNonQuery();
         }
-
-        // ===================================================================
-        // ===== MÉTODO PARA HISTORIAL DE VENTAS (SIN CAMBIOS) =====
-        // ===================================================================
 
 
         public List<VentaHistorial> ObtenerHistorialVentas()
@@ -155,7 +84,6 @@ namespace TiendaGlobosLaFiesta.Data
                 });
             }
 
-            // 🔹 CÓDIGO RESTAURADO PARA CARGAR DETALLES DE GLOBOS 🔹
             string queryGlobos = @"
     SELECT dvg.ventaId, g.globoId, g.material, g.color, g.unidad, g.costo,
            gt.tamanio, gf.forma, t.nombre AS tematica, dvg.cantidad, dvg.importe
@@ -183,11 +111,9 @@ namespace TiendaGlobosLaFiesta.Data
                     Forma = row["forma"]?.ToString(),
                     Tematica = row["tematica"]?.ToString(),
                     Cantidad = Convert.ToInt32(row["cantidad"]),
-                    // El importe se calcula automáticamente en la clase base
                 });
             }
 
-            // 🔹 CÓDIGO RESTAURADO PARA CARGAR DETALLES DE PRODUCTOS 🔹
             string queryProductos = @"
     SELECT dvp.ventaId, p.productoId, p.nombre, p.unidad, p.costo, dvp.cantidad, dvp.importe
     FROM Detalle_Venta_Producto dvp

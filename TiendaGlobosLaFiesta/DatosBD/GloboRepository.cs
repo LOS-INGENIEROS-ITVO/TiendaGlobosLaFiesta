@@ -53,12 +53,6 @@ namespace TiendaGlobosLaFiesta.Data
         }
 
 
-        // ... (Dentro de la clase GloboRepository, junto a los métodos existentes) ...
-
-        /// <summary>
-        /// Actualiza el stock de un globo restando la cantidad vendida.
-        /// Debe ser llamado dentro de una transacción existente.
-        /// </summary>
         public void ActualizarStock(string globoId, int cantidadVendida, SqlConnection conn, SqlTransaction tran)
         {
             string query = "UPDATE Globo SET stock = stock - @cantidad WHERE globoId = @globoId";
@@ -114,35 +108,6 @@ namespace TiendaGlobosLaFiesta.Data
             }
 
             return lista;
-        }
-
-
-        public Globo ObtenerGloboMasVendido()
-        {
-            string query = @"
-                SELECT TOP 1 g.globoId, g.color, g.material, SUM(dvg.cantidad) AS Cantidad
-                FROM Detalle_Venta_Globo dvg
-                INNER JOIN Globo g ON dvg.globoId = g.globoId
-                INNER JOIN Venta v ON dvg.ventaId = v.ventaId
-                WHERE CAST(v.fechaVenta AS DATE) = CAST(GETDATE() AS DATE)
-                GROUP BY g.globoId, g.color, g.material
-                ORDER BY SUM(dvg.cantidad) DESC";
-
-            DataTable dt = DbHelper.ExecuteQuery(query);
-
-            if (dt.Rows.Count > 0)
-            {
-                return new Globo
-                {
-                    GloboId = dt.Rows[0]["globoId"].ToString(),
-                    Color = dt.Rows[0]["color"].ToString(),
-                    Material = dt.Rows[0]["material"].ToString(),
-                    Stock = 0, // aquí no viene stock real
-                    VentasHoy = Convert.ToInt32(dt.Rows[0]["Cantidad"])
-                };
-            }
-
-            return null;
         }
 
         public Globo? ObtenerGloboPorId(string globoId)

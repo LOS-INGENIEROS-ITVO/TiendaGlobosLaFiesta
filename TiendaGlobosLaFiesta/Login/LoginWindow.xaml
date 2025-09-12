@@ -123,6 +123,10 @@
                                  Visibility="Collapsed"/>
                     </Grid>
 
+                    <TextBlock x:Name="avisoCapsLock" Text="⚠️ Bloq Mayús está activado" 
+                               Foreground="#D35400" FontWeight="SemiBold" 
+                               Margin="5,5,0,0" Visibility="Collapsed"/>
+
                     <Grid Margin="5,15,5,20">
                         <CheckBox x:Name="chkShowPassword" Content="Mostrar contraseña" VerticalAlignment="Center"
                                   Checked="chkShowPassword_Handler" Unchecked="chkShowPassword_Handler"
