@@ -1,0 +1,25 @@
+﻿<Window x:Class="TiendaGlobosLaFiesta.Inventario.ProductoEditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Gestionar Producto" Height="420" Width="400"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        WindowStyle="ToolWindow" ShowInTaskbar="False">
+    <StackPanel Margin="20">
+        <TextBlock Text="ID del Producto:" FontWeight="SemiBold"/>
+        <TextBox Text="{Binding ProductoId}" Margin="0,5,0,15" IsReadOnly="True" Background="#EEE"/>
+
+        <TextBlock Text="Nombre:" FontWeight="SemiBold"/>
+        <TextBox Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}" Margin="0,5,0,15"/>
+
+        <TextBlock Text="Costo:" FontWeight="SemiBold"/>
+        <TextBox Text="{Binding Costo, UpdateSourceTrigger=PropertyChanged}" Margin="0,5,0,15"/>
+
+        <TextBlock Text="Stock:" FontWeight="SemiBold"/>
+        <TextBox Text="{Binding Stock, UpdateSourceTrigger=PropertyChanged}" Margin="0,5,0,25"/>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Guardar" Width="100" Margin="0,0,10,0" IsDefault="True" Click="Guardar_Click" Background="#28a745" Foreground="White"/>
+            <Button Content="Cancelar" Width="100" IsCancel="True"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

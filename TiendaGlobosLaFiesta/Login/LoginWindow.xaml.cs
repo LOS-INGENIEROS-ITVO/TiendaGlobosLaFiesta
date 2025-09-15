@@ -123,5 +123,10 @@ namespace TiendaGlobosLaFiesta
             // Comprueba el estado de Bloq Mayús después de que la tecla ha sido presionada
             Dispatcher.BeginInvoke(new Action(() => ActualizarAvisoCapsLock()), DispatcherPriority.Input);
         }
+
+        private void txtUsername_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+
+        }
     }
 }

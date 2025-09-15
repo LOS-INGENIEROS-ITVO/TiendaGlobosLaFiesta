@@ -1,4 +1,4 @@
-﻿namespace TiendaGlobosLaFiesta.Modelos
+﻿namespace TiendaGlobosLaFiesta.Models
 {
     public class Producto
     {
@@ -9,7 +9,6 @@
         public int Stock { get; set; }
         public int VentasHoy { get; set; }
 
-        // 🔹 ASEGÚRATE DE QUE ESTE MÉTODO EXISTA 🔹
         public Producto Clone()
         {
             return (Producto)this.MemberwiseClone();

@@ -1,0 +1,51 @@
+﻿<UserControl x:Class="TiendaGlobosLaFiesta.Inventario.InventarioControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:vm="clr-namespace:TiendaGlobosLaFiesta.Inventario"
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1200"
+             Background="#F4F7FC">
+
+    <UserControl.DataContext>
+        <vm:InventarioViewModel/>
+    </UserControl.DataContext>
+
+    <Grid Margin="20">
+        <TabControl Grid.Row="1">
+            <TabItem Header="⚠️ Stock Crítico">
+                <DataGrid ItemsSource="{Binding StockCritico}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*"/>
+                        <DataGridTextColumn Header="Stock Actual" Binding="{Binding StockActual}" Width="150"/>
+                        <DataGridTextColumn Header="Tipo" Binding="{Binding Tipo}" Width="120"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+            <TabItem Header="🎁 Productos">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                        <TextBox Width="300" Padding="8" Text="{Binding TextoBusquedaProducto, UpdateSourceTrigger=PropertyChanged}" ToolTip="Buscar..."/>
+                        <Button Content="Agregar Nuevo" Command="{Binding AgregarProductoCommand}"/>
+                        <Button Content="Editar Seleccionado" Command="{Binding EditarProductoCommand}"/>
+                        <Button Content="Eliminar Seleccionado" Command="{Binding EliminarProductoCommand}"/>
+                    </StackPanel>
+
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding ProductosView}" SelectedItem="{Binding ProductoSeleccionado, Mode=TwoWay}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding ProductoId}" Width="150"/>
+                            <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*"/>
+                            <DataGridTextColumn Header="Costo" Binding="{Binding Costo, StringFormat=C}" Width="120"/>
+                            <DataGridTextColumn Header="Stock" Binding="{Binding Stock}" Width="100"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

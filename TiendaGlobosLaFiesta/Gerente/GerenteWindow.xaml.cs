@@ -4,6 +4,8 @@ using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using TiendaGlobosLaFiesta.Data;
 using TiendaGlobosLaFiesta.Modelos;
+using TiendaGlobosLaFiesta.Inventario;
+
 
 namespace TiendaGlobosLaFiesta
 {
