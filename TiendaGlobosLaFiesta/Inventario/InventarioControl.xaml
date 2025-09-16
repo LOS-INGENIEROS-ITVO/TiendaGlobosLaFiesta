@@ -22,20 +22,27 @@
             <Setter Property="Margin" Value="5"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" CornerRadius="5" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
-
-        <Style TargetType="DataGrid">
-            <Setter Property="AutoGenerateColumns" Value="False"/>
-            <Setter Property="CanUserAddRows" Value="False"/>
-            <Setter Property="IsReadOnly" Value="True"/>
-            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
-            <Setter Property="RowHeight" Value="35"/>
-            <Setter Property="AlternatingRowBackground" Value="#F8F9FA"/>
-            <Setter Property="SelectionUnit" Value="FullRow"/>
-        </Style>
-    </UserControl.Resources>
-
-    <Grid Margin="20">
+        </UserControl.Resources>
+    
+    <Grid Margin="25">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -46,41 +53,12 @@
                    Margin="0,0,0,20"/>
 
         <TabControl Grid.Row="1">
-
+            
             <TabItem Header="⚠️ Stock Crítico">
-                <DataGrid ItemsSource="{Binding StockCritico}">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Nombre del Producto" Binding="{Binding Nombre}" Width="*"/>
-                        <DataGridTextColumn Header="Stock Actual" Binding="{Binding StockActual}" Width="150"/>
-                        <DataGridTextColumn Header="Tipo" Binding="{Binding Tipo}" Width="120"/>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </TabItem>
+                </TabItem>
 
             <TabItem Header="🎁 Productos">
-                <Grid Margin="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
-                        <TextBox Width="300" Padding="8" Text="{Binding TextoBusquedaProducto, UpdateSourceTrigger=PropertyChanged}" ToolTip="Buscar producto..."/>
-                        <Button Content="Agregar Nuevo" Command="{Binding AgregarProductoCommand}" Style="{StaticResource ActionButtonStyle}"/>
-                        <Button Content="Editar Seleccionado" Command="{Binding EditarProductoCommand}" Style="{StaticResource ActionButtonStyle}" Background="#ffc107" Foreground="Black"/>
-                        <Button Content="Eliminar Seleccionado" Command="{Binding EliminarProductoCommand}" Style="{StaticResource ActionButtonStyle}" Background="#dc3545"/>
-                    </StackPanel>
-
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding ProductosView}"
-                              SelectedItem="{Binding ProductoSeleccionado, Mode=TwoWay}">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="ID" Binding="{Binding ProductoId}" Width="150"/>
-                            <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*"/>
-                            <DataGridTextColumn Header="Costo" Binding="{Binding Costo, StringFormat=C}" Width="120"/>
-                            <DataGridTextColumn Header="Stock" Binding="{Binding Stock}" Width="100"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
-            </TabItem>
+                </TabItem>
 
             <TabItem Header="🎈 Globos">
                 <Grid Margin="10">
@@ -96,13 +74,16 @@
                     </StackPanel>
 
                     <DataGrid Grid.Row="1" ItemsSource="{Binding GlobosView}"
-                              SelectedItem="{Binding GloboSeleccionado, Mode=TwoWay}">
+                              SelectedItem="{Binding GloboSeleccionado, Mode=TwoWay}"
+                              AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="ID" Binding="{Binding GloboId}" Width="120"/>
                             <DataGridTextColumn Header="Nombre Completo" Binding="{Binding Nombre}" Width="*"/>
                             <DataGridTextColumn Header="Material" Binding="{Binding Material}" Width="120"/>
                             <DataGridTextColumn Header="Color" Binding="{Binding Color}" Width="100"/>
                             <DataGridTextColumn Header="Tamaño(s)" Binding="{Binding Tamano}" Width="120"/>
+                            <DataGridTextColumn Header="Forma(s)" Binding="{Binding Forma}" Width="120"/>
+                            <DataGridTextColumn Header="Temática(s)" Binding="{Binding Tematica}" Width="150"/>
                             <DataGridTextColumn Header="Costo" Binding="{Binding Costo, StringFormat=C}" Width="100"/>
                             <DataGridTextColumn Header="Stock" Binding="{Binding Stock}" Width="100"/>
                         </DataGrid.Columns>

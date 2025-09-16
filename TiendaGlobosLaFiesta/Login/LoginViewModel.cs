@@ -69,9 +69,8 @@ namespace TiendaGlobosLaFiesta.ViewModels
             IsLoginInProgress = true;
             Message = "";
 
-            var passwordBox = parameter as PasswordBox;
-            if (passwordBox == null) { IsLoginInProgress = false; return; }
-            string password = passwordBox.Password;
+            string password = parameter as string;
+
 
             if (string.IsNullOrEmpty(Username) || string.IsNullOrEmpty(password))
             {

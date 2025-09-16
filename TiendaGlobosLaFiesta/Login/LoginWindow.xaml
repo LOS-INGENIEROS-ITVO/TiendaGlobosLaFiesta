@@ -24,9 +24,7 @@
                 </ThicknessAnimation.EasingFunction>
             </ThicknessAnimation>
         </Storyboard>
-
         <SolidColorBrush x:Key="AccentColorBrush" Color="#EC407A"/>
-
         <ControlTemplate x:Key="InputBoxTemplate" TargetType="{x:Type Control}">
             <Border x:Name="border" Background="#F7F9FC" BorderBrush="#E0E6F1" BorderThickness="1" CornerRadius="8">
                 <Grid>
@@ -34,12 +32,8 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-
-                    <Image Source="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" 
-                           Width="24" Height="24" Margin="12,0,0,0" VerticalAlignment="Center" Opacity="0.8"/>
-
+                    <Image Source="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Width="24" Height="24" Margin="12,0,0,0" VerticalAlignment="Center" Opacity="0.8"/>
                     <ScrollViewer x:Name="PART_ContentHost" Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center"/>
-
                     <TextBlock Text="{TemplateBinding ToolTip}" Foreground="#8A99B2" FontSize="16" VerticalAlignment="Center" 
                                Margin="12,0,0,0" IsHitTestVisible="False" Grid.Column="1">
                         <TextBlock.Style>
@@ -82,7 +76,6 @@
                 <ColumnDefinition Width="4*"/>
                 <ColumnDefinition Width="5*"/>
             </Grid.ColumnDefinitions>
-
             <Border Grid.Column="0" CornerRadius="15,0,0,15">
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
@@ -98,35 +91,28 @@
                     </Image>
                 </StackPanel>
             </Border>
-
             <Grid Grid.Column="1">
                 <Button Content="✖" Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Top"
                         Background="Transparent" BorderThickness="0" Foreground="#AAA" FontWeight="Bold" 
                         FontSize="14" Click="BtnCerrar_Click" Cursor="Hand" Margin="0,15,15,0" ToolTip="Cerrar aplicación"/>
-
                 <StackPanel x:Name="FormPanel" VerticalAlignment="Center" Margin="60,0">
                     <TextBlock Text="Iniciar Sesión" FontSize="38" FontWeight="Bold" Foreground="#333" Margin="0,0,0,40" TextAlignment="Center"/>
-
-                    <TextBox x:Name="txtUsername" 
+                    <TextBox x:Name="txtUsername" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" 
                              KeyDown="TxtUsername_KeyDown"
                              Template="{StaticResource InputBoxTemplate}"
-                             Tag="/Recursos/user32.png" ToolTip="Nombre de usuario" TextChanged="txtUsername_TextChanged" FontSize="20"/>
-
+                             Tag="/Recursos/user32.png" ToolTip="Nombre de usuario" FontSize="20"/>
                     <Grid Margin="0,20,0,0">
                         <PasswordBox x:Name="txtPassword" KeyDown="TxtPassword_KeyDown"
                                      Template="{StaticResource InputBoxTemplate}"
                                      Tag="/Recursos/lock32.png" ToolTip="Contraseña" FontSize="20"/>
-
                         <TextBox x:Name="txtPasswordVisible" KeyDown="TxtPassword_KeyDown"
                                  Template="{StaticResource InputBoxTemplate}"
                                  Tag="/Recursos/lock32.png" ToolTip="Contraseña"
-                                 Visibility="Collapsed"/>
+                                 Visibility="Collapsed" FontSize="20"/>
                     </Grid>
-
                     <TextBlock x:Name="avisoCapsLock" Text="⚠️ Bloq Mayús está activado" 
                                Foreground="#D35400" FontWeight="SemiBold" 
                                Margin="5,5,0,0" Visibility="Collapsed"/>
-
                     <Grid Margin="5,15,5,20">
                         <CheckBox x:Name="chkShowPassword" Content="Mostrar contraseña" VerticalAlignment="Center"
                                   Checked="chkShowPassword_Handler" Unchecked="chkShowPassword_Handler"
@@ -139,15 +125,12 @@
                     </Grid>
                     <CheckBox Content="Recordar usuario" IsChecked="{Binding IsRememberMe}"
                               Foreground="#666"/>
-
-                    <TextBlock Text="{Binding Message}" Foreground="Crimson" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,10" MinHeight="30"/>
-
+                    <TextBlock Text="{Binding Message}" Foreground="Crimson" TextWrapping="Wrap" TextAlignment="Center" Margin="0,15,0,10" MinHeight="30"/>
                     <ProgressBar Height="4" IsIndeterminate="True" Margin="0,0,0,10"
                                  Visibility="{Binding IsLoginInProgress, Converter={StaticResource BoolToVis}}"/>
-
-                    <Button x:Name="btnIngresar" Content="Ingresar" Height="50" FontSize="18" FontWeight="Bold" Cursor="Hand" Margin="0,10,0,0"
-                            Command="{Binding LoginCommand}"
-                            CommandParameter="{Binding ElementName=txtPassword}">
+                    <Button x:Name="btnIngresar" Content="Ingresar" Height="50" FontSize="18" FontWeight="Bold" 
+                            Cursor="Hand" Margin="0,10,0,0"
+                            Click="BtnIngresar_Click">
                         <Button.Style>
                             <Style TargetType="Button">
                                 <Setter Property="Foreground" Value="White"/>
@@ -166,9 +149,9 @@
                                                         </Setter.Value>
                                                     </Setter>
                                                 </Trigger>
-                                                <Trigger Property="IsEnabled" Value="False">
-                                                    <Setter Property="Opacity" Value="0.6"/>
-                                                </Trigger>
+                                                <DataTrigger Binding="{Binding IsLoginInProgress}" Value="True">
+                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                </DataTrigger>
                                             </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Setter.Value>

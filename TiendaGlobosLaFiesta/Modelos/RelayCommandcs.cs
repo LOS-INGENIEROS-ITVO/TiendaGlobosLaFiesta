@@ -17,7 +17,6 @@ namespace TiendaGlobosLaFiesta.ViewModels
 
         public event EventHandler CanExecuteChanged;
 
-        // 🔹 MÉTODO AÑADIDO: Esto permite al ViewModel forzar la reevaluación del estado del botón.
         public void RaiseCanExecuteChanged()
         {
             CanExecuteChanged?.Invoke(this, EventArgs.Empty);

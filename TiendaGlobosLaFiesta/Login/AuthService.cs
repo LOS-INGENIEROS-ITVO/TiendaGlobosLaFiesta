@@ -1,10 +1,8 @@
-﻿// Archivo: AuthService.cs (Versión final y limpia)
-
-using System;
+﻿using System;
 using System.Data;
 using System.Data.SqlClient;
 using TiendaGlobosLaFiesta.Modelos;
-using TiendaGlobosLaFiesta.Services; // Asegúrate de que este using esté presente
+using TiendaGlobosLaFiesta.Services;
 
 namespace TiendaGlobosLaFiesta.Data
 {
@@ -26,11 +24,7 @@ namespace TiendaGlobosLaFiesta.Data
                     INNER JOIN Empleado e ON u.empleadoId = e.empleadoId
                     WHERE u.username = @username AND u.activo = 1";
 
-                var parametros = new[]
-                {
-                    new SqlParameter("@username", username)
-                };
-
+                var parametros = new[] { new SqlParameter("@username", username) };
                 DataTable dt = DbHelper.ExecuteQuery(query, parametros);
 
                 if (dt.Rows.Count == 0)
@@ -40,10 +34,26 @@ namespace TiendaGlobosLaFiesta.Data
                 }
 
                 DataRow row = dt.Rows[0];
-                string passwordHash = row["passwordHash"].ToString();
+                // 🔹 Usaremos este nombre de variable en todo el método 🔹
+                string passwordHashFromDB = row["passwordHash"].ToString();
 
-                // Se utiliza el nuevo servicio de contraseñas con BCrypt
-                if (!PasswordService.VerifyPassword(password, passwordHash))
+                // Bloque de Depuración
+                try
+                {
+                    string hashGeneradoAhora = Services.PasswordService.HashPassword("admin");
+                    bool controlTest = Services.PasswordService.VerifyPassword("admin", hashGeneradoAhora);
+                    bool dbTest = Services.PasswordService.VerifyPassword(password, passwordHashFromDB);
+                    bool dbTrimmedTest = Services.PasswordService.VerifyPassword(password, passwordHashFromDB.Trim());
+
+ 
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show($"Error en la validación: {ex.Message}");
+                }
+
+                // Lógica de Verificación Real
+                if (!Services.PasswordService.VerifyPassword(password, passwordHashFromDB.Trim()))
                 {
                     mensaje = "Contraseña incorrecta.";
                     return false;
@@ -67,8 +77,7 @@ namespace TiendaGlobosLaFiesta.Data
         }
 
 
-
-public static bool RestablecerContrasena(string username, long telefono, string nuevaContrasena, out string mensaje)
+        public static bool RestablecerContrasena(string username, long telefono, string nuevaContrasena, out string mensaje)
         {
             try
             {
