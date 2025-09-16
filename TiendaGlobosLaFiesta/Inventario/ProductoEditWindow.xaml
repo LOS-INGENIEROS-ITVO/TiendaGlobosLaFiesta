@@ -1,4 +1,4 @@
-﻿<Window x:Class="TiendaGlobosLaFiesta.Inventario.ProductoEditWindow"
+﻿<Window x:Class="TiendaGlobosLaFiesta.Views.ProductoEditWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Gestionar Producto" Height="420" Width="400"

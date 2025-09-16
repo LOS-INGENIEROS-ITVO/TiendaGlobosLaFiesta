@@ -1,52 +1,45 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using TiendaGlobosLaFiesta.Models;
+using TiendaGlobosLaFiesta.Modelos;
 
 namespace TiendaGlobosLaFiesta.Data
 {
     public class StockRepository
     {
-        public class ProductoStockCritico
-        {
-            public string ProductoId { get; set; } // ⬅️ AÑADE ESTA LÍNEA
-            public string Nombre { get; set; }
-            public int Stock { get; set; }
-        }
-
-        public List<ProductoStockCritico> ObtenerProductosStockCritico()
+        public List<StockCriticoItem> ObtenerProductosStockCritico()
         {
             string query = "SELECT productoId, nombre, stock FROM Producto WHERE stock <= 10 ORDER BY stock ASC";
             DataTable dt = DbHelper.ExecuteQuery(query);
-
-            var lista = new List<ProductoStockCritico>();
+            var lista = new List<StockCriticoItem>();
             foreach (DataRow row in dt.Rows)
             {
-                lista.Add(new ProductoStockCritico
+                lista.Add(new StockCriticoItem
                 {
-                    ProductoId = row["productoId"].ToString(), // ⬅️ AÑADE ESTA LÍNEA
+                    Id = row["productoId"].ToString(),
                     Nombre = row["nombre"].ToString(),
-                    Stock = Convert.ToInt32(row["stock"])
+                    StockActual = Convert.ToInt32(row["stock"]),
+                    Tipo = "Producto"
                 });
             }
             return lista;
         }
 
-        public List<ProductoStockCritico> ObtenerGlobosStockCritico()
+        public List<StockCriticoItem> ObtenerGlobosStockCritico()
         {
-            string query = "SELECT material + ' ' + unidad AS Nombre, stock FROM Globo WHERE stock <= 5 ORDER BY stock ASC";
+            string query = "SELECT globoId, material + ' ' + color AS Nombre, stock FROM Globo WHERE stock <= 10 ORDER BY stock ASC";
             DataTable dt = DbHelper.ExecuteQuery(query);
-
-            var lista = new List<ProductoStockCritico>();
+            var lista = new List<StockCriticoItem>();
             foreach (DataRow row in dt.Rows)
             {
-                lista.Add(new ProductoStockCritico
+                lista.Add(new StockCriticoItem
                 {
+                    Id = row["globoId"].ToString(),
                     Nombre = row["Nombre"].ToString(),
-                    Stock = Convert.ToInt32(row["stock"])
+                    StockActual = Convert.ToInt32(row["stock"]),
+                    Tipo = "Globo"
                 });
             }
-
             return lista;
         }
     }

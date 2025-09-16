@@ -4,7 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using TiendaGlobosLaFiesta.Data;
 using TiendaGlobosLaFiesta.Modelos;
-using TiendaGlobosLaFiesta.Inventario;
+using TiendaGlobosLaFiesta.Views;
 
 
 namespace TiendaGlobosLaFiesta
@@ -14,7 +14,7 @@ namespace TiendaGlobosLaFiesta
         private string RolUsuario;
         private Dictionary<string, UserControl> Modulos = new Dictionary<string, UserControl>();
 
-            public MenuGerenteWindow(string rol)
+        public MenuGerenteWindow(string rol)
         {
             InitializeComponent();
             RolUsuario = rol;
@@ -72,7 +72,9 @@ namespace TiendaGlobosLaFiesta
         private void BtnInventario_Click(object sender, RoutedEventArgs e)
         {
             if (!Modulos.ContainsKey("Inventario"))
+            {
                 Modulos["Inventario"] = new InventarioControl();
+            }
             MostrarModulo(Modulos["Inventario"]);
         }
 

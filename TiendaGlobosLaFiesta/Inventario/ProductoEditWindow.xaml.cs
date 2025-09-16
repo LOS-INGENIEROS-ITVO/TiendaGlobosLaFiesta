@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using TiendaGlobosLaFiesta.Models;
 
-namespace TiendaGlobosLaFiesta.Inventario
+namespace TiendaGlobosLaFiesta.Views
 {
     public partial class ProductoEditWindow : Window
     {

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
 using TiendaGlobosLaFiesta.Models;
 
 namespace TiendaGlobosLaFiesta.Data
@@ -10,39 +11,64 @@ namespace TiendaGlobosLaFiesta.Data
     {
         public bool AgregarGlobo(Globo globo)
         {
-            string query = @"INSERT INTO Globo (globoId, material, unidad, color, costo, stock)
-                             VALUES (@id, @material, @unidad, @color, @costo, @stock)";
-
-            var parametros = new[]
+            using var conn = DbHelper.ObtenerConexion();
+            using var tran = conn.BeginTransaction();
+            try
             {
-                new SqlParameter("@id", globo.GloboId),
-                new SqlParameter("@material", globo.Material),
-                new SqlParameter("@unidad", globo.Unidad),
-                new SqlParameter("@color", globo.Color),
-                new SqlParameter("@costo", globo.Costo),
-                new SqlParameter("@stock", globo.Stock)
-            };
+                string queryGlobo = @"INSERT INTO Globo (globoId, material, unidad, color, costo, stock)
+                                      VALUES (@id, @material, @unidad, @color, @costo, @stock)";
+                using (var cmd = new SqlCommand(queryGlobo, conn, tran))
+                {
+                    cmd.Parameters.AddWithValue("@id", globo.GloboId);
+                    cmd.Parameters.AddWithValue("@material", globo.Material);
+                    cmd.Parameters.AddWithValue("@unidad", globo.Unidad);
+                    cmd.Parameters.AddWithValue("@color", globo.Color);
+                    cmd.Parameters.AddWithValue("@costo", globo.Costo);
+                    cmd.Parameters.AddWithValue("@stock", globo.Stock);
+                    cmd.ExecuteNonQuery();
+                }
 
-            return DbHelper.ExecuteNonQuery(query, parametros) > 0;
+                InsertarCaracteristicas(globo.GloboId, "Globo_Tamanio", "tamanio", globo.Tamanos, conn, tran);
+                InsertarCaracteristicas(globo.GloboId, "Globo_Forma", "forma", globo.Formas, conn, tran);
+                InsertarCaracteristicas(globo.GloboId, "Tematica", "nombre", globo.Tematicas, conn, tran, true);
+
+                tran.Commit();
+                return true;
+            }
+            catch { tran.Rollback(); return false; }
         }
 
         public bool ActualizarGlobo(Globo globo)
         {
-            string query = @"UPDATE Globo 
-                             SET material=@material, unidad=@unidad, color=@color, costo=@costo, stock=@stock
-                             WHERE globoId=@id";
-
-            var parametros = new[]
+            using var conn = DbHelper.ObtenerConexion();
+            using var tran = conn.BeginTransaction();
+            try
             {
-                new SqlParameter("@id", globo.GloboId),
-                new SqlParameter("@material", globo.Material),
-                new SqlParameter("@unidad", globo.Unidad),
-                new SqlParameter("@color", globo.Color),
-                new SqlParameter("@costo", globo.Costo),
-                new SqlParameter("@stock", globo.Stock)
-            };
+                string queryGlobo = @"UPDATE Globo SET material=@material, unidad=@unidad, color=@color, costo=@costo, stock=@stock WHERE globoId=@id";
+                using (var cmd = new SqlCommand(queryGlobo, conn, tran))
+                {
+                    cmd.Parameters.AddWithValue("@id", globo.GloboId);
+                    cmd.Parameters.AddWithValue("@material", globo.Material);
+                    cmd.Parameters.AddWithValue("@unidad", globo.Unidad);
+                    cmd.Parameters.AddWithValue("@color", globo.Color);
+                    cmd.Parameters.AddWithValue("@costo", globo.Costo);
+                    cmd.Parameters.AddWithValue("@stock", globo.Stock);
+                    cmd.ExecuteNonQuery();
+                }
 
-            return DbHelper.ExecuteNonQuery(query, parametros) > 0;
+                BorrarCaracteristicas(globo.GloboId, "Globo_Tamanio", conn, tran);
+                InsertarCaracteristicas(globo.GloboId, "Globo_Tamanio", "tamanio", globo.Tamanos, conn, tran);
+
+                BorrarCaracteristicas(globo.GloboId, "Globo_Forma", conn, tran);
+                InsertarCaracteristicas(globo.GloboId, "Globo_Forma", "forma", globo.Formas, conn, tran);
+
+                BorrarCaracteristicas(globo.GloboId, "Tematica", conn, tran);
+                InsertarCaracteristicas(globo.GloboId, "Tematica", "nombre", globo.Tematicas, conn, tran, true);
+
+                tran.Commit();
+                return true;
+            }
+            catch { tran.Rollback(); return false; }
         }
 
         public bool EliminarGlobo(string globoId)
@@ -51,17 +77,6 @@ namespace TiendaGlobosLaFiesta.Data
             var parametros = new[] { new SqlParameter("@id", globoId) };
             return DbHelper.ExecuteNonQuery(query, parametros) > 0;
         }
-
-
-        public void ActualizarStock(string globoId, int cantidadVendida, SqlConnection conn, SqlTransaction tran)
-        {
-            string query = "UPDATE Globo SET stock = stock - @cantidad WHERE globoId = @globoId";
-            using var cmd = new SqlCommand(query, conn, tran);
-            cmd.Parameters.AddWithValue("@cantidad", cantidadVendida);
-            cmd.Parameters.AddWithValue("@globoId", globoId);
-            cmd.ExecuteNonQuery();
-        }
-
 
         public List<Globo> ObtenerGlobos()
         {
@@ -72,19 +87,13 @@ namespace TiendaGlobosLaFiesta.Data
                        ISNULL(Temp.Tematica, '') AS Tematica
                 FROM Globo g
                 LEFT JOIN (
-                    SELECT globoId, STRING_AGG(tamanio, ', ') AS Tamano
-                    FROM Globo_Tamanio
-                    GROUP BY globoId
+                    SELECT globoId, STRING_AGG(tamanio, ', ') AS Tamano FROM Globo_Tamanio GROUP BY globoId
                 ) Tam ON g.globoId = Tam.globoId
                 LEFT JOIN (
-                    SELECT globoId, STRING_AGG(forma, ', ') AS Forma
-                    FROM Globo_Forma
-                    GROUP BY globoId
+                    SELECT globoId, STRING_AGG(forma, ', ') AS Forma FROM Globo_Forma GROUP BY globoId
                 ) Form ON g.globoId = Form.globoId
                 LEFT JOIN (
-                    SELECT globoId, STRING_AGG(nombre, ', ') AS Tematica
-                    FROM Tematica
-                    GROUP BY globoId
+                    SELECT globoId, STRING_AGG(nombre, ', ') AS Tematica FROM Tematica GROUP BY globoId
                 ) Temp ON g.globoId = Temp.globoId
                 ORDER BY g.globoId";
 
@@ -101,14 +110,60 @@ namespace TiendaGlobosLaFiesta.Data
                     Color = row["color"].ToString(),
                     Costo = Convert.ToDecimal(row["costo"]),
                     Stock = Convert.ToInt32(row["stock"]),
-                    Tamano = row["Tamano"].ToString(),
-                    Forma = row["Forma"].ToString(),
-                    Tematica = row["Tematica"].ToString()
+                    // Llenar las listas a partir del texto concatenado
+                    Tamanos = row["Tamano"].ToString().Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList(),
+                    Formas = row["Forma"].ToString().Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList(),
+                    Tematicas = row["Tematica"].ToString().Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList(),
                 });
             }
-
             return lista;
         }
+
+        private void BorrarCaracteristicas(string globoId, string tabla, SqlConnection conn, SqlTransaction tran)
+        {
+            string query = $"DELETE FROM {tabla} WHERE globoId = @globoId";
+            using var cmd = new SqlCommand(query, conn, tran);
+            cmd.Parameters.AddWithValue("@globoId", globoId);
+            cmd.ExecuteNonQuery();
+        }
+
+        private void InsertarCaracteristicas(string globoId, string tabla, string columna, IEnumerable<string> valores, SqlConnection conn, SqlTransaction tran, bool tieneClavePK = false)
+        {
+            foreach (var valor in valores.Where(v => !string.IsNullOrWhiteSpace(v)))
+            {
+                string query;
+                using var cmd = new SqlCommand();
+                cmd.Connection = conn;
+                cmd.Transaction = tran;
+
+                if (tieneClavePK)
+                {
+                    string pkColumn = "claveTematica";
+                    string pkValue = $"{valor.Substring(0, Math.Min(3, valor.Length)).ToUpper()}{DateTime.Now.Ticks % 1000000}";
+                    query = $"INSERT INTO {tabla} ({pkColumn}, globoId, {columna}) VALUES (@pkValue, @globoId, @valor)";
+                    cmd.Parameters.AddWithValue("@pkValue", pkValue);
+                }
+                else
+                {
+                    query = $"INSERT INTO {tabla} (globoId, {columna}) VALUES (@globoId, @valor)";
+                }
+
+                cmd.CommandText = query;
+                cmd.Parameters.AddWithValue("@globoId", globoId);
+                cmd.Parameters.AddWithValue("@valor", valor.Trim());
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public void ActualizarStock(string globoId, int cantidadVendida, SqlConnection conn, SqlTransaction tran)
+        {
+            string query = "UPDATE Globo SET stock = stock - @cantidad WHERE globoId = @globoId";
+            using var cmd = new SqlCommand(query, conn, tran);
+            cmd.Parameters.AddWithValue("@cantidad", cantidadVendida);
+            cmd.Parameters.AddWithValue("@globoId", globoId);
+            cmd.ExecuteNonQuery();
+        }
+
 
         public Globo? ObtenerGloboPorId(string globoId)
         {

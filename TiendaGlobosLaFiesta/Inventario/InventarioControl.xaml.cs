@@ -1,6 +1,5 @@
 ﻿using System.Windows.Controls;
-
-namespace TiendaGlobosLaFiesta.Inventario
+namespace TiendaGlobosLaFiesta.Views
 {
     public partial class InventarioControl : UserControl
     {

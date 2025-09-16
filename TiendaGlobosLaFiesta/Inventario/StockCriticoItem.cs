@@ -5,6 +5,6 @@
         public string Id { get; set; }
         public string Nombre { get; set; }
         public int StockActual { get; set; }
-        public string Tipo { get; set; } // "Producto" o "Globo"
+        public string Tipo { get; set; }
     }
 }
