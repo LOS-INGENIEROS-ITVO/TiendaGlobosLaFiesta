@@ -34,10 +34,8 @@ namespace TiendaGlobosLaFiesta.Data
                 }
 
                 DataRow row = dt.Rows[0];
-                // 🔹 Usaremos este nombre de variable en todo el método 🔹
                 string passwordHashFromDB = row["passwordHash"].ToString();
 
-                // Bloque de Depuración
                 try
                 {
                     string hashGeneradoAhora = Services.PasswordService.HashPassword("admin");
