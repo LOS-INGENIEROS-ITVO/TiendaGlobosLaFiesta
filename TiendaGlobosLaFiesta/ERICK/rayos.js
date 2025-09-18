@@ -16,7 +16,7 @@ function generarRayo() {
         "⚡ ¡Descarga eléctrica inesperada! ⚡"
     ];
     const indice = Math.floor(Math.random() * rayos.length);
-    console.log(rayos[indice]);
+    console.log(rayos[indice]); gi
 }
 
 // Genera un rayo cada 2 segundos, 5 veces
@@ -29,3 +29,5 @@ const intervalo = setInterval(() => {
         console.log("¡Fin de la tormenta eléctrica! ☀️");
     }
 }, 2000);
+
+// Fin del archivo rayos.js no me sale
