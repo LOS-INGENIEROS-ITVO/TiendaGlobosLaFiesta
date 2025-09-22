@@ -10,4 +10,4 @@ console.log(Hola)
 //a los caballos les dará dolor de Caballo???
 // ´Porque el profe me pide desarrollar algo si yo queria desarrollar un futuro con ella, lo cual ya no es posible?
 
-
+//Realizando un cambio el 22-09-2025
