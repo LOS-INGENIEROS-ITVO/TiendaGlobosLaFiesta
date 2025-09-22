@@ -9,10 +9,3 @@
 //Cuando no estoy programando, me gusta explorar nuevas tecnologías, leer sobre tendencias en desarrollo de software y participar en hackathons. También disfruto compartir mis conocimientos a través de blogs y charlas en conferencias tecnológicas.
 
 //que tal?
-export const Lalo = {
-  name: "Lalo",
-  role: "Desarrollador de Software",   };
-export const Lalito = {
-  name: "Lalito",
-  role: "Desarrollador de Software",   };
-  
