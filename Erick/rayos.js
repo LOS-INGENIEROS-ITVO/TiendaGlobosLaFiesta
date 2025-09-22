@@ -6,6 +6,7 @@ console.log("Probando cambios en el archivo rayos.js");
 console.log("Archivo actualizado el 2024-06-10");
 
 
+<<<<<<< HEAD
 // Generador de rayos aleatorios en la consola
 function generarRayo() {
     const rayos = [
@@ -31,3 +32,9 @@ const intervalo = setInterval(() => {
 }, 2000);
 
 // Fin del archivo rayos.js no me sale
+=======
+
+
+// Fin del archivo rayos.js no me sale
+//22/09/2025
+>>>>>>> Erick
