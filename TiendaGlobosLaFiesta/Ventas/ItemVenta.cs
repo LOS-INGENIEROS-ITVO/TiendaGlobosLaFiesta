@@ -1,12 +1,14 @@
 ﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace TiendaGlobosLaFiesta.Models
 {
     public abstract class ItemVenta : INotifyPropertyChanged
     {
-        private int cantidad;
-        private int stock;
+        // 🔹 PROPIEDAD AÑADIDA: Un identificador genérico para productos o globos
+        public string Id { get; set; }
 
+        private int cantidad;
         public int Cantidad
         {
             get => cantidad;
@@ -21,6 +23,7 @@ namespace TiendaGlobosLaFiesta.Models
             }
         }
 
+        private int stock;
         public int Stock
         {
             get => stock;
@@ -35,21 +38,13 @@ namespace TiendaGlobosLaFiesta.Models
         }
 
         public decimal Costo { get; set; }
-
-        // Alias para compatibilidad
-        public decimal Precio
-        {
-            get => Costo;
-            set => Costo = value;
-        }
-
         public decimal Importe => Cantidad * Costo;
 
-        public void Incrementar() => Cantidad = Cantidad < Stock ? Cantidad + 1 : Cantidad;
-        public void Decrementar() => Cantidad = Cantidad > 0 ? Cantidad - 1 : 0;
+        public void Incrementar() => Cantidad = (Cantidad < Stock) ? Cantidad + 1 : Stock;
+        public void Decrementar() => Cantidad = (Cantidad > 0) ? Cantidad - 1 : 0;
 
         public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged(string propertyName) =>
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

@@ -2,14 +2,11 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows.Data;
-using System.Windows.Input;
-using TiendaGlobosLaFiesta.Models;
 using TiendaGlobosLaFiesta.Data;
-using TiendaGlobosLaFiesta.Services;
-using LiveChartsCore;
-using LiveChartsCore.SkiaSharpView;
 using TiendaGlobosLaFiesta.Modelos;
+using TiendaGlobosLaFiesta.Models;
 
 namespace TiendaGlobosLaFiesta.ViewModels
 {
@@ -20,33 +17,20 @@ namespace TiendaGlobosLaFiesta.ViewModels
         private readonly ClienteRepository _clienteRepo = new();
         private readonly VentasRepository _ventasRepo = new();
 
-        public ObservableCollection<ProductoVenta> Productos { get; set; } = new();
-        public ObservableCollection<GloboVenta> Globos { get; set; } = new();
-        public ObservableCollection<Cliente> Clientes { get; set; } = new();
-        public ObservableCollection<VentaHistorial> Historial { get; set; } = new();
-        public ICollectionView HistorialView { get; set; }
-
-        // Para gráficas
-        public ObservableCollection<ISeries> Series { get; set; } = new();
-        public string[] Labels { get; set; } = Array.Empty<string>();
-
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged(string name) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
-        // Propiedad para empleado actual
-        public int EmpleadoIdActual => SesionActual.EmpleadoId;
+        public ObservableCollection<ProductoVenta> Productos { get; set; }
+        public ObservableCollection<GloboVenta> Globos { get; set; }
+        public ObservableCollection<Cliente> Clientes { get; set; }
+        public ObservableCollection<VentaHistorial> Historial { get; set; }
+        public ICollectionView HistorialView { get; private set; }
 
         public ModeloDeVistaVentas()
         {
-            CargarDatos();
-            Productos.CollectionChanged += (_, _) => OnPropertyChanged(nameof(TotalProductos));
-            Globos.CollectionChanged += (_, _) => OnPropertyChanged(nameof(TotalGlobos));
+            CargarDatosIniciales();
         }
 
-        private void CargarDatos()
+        public void CargarDatosIniciales()
         {
-            Clientes = new ObservableCollection<Cliente>(_clienteRepo.ObtenerClientes());
+            Clientes = new ObservableCollection<Cliente>(_clienteRepo.ObtenerClientes().Where(c => c.Activo));
 
             Productos = new ObservableCollection<ProductoVenta>(
                 _productoRepo.ObtenerProductos().Select(p => new ProductoVenta
@@ -68,29 +52,37 @@ namespace TiendaGlobosLaFiesta.ViewModels
                     Tamano = g.Tamano,
                     Forma = g.Forma,
                     Tematica = g.Tematica,
-                    Unidad = g.Unidad,
                     Costo = g.Costo,
                     Stock = g.Stock
                 })
             );
 
-            foreach (var p in Productos) p.PropertyChanged += (_, __) => OnPropertyChanged(nameof(ImporteTotal));
-            foreach (var g in Globos) g.PropertyChanged += (_, __) => OnPropertyChanged(nameof(ImporteTotal));
+            foreach (var p in Productos) p.PropertyChanged += ItemVenta_PropertyChanged;
+            foreach (var g in Globos) g.PropertyChanged += ItemVenta_PropertyChanged;
 
-            Historial = new ObservableCollection<VentaHistorial>(_ventasRepo.ObtenerHistorialVentas());
-            HistorialView = CollectionViewSource.GetDefaultView(Historial);
+            CargarHistorial();
+            OnPropertyChanged(string.Empty);
         }
 
-        public int TotalProductos => Productos.Sum(p => p.Cantidad);
-        public int TotalGlobos => Globos.Sum(g => g.Cantidad);
+        public void CargarHistorial()
+        {
+            Historial = new ObservableCollection<VentaHistorial>(_ventasRepo.ObtenerHistorialVentas());
+            HistorialView = CollectionViewSource.GetDefaultView(Historial);
+            OnPropertyChanged(nameof(Historial));
+            OnPropertyChanged(nameof(HistorialView));
+        }
+
+        private void ItemVenta_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(ItemVenta.Cantidad))
+            {
+                OnPropertyChanged(nameof(ImporteTotal));
+            }
+        }
+
         public decimal ImporteTotal => Productos.Sum(p => p.Importe) + Globos.Sum(g => g.Importe);
 
-        // Comandos para UI
-        public ICommand IncrementarCommand => new RelayCommand<ItemVenta>(item => item.Incrementar());
-        public ICommand DecrementarCommand => new RelayCommand<ItemVenta>(item => item.Decrementar());
-
-        // Filtrar historial
-        public void FiltrarHistorial(Cliente cliente = null, DateTime? desde = null, DateTime? hasta = null)
+        public void FiltrarHistorial(Cliente cliente, DateTime? desde, DateTime? hasta)
         {
             HistorialView.Filter = obj =>
             {
@@ -103,51 +95,14 @@ namespace TiendaGlobosLaFiesta.ViewModels
                 }
                 return false;
             };
-            HistorialView.Refresh();
         }
 
-        public void LimpiarFiltros()
+        public void LimpiarFiltros() => HistorialView.Filter = null;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string name = null)
         {
-            HistorialView.Filter = null;
-            HistorialView.Refresh();
-        }
-
-        // Recargar historial completo
-        public void CargarHistorial()
-        {
-            Historial.Clear();
-            foreach (var vh in _ventasRepo.ObtenerHistorialVentas())
-                Historial.Add(vh);
-            HistorialView.Refresh();
-        }
-
-        // Actualizar gráfica
-        public void ActualizarGrafica(IEnumerable<VentaHistorial> historialFiltrado)
-        {
-            var datos = historialFiltrado
-                .GroupBy(v => v.ClienteNombre)
-                .Select(g => new
-                {
-                    Cliente = g.Key,
-                    Total = g.Sum(x => (double)x.Total)
-                })
-                .OrderByDescending(x => x.Total)
-                .ToList();
-
-            Labels = datos.Select(d => d.Cliente).ToArray();
-
-            Series.Clear();
-            Series.Add(new ColumnSeries<double>
-            {
-                Values = datos.Select(d => d.Total).ToArray(),
-                Name = "Ventas",
-                DataLabelsPaint = new LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SkiaSharp.SKColors.Black),
-                DataLabelsSize = 14,
-                DataLabelsFormatter = value => $"{value:C}"
-            });
-
-            OnPropertyChanged(nameof(Series));
-            OnPropertyChanged(nameof(Labels));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
     }
 }
