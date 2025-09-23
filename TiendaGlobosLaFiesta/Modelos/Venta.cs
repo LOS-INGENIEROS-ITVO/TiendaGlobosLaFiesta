@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using TiendaGlobosLaFiesta.Models; // Necesario para ProductoVenta y GloboVenta
+using TiendaGlobosLaFiesta.Models;
 
+// Este modelo puede estar en la raíz o en la carpeta Models.
+// Si está en Models, su namespace debería ser TiendaGlobosLaFiesta.Models
 public class Venta
 {
     public string VentaId { get; set; }
@@ -11,6 +13,6 @@ public class Venta
     public decimal ImporteTotal { get; set; }
     public string Estatus { get; set; }
 
-    public ObservableCollection<ProductoVenta> Productos { get; set; }
-    public ObservableCollection<GloboVenta> Globos { get; set; }
+    public ObservableCollection<ProductoVenta> Productos { get; set; } = new();
+    public ObservableCollection<GloboVenta> Globos { get; set; } = new();
 }

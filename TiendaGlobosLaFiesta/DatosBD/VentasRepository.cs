@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Collections.ObjectModel;
 using TiendaGlobosLaFiesta.Models;
+using System.Linq; // Necesario para FirstOrDefault
 
 namespace TiendaGlobosLaFiesta.Data
 {
@@ -12,14 +13,15 @@ namespace TiendaGlobosLaFiesta.Data
 
         public void InsertarVentaMaestro(Venta venta, SqlConnection conn, SqlTransaction tran)
         {
-            string queryVenta = @"INSERT INTO Venta (ventaId, clienteId, empleadoId, fechaVenta, importeTotal)
-                                  VALUES (@ventaId, @clienteId, @empleadoId, @fecha, @total)";
+            string queryVenta = @"INSERT INTO Venta (ventaId, clienteId, empleadoId, fechaVenta, importeTotal, Estatus)
+                                  VALUES (@ventaId, @clienteId, @empleadoId, @fecha, @total, @estatus)";
             using var cmd = new SqlCommand(queryVenta, conn, tran);
             cmd.Parameters.AddWithValue("@ventaId", venta.VentaId);
             cmd.Parameters.AddWithValue("@clienteId", venta.ClienteId);
             cmd.Parameters.AddWithValue("@empleadoId", venta.EmpleadoId);
             cmd.Parameters.AddWithValue("@fecha", venta.FechaVenta);
             cmd.Parameters.AddWithValue("@total", venta.ImporteTotal);
+            cmd.Parameters.AddWithValue("@estatus", venta.Estatus ?? "Completada"); // Usa el estatus del objeto o el default
             cmd.ExecuteNonQuery();
         }
 
@@ -54,17 +56,17 @@ namespace TiendaGlobosLaFiesta.Data
 
         public List<VentaHistorial> ObtenerHistorialVentas()
         {
-            // 1. Obtener las ventas principales (esta parte estaba bien)
             string queryVentas = @"
-    SELECT v.ventaId, v.clienteId, v.empleadoId, v.fechaVenta, v.importeTotal,
-           c.primerNombre AS primerNombreCliente, c.segundoNombre AS segundoNombreCliente,
-           c.apellidoP AS apellidoPCliente, c.apellidoM AS apellidoMCliente,
-           e.primerNombre AS primerNombreEmpleado, e.segundoNombre AS segundoNombreEmpleado,
-           e.apellidoP AS apellidoPEmpleado, e.apellidoM AS apellidoMEmpleado
-    FROM Venta v
-    JOIN Cliente c ON v.clienteId = c.clienteId
-    JOIN Empleado e ON v.empleadoId = e.empleadoId
-    ORDER BY v.fechaVenta DESC";
+            SELECT v.ventaId, v.clienteId, v.empleadoId, v.fechaVenta, v.importeTotal, v.Estatus,
+                   c.primerNombre AS primerNombreCliente, c.segundoNombre AS segundoNombreCliente,
+                   c.apellidoP AS apellidoPCliente, c.apellidoM AS apellidoMCliente,
+                   e.primerNombre AS primerNombreEmpleado, e.segundoNombre AS segundoNombreEmpleado,
+                   e.apellidoP AS apellidoPEmpleado, e.apellidoM AS apellidoMEmpleado
+            FROM Venta v
+            JOIN Cliente c ON v.clienteId = c.clienteId
+            JOIN Empleado e ON v.empleadoId = e.empleadoId
+            WHERE c.Activo = 1 AND e.Activo = 1  -- Solo muestra ventas de clientes y empleados activos
+            ORDER BY v.fechaVenta DESC";
 
             DataTable dtVentas = DbHelper.ExecuteQuery(queryVentas);
             var historial = new List<VentaHistorial>();
@@ -79,6 +81,7 @@ namespace TiendaGlobosLaFiesta.Data
                     NombreEmpleado = $"{row["primerNombreEmpleado"]} {row["segundoNombreEmpleado"]} {row["apellidoPEmpleado"]} {row["apellidoMEmpleado"]}".Replace("  ", " ").Trim(),
                     FechaVenta = Convert.ToDateTime(row["fechaVenta"]),
                     Total = Convert.ToDecimal(row["importeTotal"]),
+                    Estatus = row["Estatus"].ToString(),
                     Productos = new ObservableCollection<ProductoVenta>(),
                     Globos = new ObservableCollection<GloboVenta>()
                 });
