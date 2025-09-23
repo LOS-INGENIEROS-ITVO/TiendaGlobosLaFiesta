@@ -1,5 +1,4 @@
-﻿// Archivo: Data/DashboardRepository.cs
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -13,33 +12,26 @@ namespace TiendaGlobosLaFiesta.Data
         {
             var data = new DashboardData();
 
-            // Asume que DbHelper.ObtenerConexion() devuelve una SqlConnection abierta
             using var conn = DbHelper.ObtenerConexion();
             using var cmd = new SqlCommand("sp_ObtenerKPIsDashboard", conn)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            // Abre la conexión si no está abierta (es una buena práctica asegurar)
-            if (conn.State != ConnectionState.Open)
-            {
-                conn.Open();
-            }
-
             using var reader = cmd.ExecuteReader();
 
-            // 1. Resultado: KPIs Numéricos Principales
+            // Resultado 1: KPIs Numéricos
             if (reader.Read())
             {
-                data.VentasHoy = (decimal)reader["VentasHoy"];
-                data.Ventas7Dias = (decimal)reader["Ventas7Dias"];
-                data.VentasMes = (decimal)reader["VentasMes"];
-                data.TicketPromedioHoy = (decimal)reader["TicketPromedioHoy"];
-                data.TotalStockCritico = (int)reader["TotalStockCritico"];
-                data.TotalClientesFrecuentes = (int)reader["TotalClientesFrecuentes"];
+                data.VentasHoy = reader["VentasHoy"] != DBNull.Value ? Convert.ToDecimal(reader["VentasHoy"]) : 0;
+                data.Ventas7Dias = reader["Ventas7Dias"] != DBNull.Value ? Convert.ToDecimal(reader["Ventas7Dias"]) : 0;
+                data.VentasMes = reader["VentasMes"] != DBNull.Value ? Convert.ToDecimal(reader["VentasMes"]) : 0;
+                data.TicketPromedioHoy = reader["TicketPromedioHoy"] != DBNull.Value ? Convert.ToDecimal(reader["TicketPromedioHoy"]) : 0;
+                data.TotalStockCritico = reader["TotalStockCritico"] != DBNull.Value ? Convert.ToInt32(reader["TotalStockCritico"]) : 0;
+                data.TotalClientesFrecuentes = reader["TotalClientesFrecuentes"] != DBNull.Value ? Convert.ToInt32(reader["TotalClientesFrecuentes"]) : 0;
             }
 
-            // 2. Resultado: Top 3 Stock Crítico
+            // Resultado 2: Top 3 Stock Crítico
             if (reader.NextResult())
             {
                 while (reader.Read())
@@ -48,7 +40,7 @@ namespace TiendaGlobosLaFiesta.Data
                 }
             }
 
-            // 3. Resultado: Top 3 Clientes Frecuentes
+            // Resultado 3: Top 3 Clientes Frecuentes
             if (reader.NextResult())
             {
                 while (reader.Read())
@@ -57,34 +49,38 @@ namespace TiendaGlobosLaFiesta.Data
                 }
             }
 
-            // 4. Resultado: Top Cliente del Mes
+            // Resultado 4: Top Cliente Mes
             if (reader.NextResult() && reader.Read())
             {
                 data.NombreTopCliente = reader["NombreTopCliente"].ToString();
-                data.TotalTopCliente = (decimal)reader["TotalTopCliente"];
+                data.TotalTopCliente = Convert.ToDecimal(reader["TotalTopCliente"]);
             }
 
-            // 5. Resultado: Productos Más Vendidos (Día, Semana, Mes)
+            // Resultado 5: Productos Más Vendidos
             if (reader.NextResult())
             {
                 while (reader.Read())
                 {
                     var periodo = reader["Periodo"].ToString();
                     var nombre = reader["Nombre"].ToString();
-                    var cantidad = (int)reader["CantidadTotal"];
+                    var cantidad = Convert.ToInt32(reader["CantidadTotal"]);
+                    string texto = $"{nombre} ({cantidad})";
 
-                    if (periodo == "Dia") data.ProductoMasVendidoDia = $"{nombre} ({cantidad})";
-                    if (periodo == "Semana") data.ProductoMasVendidoSemana = $"{nombre} ({cantidad})";
-                    if (periodo == "Mes") data.ProductoMasVendidoMes = $"{nombre} ({cantidad})";
+                    switch (periodo)
+                    {
+                        case "Dia": data.ProductoMasVendidoDia = texto; break;
+                        case "Semana": data.ProductoMasVendidoSemana = texto; break;
+                        case "Mes": data.ProductoMasVendidoMes = texto; break;
+                    }
                 }
             }
 
-            // 6. Resultado: Ventas Diarias para la Gráfica (Últimos 7 Días)
+            // Resultado 6: Ventas diarias para la gráfica
             if (reader.NextResult())
             {
                 while (reader.Read())
                 {
-                    data.VentasDiarias7Dias[((DateTime)reader["Fecha"]).Date] = (decimal)reader["Total"];
+                    data.VentasDiarias7Dias[Convert.ToDateTime(reader["Fecha"]).Date] = Convert.ToDecimal(reader["Total"]);
                 }
             }
 

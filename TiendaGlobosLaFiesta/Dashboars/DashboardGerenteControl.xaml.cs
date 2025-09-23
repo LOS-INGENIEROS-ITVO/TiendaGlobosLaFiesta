@@ -41,7 +41,7 @@ namespace TiendaGlobosLaFiesta.Views
             LabelsGrafica = Array.Empty<string>();
             Formatter = value => value.ToString("C0");
 
-            DataContext = this;
+            this.DataContext = this;
             Loaded += DashboardGerenteControl_Loaded;
         }
 
@@ -98,17 +98,21 @@ namespace TiendaGlobosLaFiesta.Views
             var valores = ultimos7dias.Select(d => ventas.ContainsKey(d.Date) ? ventas[d.Date] : 0).ToList();
 
             SeriesCollection = new SeriesCollection
-{
-    new ColumnSeries
-    {
-        Title = "Ventas",
-        Values = new ChartValues<decimal>(valores),
-        DataLabels = true,
-        Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#17a2b8"))
-    }
-};
+            {
+                new ColumnSeries
+                {
+                    Title = "Ventas",
+                    Values = new ChartValues<decimal>(valores),
+                    DataLabels = true,
+                    Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#17a2b8"))
+                }
+            };
 
             LabelsGrafica = ultimos7dias.Select(d => d.ToString("ddd d")).ToArray();
+
+
+            OnPropertyChanged(nameof(SeriesCollection));
+            OnPropertyChanged(nameof(LabelsGrafica));
         }
 
         public void RefrescarKPIs() => CargarKPIs();
