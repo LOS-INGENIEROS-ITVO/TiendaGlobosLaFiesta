@@ -12,6 +12,7 @@ namespace TiendaGlobosLaFiesta.Models
         public string ApellidoP { get; set; }
         public string ApellidoM { get; set; }
         public long Telefono { get; set; }
+        public bool Activo { get; set; } = true;
 
         public string NombreCompleto => $"{PrimerNombre} {SegundoNombre} {ApellidoP} {ApellidoM}".Trim();
 

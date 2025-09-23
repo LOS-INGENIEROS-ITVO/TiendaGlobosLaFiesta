@@ -10,6 +10,7 @@ namespace TiendaGlobosLaFiesta.Modelos
         private string apellidoP;
         private string apellidoM;
         private long? telefono;
+        public bool Activo { get; set; } = true;
 
         public string ClienteId
         {
