@@ -10,7 +10,7 @@
         <Border.Effect>
             <DropShadowEffect ShadowDepth="0" BlurRadius="20" Color="Black" Opacity="0.1"/>
         </Border.Effect>
-        <Grid>
+        <Grid Height="526" VerticalAlignment="Bottom">
             <Button Content="✖" Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Top"
                     Background="Transparent" BorderThickness="0" Foreground="#AAA" FontWeight="Bold" 
                     FontSize="14" Click="BtnCerrar_Click" Cursor="Hand" Margin="0,10,10,0"/>

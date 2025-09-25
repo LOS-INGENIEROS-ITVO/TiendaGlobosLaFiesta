@@ -21,7 +21,7 @@ namespace TiendaGlobosLaFiesta.Data
             cmd.Parameters.AddWithValue("@empleadoId", venta.EmpleadoId);
             cmd.Parameters.AddWithValue("@fecha", venta.FechaVenta);
             cmd.Parameters.AddWithValue("@total", venta.ImporteTotal);
-            cmd.Parameters.AddWithValue("@estatus", venta.Estatus ?? "Completada"); // Usa el estatus del objeto o el default
+            cmd.Parameters.AddWithValue("@estatus", venta.Estatus ?? "Completada");
             cmd.ExecuteNonQuery();
         }
 

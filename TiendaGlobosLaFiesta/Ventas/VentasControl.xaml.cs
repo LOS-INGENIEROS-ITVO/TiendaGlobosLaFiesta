@@ -9,31 +9,29 @@ using Microsoft.Win32;
 using TiendaGlobosLaFiesta.Modelos;
 using TiendaGlobosLaFiesta.Models;
 using TiendaGlobosLaFiesta.Services;
-using TiendaGlobosLaFiesta.ViewModels;
+using TiendaGlobosLaFiesta.Ventas;
+using TiendaGlobosLaFiesta.Data;
 using TiendaGlobosLaFiesta.Views;
 
-namespace TiendaGlobosLaFiesta
+namespace TiendaGlobosLaFiesta.Views
 {
     public partial class VentasControl : UserControl
     {
         private readonly VentaService _ventaService = new();
         public event Action VentaRealizada;
 
-        // Propiedad para acceder fácilmente al ViewModel
         private ModeloDeVistaVentas VM => DataContext as ModeloDeVistaVentas;
-
-        // 🔹 SE DEFINE UNA SOLA VEZ: Propiedad para obtener los datos filtrados del historial
-        private IEnumerable<VentaHistorial> HistorialFiltrado => VM.HistorialView?.Cast<VentaHistorial>() ?? Enumerable.Empty<VentaHistorial>();
+        private IEnumerable<VentaHistorial> HistorialFiltrado => VM?.HistorialView?.Cast<VentaHistorial>() ?? Enumerable.Empty<VentaHistorial>();
 
         public VentasControl()
         {
             InitializeComponent();
+            this.DataContext = new ModeloDeVistaVentas();
             this.Loaded += VentasControl_Loaded;
         }
 
         private void VentasControl_Loaded(object sender, RoutedEventArgs e)
         {
-            // Se asignan las fuentes de datos una vez que el control y el ViewModel están listos.
             if (VM != null)
             {
                 cmbClientes.ItemsSource = VM.Clientes;
@@ -41,18 +39,36 @@ namespace TiendaGlobosLaFiesta
                 dgProductos.ItemsSource = VM.Productos;
                 dgGlobos.ItemsSource = VM.Globos;
                 dgHistorial.ItemsSource = VM.HistorialView;
+                ActualizarTotales();
             }
         }
 
-        #region Lógica de Registrar Venta
+        private void ActualizarTotales()
+        {
+            if (VM != null)
+            {
+                txtTotalProductos.Text = VM.Productos.Sum(p => p.Cantidad).ToString();
+                txtTotalGlobos.Text = VM.Globos.Sum(g => g.Cantidad).ToString();
+                txtImporteTotal.Text = VM.ImporteTotal.ToString("C");
+            }
+        }
+
         private void BtnAumentarCantidad_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn && btn.Tag is ItemVenta item) item.Incrementar();
+            if (sender is Button btn && btn.Tag is ItemVenta item)
+            {
+                item.Incrementar();
+                ActualizarTotales();
+            }
         }
 
         private void BtnDisminuirCantidad_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn && btn.Tag is ItemVenta item) item.Decrementar();
+            if (sender is Button btn && btn.Tag is ItemVenta item)
+            {
+                item.Decrementar();
+                ActualizarTotales();
+            }
         }
 
         private void BtnRegistrarVenta_Click(object sender, RoutedEventArgs e)
@@ -63,8 +79,8 @@ namespace TiendaGlobosLaFiesta
                 return;
             }
 
-            var productosSeleccionados = VM.Productos.Where(p => p.Cantidad > 0).ToList();
-            var globosSeleccionados = VM.Globos.Where(g => g.Cantidad > 0).ToList();
+            var productosSeleccionados = new ObservableCollection<ProductoVenta>(VM.Productos.Where(p => p.Cantidad > 0));
+            var globosSeleccionados = new ObservableCollection<GloboVenta>(VM.Globos.Where(g => g.Cantidad > 0));
 
             if (!productosSeleccionados.Any() && !globosSeleccionados.Any())
             {
@@ -79,8 +95,8 @@ namespace TiendaGlobosLaFiesta
                 EmpleadoId = SesionActual.EmpleadoId,
                 FechaVenta = DateTime.Now,
                 ImporteTotal = VM.ImporteTotal,
-                Productos = new ObservableCollection<ProductoVenta>(productosSeleccionados),
-                Globos = new ObservableCollection<GloboVenta>(globosSeleccionados),
+                Productos = productosSeleccionados,
+                Globos = globosSeleccionados,
                 Estatus = "Completada"
             };
 
@@ -98,13 +114,19 @@ namespace TiendaGlobosLaFiesta
 
         private void LimpiarFormulario()
         {
-            // Llama al método público del ViewModel para recargar los datos
+            // 1. Llama al método del ViewModel que recarga todas las listas desde la BD.
             VM.CargarDatosIniciales();
+
+            // 2. 🔹 CORRECCIÓN: Vuelve a enlazar las listas actualizadas a los controles de la UI 🔹
+            // Esto le dice a las tablas en pantalla que muestren los nuevos datos.
+            dgProductos.ItemsSource = VM.Productos;
+            dgGlobos.ItemsSource = VM.Globos;
+            dgHistorial.ItemsSource = VM.HistorialView;
+
+            // 3. Limpia la selección del cliente.
             cmbClientes.SelectedIndex = -1;
         }
-        #endregion
 
-        #region Lógica del Historial
         private void BtnFiltrarHistorial_Click(object sender, RoutedEventArgs e)
         {
             VM.FiltrarHistorial(cmbFiltroCliente.SelectedItem as Cliente, dpFechaDesde.SelectedDate, dpFechaHasta.SelectedDate);
@@ -126,14 +148,20 @@ namespace TiendaGlobosLaFiesta
                 return;
             }
 
-            var sfd = new SaveFileDialog { Filter = "Archivos Excel (*.xlsx)|*.xlsx", FileName = "Ventas_Exportadas.xlsx" };
+            var sfd = new SaveFileDialog { Filter = "Archivos Excel (*.xlsx)|*.xlsx", FileName = $"Ventas_{DateTime.Now:yyyyMMdd}.xlsx" };
             if (sfd.ShowDialog() == true)
             {
-                using var workbook = new XLWorkbook();
-                // Asumiendo que tienes una clase GeneradorDeExcel
-                // GeneradorDeExcel.CrearHojas(workbook, HistorialFiltrado);
-                // workbook.SaveAs(sfd.FileName);
-                MessageBox.Show("Exportación a Excel completada.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                try
+                {
+                    using var workbook = new XLWorkbook();
+                    GeneradorDeExcel.CrearHojas(workbook, HistorialFiltrado);
+                    workbook.SaveAs(sfd.FileName);
+                    MessageBox.Show("Exportación a Excel completada.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error al exportar a Excel: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 
@@ -149,8 +177,13 @@ namespace TiendaGlobosLaFiesta
 
         private void BtnMostrarGrafica_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Funcionalidad de gráfica por reimplementar.", "Info");
+            if (!HistorialFiltrado.Any())
+            {
+                MessageBox.Show("No hay datos para mostrar en la gráfica.", "Atención", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            var ventana = new VentasGraficaWindow(HistorialFiltrado);
+            ventana.ShowDialog();
         }
-        #endregion
     }
 }

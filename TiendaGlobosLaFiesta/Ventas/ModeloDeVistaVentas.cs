@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -8,7 +9,7 @@ using TiendaGlobosLaFiesta.Data;
 using TiendaGlobosLaFiesta.Modelos;
 using TiendaGlobosLaFiesta.Models;
 
-namespace TiendaGlobosLaFiesta.ViewModels
+namespace TiendaGlobosLaFiesta.Ventas
 {
     public class ModeloDeVistaVentas : INotifyPropertyChanged
     {
@@ -31,37 +32,14 @@ namespace TiendaGlobosLaFiesta.ViewModels
         public void CargarDatosIniciales()
         {
             Clientes = new ObservableCollection<Cliente>(_clienteRepo.ObtenerClientes().Where(c => c.Activo));
-
-            Productos = new ObservableCollection<ProductoVenta>(
-                _productoRepo.ObtenerProductos().Select(p => new ProductoVenta
-                {
-                    ProductoId = p.ProductoId,
-                    Nombre = p.Nombre,
-                    Costo = p.Costo,
-                    Stock = p.Stock,
-                    Unidad = p.Unidad
-                })
-            );
-
-            Globos = new ObservableCollection<GloboVenta>(
-                _globoRepo.ObtenerGlobos().Select(g => new GloboVenta
-                {
-                    GloboId = g.GloboId,
-                    Material = g.Material,
-                    Color = g.Color,
-                    Tamano = g.Tamano,
-                    Forma = g.Forma,
-                    Tematica = g.Tematica,
-                    Costo = g.Costo,
-                    Stock = g.Stock
-                })
-            );
+            Productos = new ObservableCollection<ProductoVenta>(_productoRepo.ObtenerProductos().Select(p => new ProductoVenta { Id = p.ProductoId, ProductoId = p.ProductoId, Nombre = p.Nombre, Costo = p.Costo, Stock = p.Stock, Unidad = p.Unidad }));
+            Globos = new ObservableCollection<GloboVenta>(_globoRepo.ObtenerGlobos().Select(g => new GloboVenta { Id = g.GloboId, GloboId = g.GloboId, Material = g.Material, Color = g.Color, Tamano = g.Tamano, Forma = g.Forma, Tematica = g.Tematica, Costo = g.Costo, Stock = g.Stock }));
 
             foreach (var p in Productos) p.PropertyChanged += ItemVenta_PropertyChanged;
             foreach (var g in Globos) g.PropertyChanged += ItemVenta_PropertyChanged;
 
             CargarHistorial();
-            OnPropertyChanged(string.Empty);
+            OnPropertyChanged(string.Empty); // Notifica a toda la UI
         }
 
         public void CargarHistorial()
@@ -74,10 +52,7 @@ namespace TiendaGlobosLaFiesta.ViewModels
 
         private void ItemVenta_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(ItemVenta.Cantidad))
-            {
-                OnPropertyChanged(nameof(ImporteTotal));
-            }
+            if (e.PropertyName == nameof(ItemVenta.Cantidad)) OnPropertyChanged(nameof(ImporteTotal));
         }
 
         public decimal ImporteTotal => Productos.Sum(p => p.Importe) + Globos.Sum(g => g.Importe);

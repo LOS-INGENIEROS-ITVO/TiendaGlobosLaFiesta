@@ -1,10 +1,11 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
-using TiendaGlobosLaFiesta.ViewModels;
+using TiendaGlobosLaFiesta.Models; // Asegúrate que el using a VentaHistorial sea correcto
 
 namespace TiendaGlobosLaFiesta
 {
@@ -14,15 +15,16 @@ namespace TiendaGlobosLaFiesta
         public Axis[] XAxes { get; set; }
         public Axis[] YAxes { get; set; }
 
-        // Paleta de colores más atractiva
         private readonly SKColor barraColor = SKColors.MediumSlateBlue;
         private readonly SKColor ejeColor = SKColors.DarkSlateGray;
 
-        public VentasGraficaWindow(ModeloDeVistaVentas vm)
+        // 🔹 CAMBIO: El constructor ahora recibe la lista de ventas directamente
+        public VentasGraficaWindow(IEnumerable<VentaHistorial> historialFiltrado)
         {
             InitializeComponent();
 
-            var ventasPorCliente = vm.Historial
+            // 🔹 CAMBIO: Se usa la lista recibida en lugar de "vm.Historial"
+            var ventasPorCliente = historialFiltrado
                 .GroupBy(v => v.ClienteNombre)
                 .Select(g => new
                 {
@@ -41,7 +43,7 @@ namespace TiendaGlobosLaFiesta
                 {
                     Values = values,
                     Name = "Ventas",
-                    Fill = new SolidColorPaint(barraColor) // Color más atractivo
+                    Fill = new SolidColorPaint(barraColor)
                 }
             };
 
