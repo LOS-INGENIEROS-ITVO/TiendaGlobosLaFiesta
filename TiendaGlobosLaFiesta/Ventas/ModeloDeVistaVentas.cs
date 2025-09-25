@@ -9,7 +9,7 @@ using TiendaGlobosLaFiesta.Data;
 using TiendaGlobosLaFiesta.Modelos;
 using TiendaGlobosLaFiesta.Models;
 
-namespace TiendaGlobosLaFiesta.Ventas
+namespace TiendaGlobosLaFiesta.ViewModels
 {
     public class ModeloDeVistaVentas : INotifyPropertyChanged
     {
@@ -33,7 +33,21 @@ namespace TiendaGlobosLaFiesta.Ventas
         {
             Clientes = new ObservableCollection<Cliente>(_clienteRepo.ObtenerClientes().Where(c => c.Activo));
             Productos = new ObservableCollection<ProductoVenta>(_productoRepo.ObtenerProductos().Select(p => new ProductoVenta { Id = p.ProductoId, ProductoId = p.ProductoId, Nombre = p.Nombre, Costo = p.Costo, Stock = p.Stock, Unidad = p.Unidad }));
-            Globos = new ObservableCollection<GloboVenta>(_globoRepo.ObtenerGlobos().Select(g => new GloboVenta { Id = g.GloboId, GloboId = g.GloboId, Material = g.Material, Color = g.Color, Tamano = g.Tamano, Forma = g.Forma, Tematica = g.Tematica, Costo = g.Costo, Stock = g.Stock }));
+            Globos = new ObservableCollection<GloboVenta>(
+                _globoRepo.ObtenerGlobos().Select(g => new GloboVenta
+                {
+                    Id = g.GloboId,
+                    GloboId = g.GloboId,
+                    Material = g.Material,
+                    Color = g.Color,
+                    Tamano = g.Tamano,
+                    Forma = g.Forma,
+                    Tematica = g.Tematica,
+                    Unidad = g.Unidad, 
+                    Costo = g.Costo,
+                    Stock = g.Stock
+                })
+            );
 
             foreach (var p in Productos) p.PropertyChanged += ItemVenta_PropertyChanged;
             foreach (var g in Globos) g.PropertyChanged += ItemVenta_PropertyChanged;

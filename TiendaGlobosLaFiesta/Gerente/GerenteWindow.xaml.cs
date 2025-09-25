@@ -5,7 +5,7 @@ using System.Windows.Media.Imaging;
 using TiendaGlobosLaFiesta.Data;
 using TiendaGlobosLaFiesta.Modelos;
 using TiendaGlobosLaFiesta.Views;
-using TiendaGlobosLaFiesta.Ventas;
+using TiendaGlobosLaFiesta.ViewModels;
 
 
 namespace TiendaGlobosLaFiesta

@@ -7,6 +7,9 @@ namespace TiendaGlobosLaFiesta.Models
     {
         // 🔹 PROPIEDAD AÑADIDA: Un identificador genérico para productos o globos
         public string Id { get; set; }
+        public string Unidad { get; set; }
+        public string Nombre { get; set; }
+
 
         private int cantidad;
         public int Cantidad

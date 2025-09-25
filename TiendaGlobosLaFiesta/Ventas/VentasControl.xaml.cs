@@ -9,9 +9,8 @@ using Microsoft.Win32;
 using TiendaGlobosLaFiesta.Modelos;
 using TiendaGlobosLaFiesta.Models;
 using TiendaGlobosLaFiesta.Services;
-using TiendaGlobosLaFiesta.Ventas;
-using TiendaGlobosLaFiesta.Data;
-using TiendaGlobosLaFiesta.Views;
+using TiendaGlobosLaFiesta.ViewModels;
+
 
 namespace TiendaGlobosLaFiesta.Views
 {

@@ -77,7 +77,6 @@ namespace TiendaGlobosLaFiesta.Data
 
         public bool EliminarGlobo(string globoId)
         {
-            // 🔹 CAMBIO: Borrado Lógico en lugar de DELETE
             string query = "UPDATE Globo SET Activo = 0 WHERE globoId=@id";
             var parametros = new[] { new SqlParameter("@id", globoId) };
             return DbHelper.ExecuteNonQuery(query, parametros) > 0;
@@ -119,6 +118,42 @@ namespace TiendaGlobosLaFiesta.Data
                 });
             }
             return lista;
+        }
+
+
+        public Globo? ObtenerGloboPorId(string globoId)
+        {
+            string query = @"
+                SELECT g.globoId, g.material, g.unidad, g.color, g.costo, g.stock, g.proveedorId, g.Activo,
+                       ISNULL(Tam.Tamano, '') AS Tamano,
+                       ISNULL(Form.Forma, '') AS Forma,
+                       ISNULL(Temp.Tematica, '') AS Tematica
+                FROM Globo g
+                LEFT JOIN (SELECT globoId, STRING_AGG(tamanio, ', ') AS Tamano FROM Globo_Tamanio GROUP BY globoId) Tam ON g.globoId = Tam.globoId
+                LEFT JOIN (SELECT globoId, STRING_AGG(forma, ', ') AS Forma FROM Globo_Forma GROUP BY globoId) Form ON g.globoId = Form.globoId
+                LEFT JOIN (SELECT globoId, STRING_AGG(nombre, ', ') AS Tematica FROM Tematica GROUP BY globoId) Temp ON g.globoId = Temp.globoId
+                WHERE g.globoId = @id";
+
+            var parametros = new[] { new SqlParameter("@id", globoId) };
+            DataTable dt = DbHelper.ExecuteQuery(query, parametros);
+
+            if (dt.Rows.Count == 0) return null;
+
+            DataRow row = dt.Rows[0];
+            return new Globo
+            {
+                GloboId = row["globoId"].ToString(),
+                Material = row["material"].ToString(),
+                Unidad = row["unidad"].ToString(),
+                Color = row["color"].ToString(),
+                Costo = Convert.ToDecimal(row["costo"]),
+                Stock = Convert.ToInt32(row["stock"]),
+                ProveedorId = row["proveedorId"] != DBNull.Value ? row["proveedorId"].ToString() : null,
+                Activo = Convert.ToBoolean(row["Activo"]),
+                Tamanos = row["Tamano"].ToString().Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList(),
+                Formas = row["Forma"].ToString().Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList(),
+                Tematicas = row["Tematica"].ToString().Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList()
+            };
         }
 
 
@@ -165,30 +200,6 @@ namespace TiendaGlobosLaFiesta.Data
             cmd.Parameters.AddWithValue("@cantidad", cantidadVendida);
             cmd.Parameters.AddWithValue("@globoId", globoId);
             cmd.ExecuteNonQuery();
-        }
-
-
-        public Globo? ObtenerGloboPorId(string globoId)
-        {
-            string query = @"SELECT globoId, material, unidad, color, costo, stock
-                             FROM Globo WHERE globoId=@id";
-
-            var parametros = new[] { new SqlParameter("@id", globoId) };
-            DataTable dt = DbHelper.ExecuteQuery(query, parametros);
-
-            if (dt.Rows.Count == 0) return null;
-
-            DataRow row = dt.Rows[0];
-            return new Globo
-            {
-                GloboId = row["globoId"].ToString(),
-                Material = row["material"].ToString(),
-                Unidad = row["unidad"].ToString(),
-                Color = row["color"].ToString(),
-                Costo = Convert.ToDecimal(row["costo"]),
-                Stock = Convert.ToInt32(row["stock"]),
-                VentasHoy = 0
-            };
         }
     }
 }
