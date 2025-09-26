@@ -18,7 +18,7 @@
         <conv:StockStatusToColorConverter x:Key="StockStatusColorConverter"/>
         <conv:NullOrEmptyToDashConverter x:Key="EmptyToDashConverter"/>
 
-        <Style x:Key="ProductoRowStyle" TargetType="DataGridRow">
+        <Style TargetType="DataGridRow" x:Key="ProductoRowStyle">
             <Setter Property="ContextMenu">
                 <Setter.Value>
                     <ContextMenu>
@@ -40,7 +40,7 @@
             </Style.Triggers>
         </Style>
 
-        <Style x:Key="GloboRowStyle" TargetType="DataGridRow">
+        <Style TargetType="DataGridRow" x:Key="GloboRowStyle">
             <Setter Property="ContextMenu">
                 <Setter.Value>
                     <ContextMenu>

@@ -15,8 +15,8 @@
             <ComboBoxItem>Otro</ComboBoxItem>
         </ComboBox>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="Confirmar Ajuste" Width="140" Click="Confirmar_Click"/>
-            <Button Content="Cancelar" Width="100" IsCancel="True"/>
+            <Button Content="Confirmar Ajuste" Width="140" Click="Confirmar_Click" IsDefault="True"/>
+            <Button Content="Cancelar" Width="100" IsCancel="True" Margin="10,0,0,0"/>
         </StackPanel>
     </StackPanel>
 </Window>

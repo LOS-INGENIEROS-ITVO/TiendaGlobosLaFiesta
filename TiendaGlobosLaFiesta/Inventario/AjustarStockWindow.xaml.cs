@@ -16,9 +16,16 @@ namespace TiendaGlobosLaFiesta.Views
 
         private void Confirmar_Click(object sender, RoutedEventArgs e)
         {
-            if (!int.TryParse(txtNuevaCantidad.Text, out int nuevaCantidad) || nuevaCantidad < 0) { /*...*/ return; }
-            if (cmbMotivo.SelectedItem == null) { /*...*/ return; }
-
+            if (!int.TryParse(txtNuevaCantidad.Text, out int nuevaCantidad) || nuevaCantidad < 0)
+            {
+                MessageBox.Show("Por favor, introduce una cantidad numérica válida.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            if (cmbMotivo.SelectedItem == null)
+            {
+                MessageBox.Show("Por favor, selecciona un motivo para el ajuste.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
             NuevaCantidad = nuevaCantidad;
             Motivo = (cmbMotivo.SelectedItem as ComboBoxItem).Content.ToString();
             this.DialogResult = true;

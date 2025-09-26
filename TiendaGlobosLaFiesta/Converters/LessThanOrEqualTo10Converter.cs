@@ -8,16 +8,8 @@ namespace TiendaGlobosLaFiesta.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is int stock)
-            {
-                return stock > 0 && stock <= 10;
-            }
-            return false;
+            return value is int stock && stock > 0 && stock <= 10;
         }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
     }
 }
