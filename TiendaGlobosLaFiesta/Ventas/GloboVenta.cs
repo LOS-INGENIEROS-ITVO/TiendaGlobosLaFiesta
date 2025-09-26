@@ -10,6 +10,5 @@ public class GloboVenta : ItemVenta
     public string Tematica { get; set; }
     public string Unidad { get; set; }
 
-    // Propiedad "Nombre" para compatibilidad con ProductoVenta
     public string Nombre => $"{Material} {Color} {Tamano} {Forma} {Tematica}";
 }

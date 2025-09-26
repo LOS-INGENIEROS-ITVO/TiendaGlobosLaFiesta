@@ -2,7 +2,7 @@
 using System.Collections.ObjectModel;
 using TiendaGlobosLaFiesta.Models;
 
-namespace TiendaGlobosLaFiesta.Models // O TiendaGlobosLaFiesta.Modelos, según tu estructura
+namespace TiendaGlobosLaFiesta.Models 
 {
     public class VentaHistorial
     {

@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:vm="clr-namespace:TiendaGlobosLaFiesta.ViewModels"
+             xmlns:conv="clr-namespace:TiendaGlobosLaFiesta.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="1200"
              Background="#F4F7FC">
@@ -13,84 +14,160 @@
     </UserControl.DataContext>
 
     <UserControl.Resources>
-        <Style TargetType="Button" x:Key="ActionButtonStyle">
-            <Setter Property="Background" Value="#007bff"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Padding" Value="12,8"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Margin" Value="5"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Template">
+        <conv:LessThanOrEqualTo10Converter x:Key="LessThan10Converter"/>
+        <conv:StockStatusToColorConverter x:Key="StockStatusColorConverter"/>
+        <conv:NullOrEmptyToDashConverter x:Key="EmptyToDashConverter"/>
+
+        <Style x:Key="ProductoRowStyle" TargetType="DataGridRow">
+            <Setter Property="ContextMenu">
                 <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" CornerRadius="5" Background="{TemplateBinding Background}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Opacity" Value="0.9"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="border" Property="Opacity" Value="0.5"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
+                    <ContextMenu>
+                        <MenuItem Header="✏️ Editar Producto" Command="{Binding DataContext.EditarProductoCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                        <MenuItem Header="📊 Ajustar Stock" Command="{Binding DataContext.AjustarStockProductoCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                        <Separator />
+                        <MenuItem Header="🗑️ Desactivar" Command="{Binding DataContext.EliminarProductoCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                    </ContextMenu>
                 </Setter.Value>
             </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Stock}" Value="0">
+                    <Setter Property="Background" Value="#FFEBEB"/>
+                    <Setter Property="Foreground" Value="#A83232"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Stock, Converter={StaticResource LessThan10Converter}}" Value="True">
+                    <Setter Property="Background" Value="#FFF9E6"/>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
-        </UserControl.Resources>
-    
+
+        <Style x:Key="GloboRowStyle" TargetType="DataGridRow">
+            <Setter Property="ContextMenu">
+                <Setter.Value>
+                    <ContextMenu>
+                        <MenuItem Header="✏️ Editar Globo" Command="{Binding DataContext.EditarGloboCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                        <MenuItem Header="📊 Ajustar Stock" Command="{Binding DataContext.AjustarStockGloboCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                        <Separator />
+                        <MenuItem Header="🗑️ Desactivar" Command="{Binding DataContext.EliminarGloboCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                    </ContextMenu>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Stock}" Value="0">
+                    <Setter Property="Background" Value="#FFEBEB"/>
+                    <Setter Property="Foreground" Value="#A83232"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Stock, Converter={StaticResource LessThan10Converter}}" Value="True">
+                    <Setter Property="Background" Value="#FFF9E6"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="Button" x:Key="ToolBarButtonStyle">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+    </UserControl.Resources>
+
     <Grid Margin="25">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="📦 Gestión de Inventario" Grid.Row="0"
-                   FontSize="32" FontWeight="Bold" Foreground="#1B2B4E" 
-                   Margin="0,0,0,20"/>
+        <TextBlock Text="📦 Gestión de Inventario" Grid.Row="0" FontSize="32" FontWeight="Bold" Foreground="#1B2B4E" Margin="0,0,0,20"/>
 
         <TabControl Grid.Row="1">
-            
-            <TabItem Header="⚠️ Stock Crítico">
-                </TabItem>
 
-            <TabItem Header="🎁 Productos">
-                </TabItem>
+            <TabItem Header="{Binding HeaderStockCritico}">
+                <DataGrid ItemsSource="{Binding StockCritico}" IsReadOnly="True" AutoGenerateColumns="False" CanUserAddRows="False" RowHeight="35">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="Estatus" Width="80">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Ellipse Width="15" Height="15" Margin="5" HorizontalAlignment="Center"
+                                             Fill="{Binding StockActual, Converter={StaticResource StockStatusColorConverter}}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Nombre del Producto" Binding="{Binding Nombre}" Width="*"/>
+                        <DataGridTextColumn Header="Stock Actual" Binding="{Binding StockActual}" Width="150"/>
+                        <DataGridTextColumn Header="Tipo" Binding="{Binding Tipo}" Width="120"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
 
-            <TabItem Header="🎈 Globos">
-                <Grid Margin="10">
+            <TabItem Header="{Binding HeaderProductos}">
+                <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
-                        <TextBox Width="300" Padding="8" Text="{Binding TextoBusquedaGlobo, UpdateSourceTrigger=PropertyChanged}" ToolTip="Buscar globo..."/>
-                        <Button Content="Agregar Nuevo" Command="{Binding AgregarGloboCommand}" Style="{StaticResource ActionButtonStyle}"/>
-                        <Button Content="Editar Seleccionado" Command="{Binding EditarGloboCommand}" Style="{StaticResource ActionButtonStyle}" Background="#ffc107" Foreground="Black"/>
-                        <Button Content="Eliminar Seleccionado" Command="{Binding EliminarGloboCommand}" Style="{StaticResource ActionButtonStyle}" Background="#dc3545"/>
-                    </StackPanel>
-
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding GlobosView}"
-                              SelectedItem="{Binding GloboSeleccionado, Mode=TwoWay}"
-                              AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
+                    <Border Grid.Row="0" Padding="5" Margin="0,5,0,10" Background="WhiteSmoke" CornerRadius="5">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Command="{Binding AgregarProductoCommand}" Style="{StaticResource ToolBarButtonStyle}" ToolTip="Agregar Nuevo Producto">
+                                <Image Source="/Recursos/add.png" Width="24" Height="24"/>
+                            </Button>
+                            <Button Command="{Binding EditarProductoCommand}" Style="{StaticResource ToolBarButtonStyle}" ToolTip="Editar Producto Seleccionado">
+                                <Image Source="/Recursos/edit.png" Width="24" Height="24"/>
+                            </Button>
+                            <Button Command="{Binding EliminarProductoCommand}" Style="{StaticResource ToolBarButtonStyle}" ToolTip="Desactivar Producto Seleccionado">
+                                <Image Source="/Recursos/delete.png" Width="24" Height="24"/>
+                            </Button>
+                            <Separator Margin="10,0"/>
+                            <TextBlock Text="Buscar:" VerticalAlignment="Center" Margin="5,0"/>
+                            <TextBox Width="250" Text="{Binding TextoBusquedaProducto, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding ProductosView}" SelectedItem="{Binding ProductoSeleccionado, Mode=TwoWay}" RowStyle="{StaticResource ProductoRowStyle}" AutoGenerateColumns="False" IsReadOnly="True">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="ID" Binding="{Binding GloboId}" Width="120"/>
-                            <DataGridTextColumn Header="Nombre Completo" Binding="{Binding Nombre}" Width="*"/>
-                            <DataGridTextColumn Header="Material" Binding="{Binding Material}" Width="120"/>
-                            <DataGridTextColumn Header="Color" Binding="{Binding Color}" Width="100"/>
-                            <DataGridTextColumn Header="Tamaño(s)" Binding="{Binding Tamano}" Width="120"/>
-                            <DataGridTextColumn Header="Forma(s)" Binding="{Binding Forma}" Width="120"/>
-                            <DataGridTextColumn Header="Temática(s)" Binding="{Binding Tematica}" Width="150"/>
+                            <DataGridTextColumn Header="ID" Binding="{Binding ProductoId}" Width="150"/>
+                            <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*"/>
+                            <DataGridTextColumn Header="Proveedor" Binding="{Binding ProveedorId, Converter={StaticResource EmptyToDashConverter}}" Width="150"/>
+                            <DataGridTextColumn Header="Categoría" Binding="{Binding CategoriaId, Converter={StaticResource EmptyToDashConverter}}" Width="150"/>
                             <DataGridTextColumn Header="Costo" Binding="{Binding Costo, StringFormat=C}" Width="100"/>
-                            <DataGridTextColumn Header="Stock" Binding="{Binding Stock}" Width="100"/>
+                            <DataGridTextColumn Header="Stock" Binding="{Binding Stock}" Width="80"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
             </TabItem>
 
+            <TabItem Header="{Binding HeaderGlobos}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Padding="5" Margin="0,5,0,10" Background="WhiteSmoke" CornerRadius="5">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Command="{Binding AgregarGloboCommand}" Style="{StaticResource ToolBarButtonStyle}" ToolTip="Agregar Nuevo Globo">
+                                <Image Source="/Recursos/add.png" Width="24" Height="24"/>
+                            </Button>
+                            <Button Command="{Binding EditarGloboCommand}" Style="{StaticResource ToolBarButtonStyle}" ToolTip="Editar Globo Seleccionado">
+                                <Image Source="/Recursos/edit.png" Width="24" Height="24"/>
+                            </Button>
+                            <Button Command="{Binding EliminarGloboCommand}" Style="{StaticResource ToolBarButtonStyle}" ToolTip="Desactivar Globo Seleccionado">
+                                <Image Source="/Recursos/delete.png" Width="24" Height="24"/>
+                            </Button>
+                            <Separator Margin="10,0"/>
+                            <TextBlock Text="Buscar:" VerticalAlignment="Center" Margin="5,0"/>
+                            <TextBox Width="250" Text="{Binding TextoBusquedaGlobo, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding GlobosView}" SelectedItem="{Binding GloboSeleccionado, Mode=TwoWay}" RowStyle="{StaticResource GloboRowStyle}" AutoGenerateColumns="False" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding GloboId}" Width="120"/>
+                            <DataGridTextColumn Header="Nombre Completo" Binding="{Binding Nombre}" Width="*"/>
+                            <DataGridTextColumn Header="Proveedor" Binding="{Binding ProveedorId, Converter={StaticResource EmptyToDashConverter}}" Width="150"/>
+                            <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad, Converter={StaticResource EmptyToDashConverter}}" Width="120"/>
+                            <DataGridTextColumn Header="Costo" Binding="{Binding Costo, StringFormat=C}" Width="100"/>
+                            <DataGridTextColumn Header="Stock" Binding="{Binding Stock}" Width="80"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
         </TabControl>
     </Grid>
 </UserControl>

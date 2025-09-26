@@ -35,7 +35,7 @@ namespace TiendaGlobosLaFiesta.ViewModels
             Productos = new ObservableCollection<ProductoVenta>(
                 _productoRepo.ObtenerProductos().Select(p => new ProductoVenta
                 {
-                    Id = p.ProductoId, // Asignar al Id de la clase base
+                    Id = p.ProductoId, 
                     ProductoId = p.ProductoId,
                     Nombre = p.Nombre,
                     Costo = p.Costo,
@@ -44,11 +44,10 @@ namespace TiendaGlobosLaFiesta.ViewModels
                 })
             );
 
-            // 🔹 CORRECCIÓN: Se completa la asignación a la colección de Globos
             Globos = new ObservableCollection<GloboVenta>(
                 _globoRepo.ObtenerGlobos().Select(g => new GloboVenta
                 {
-                    Id = g.GloboId, // Asignar al Id de la clase base
+                    Id = g.GloboId, 
                     GloboId = g.GloboId,
                     Material = g.Material,
                     Unidad = g.Unidad,
@@ -65,7 +64,7 @@ namespace TiendaGlobosLaFiesta.ViewModels
             foreach (var g in Globos) g.PropertyChanged += ItemVenta_PropertyChanged;
 
             CargarHistorial();
-            OnPropertyChanged(string.Empty); // Notifica a toda la UI
+            OnPropertyChanged(string.Empty); 
         }
 
         public void CargarHistorial()
@@ -76,7 +75,6 @@ namespace TiendaGlobosLaFiesta.ViewModels
             OnPropertyChanged(nameof(HistorialView));
         }
 
-        // 🔹 CORRECCIÓN: Se elimina la versión duplicada y se deja la versión completa y correcta
         private void ItemVenta_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(ItemVenta.Cantidad))
@@ -87,7 +85,6 @@ namespace TiendaGlobosLaFiesta.ViewModels
             }
         }
 
-        // Propiedades calculadas para los totales
         public int TotalProductos => Productos.Sum(p => p.Cantidad);
         public int TotalGlobos => Globos.Sum(g => g.Cantidad);
         public decimal ImporteTotal => Productos.Sum(p => p.Importe) + Globos.Sum(g => g.Importe);
@@ -105,13 +102,13 @@ namespace TiendaGlobosLaFiesta.ViewModels
                 }
                 return false;
             };
-            HistorialView.Refresh(); // Se añade Refresh para asegurar que el filtro se aplique visualmente
+            HistorialView.Refresh();
         }
 
         public void LimpiarFiltros()
         {
             HistorialView.Filter = null;
-            HistorialView.Refresh(); // Se añade Refresh
+            HistorialView.Refresh(); 
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

@@ -14,14 +14,19 @@ namespace TiendaGlobosLaFiesta.Models
         public string ProveedorId { get; set; }
         public bool Activo { get; set; } = true;
 
+        // Propiedades de características (se mantienen)
         public List<string> Tamanos { get; set; } = new List<string>();
         public List<string> Formas { get; set; } = new List<string>();
         public List<string> Tematicas { get; set; } = new List<string>();
 
+        // Propiedades calculadas (se mantienen)
         public string Tamano => string.Join(", ", Tamanos);
         public string Forma => string.Join(", ", Formas);
         public string Tematica => string.Join(", ", Tematicas);
         public string Nombre => $"{Material} {Tamano} {Forma}".Trim();
+
+        // 🔹 PROPIEDAD AÑADIDA PARA CONSISTENCIA 🔹
+        public int VentasHoy { get; set; }
 
         public Globo Clone()
         {

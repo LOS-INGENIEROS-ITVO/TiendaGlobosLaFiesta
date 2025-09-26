@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using TiendaGlobosLaFiesta.Modelos;
 using TiendaGlobosLaFiesta.Models;
 
 namespace TiendaGlobosLaFiesta.Data
@@ -119,6 +120,23 @@ namespace TiendaGlobosLaFiesta.Data
                 Stock = Convert.ToInt32(row["stock"]),
                 VentasHoy = 0
             };
+        }
+
+        public void RegistrarAjusteStock(string productoId, int cantidadAnterior, int cantidadNueva, string motivo)
+        {
+            string query = @"
+                INSERT INTO HistorialAjusteStock (ProductoId, CantidadAnterior, CantidadNueva, Motivo, EmpleadoId)
+                VALUES (@ProductoId, @CantAnterior, @CantNueva, @Motivo, @EmpleadoId)";
+
+            var parametros = new[]
+            {
+                new SqlParameter("@ProductoId", productoId),
+                new SqlParameter("@CantAnterior", cantidadAnterior),
+                new SqlParameter("@CantNueva", cantidadNueva),
+                new SqlParameter("@Motivo", motivo),
+                new SqlParameter("@EmpleadoId", SesionActual.EmpleadoId)
+            };
+            DbHelper.ExecuteNonQuery(query, parametros);
         }
     }
 }

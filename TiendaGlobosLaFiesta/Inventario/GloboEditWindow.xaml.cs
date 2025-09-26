@@ -9,7 +9,6 @@ namespace TiendaGlobosLaFiesta.Views
     public partial class GloboEditWindow : Window
     {
         public Globo Globo { get; private set; }
-
         private ObservableCollection<string> _tamanos;
         private ObservableCollection<string> _formas;
         private ObservableCollection<string> _tematicas;
@@ -19,6 +18,7 @@ namespace TiendaGlobosLaFiesta.Views
             InitializeComponent();
             Globo = globo;
             CargarDatos();
+            this.Title = string.IsNullOrEmpty(globo.Color) ? "Agregar Globo Nuevo" : "Editar Globo";
         }
 
         private void CargarDatos()
@@ -26,8 +26,9 @@ namespace TiendaGlobosLaFiesta.Views
             txtGloboId.Text = Globo.GloboId;
             cmbMaterial.Text = Globo.Material;
             txtColor.Text = Globo.Color;
-            txtCosto.Text = Globo.Costo.ToString();
+            txtCosto.Text = Globo.Costo.ToString("F2");
             txtStock.Text = Globo.Stock.ToString();
+            txtUnidad.Text = Globo.Unidad;
 
             _tamanos = new ObservableCollection<string>(Globo.Tamanos);
             _formas = new ObservableCollection<string>(Globo.Formas);
@@ -42,12 +43,13 @@ namespace TiendaGlobosLaFiesta.Views
         {
             if (string.IsNullOrWhiteSpace(cmbMaterial.Text) || !decimal.TryParse(txtCosto.Text, out _) || !int.TryParse(txtStock.Text, out _))
             {
-                MessageBox.Show("Rellene Material, Costo y Stock con valores válidos.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Rellene Material, Costo y Stock con valores válidos.", "Error de Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             Globo.Material = cmbMaterial.Text;
             Globo.Color = txtColor.Text;
+            Globo.Unidad = txtUnidad.Text;
             Globo.Costo = decimal.Parse(txtCosto.Text);
             Globo.Stock = int.Parse(txtStock.Text);
 
@@ -58,12 +60,9 @@ namespace TiendaGlobosLaFiesta.Views
             this.DialogResult = true;
         }
 
-        #region Manejadores de Listas
         private void Agregar_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
-            if (button == null) return;
-
             ObservableCollection<string> coleccion = null;
             TextBox textBox = null;
 
@@ -84,8 +83,6 @@ namespace TiendaGlobosLaFiesta.Views
         private void Quitar_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
-            if (button == null) return;
-
             ObservableCollection<string> coleccion = null;
             ListBox listBox = null;
 
@@ -101,6 +98,5 @@ namespace TiendaGlobosLaFiesta.Views
                 coleccion.Remove(listBox.SelectedItem as string);
             }
         }
-        #endregion
     }
 }

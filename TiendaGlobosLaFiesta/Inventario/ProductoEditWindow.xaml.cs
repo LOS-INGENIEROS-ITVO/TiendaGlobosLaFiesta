@@ -19,7 +19,7 @@ namespace TiendaGlobosLaFiesta.Views
         {
             if (string.IsNullOrWhiteSpace(Producto.Nombre) || Producto.Costo < 0 || Producto.Stock < 0)
             {
-                MessageBox.Show("Por favor, rellene todos los campos con valores válidos.", "Error de Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Por favor, rellene los campos con valores válidos.", "Error de Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             this.DialogResult = true;

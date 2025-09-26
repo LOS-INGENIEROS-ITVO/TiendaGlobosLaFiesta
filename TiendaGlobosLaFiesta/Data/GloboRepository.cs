@@ -152,7 +152,8 @@ namespace TiendaGlobosLaFiesta.Data
                 Activo = Convert.ToBoolean(row["Activo"]),
                 Tamanos = row["Tamano"].ToString().Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList(),
                 Formas = row["Forma"].ToString().Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList(),
-                Tematicas = row["Tematica"].ToString().Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList()
+                Tematicas = row["Tematica"].ToString().Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList(),
+                VentasHoy = 0 // Se inicializa por defecto
             };
         }
 

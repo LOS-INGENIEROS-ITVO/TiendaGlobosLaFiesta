@@ -19,9 +19,15 @@ namespace TiendaGlobosLaFiesta.ViewModels
         private readonly GloboRepository _globoRepo = new();
         private readonly StockRepository _stockRepo = new();
 
+        public ObservableCollection<Producto> Productos { get; set; }
+        public ObservableCollection<Globo> Globos { get; set; }
         public ICollectionView ProductosView { get; private set; }
         public ICollectionView GlobosView { get; private set; }
         public ObservableCollection<StockCriticoItem> StockCritico { get; set; }
+
+        public string HeaderProductos => $"🎁 Productos ({Productos?.Count ?? 0})";
+        public string HeaderGlobos => $"🎈 Globos ({Globos?.Count ?? 0})";
+        public string HeaderStockCritico => $"⚠️ Stock Crítico ({StockCritico?.Count ?? 0})";
 
         private string _textoBusquedaProducto;
         public string TextoBusquedaProducto { get => _textoBusquedaProducto; set { _textoBusquedaProducto = value; OnPropertyChanged(); ProductosView.Refresh(); } }
@@ -30,106 +36,139 @@ namespace TiendaGlobosLaFiesta.ViewModels
         public string TextoBusquedaGlobo { get => _textoBusquedaGlobo; set { _textoBusquedaGlobo = value; OnPropertyChanged(); GlobosView.Refresh(); } }
 
         private Producto _productoSeleccionado;
-        public Producto ProductoSeleccionado { get => _productoSeleccionado; set { _productoSeleccionado = value; OnPropertyChanged(); (EditarProductoCommand as RelayCommand)?.RaiseCanExecuteChanged(); (EliminarProductoCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
+        public Producto ProductoSeleccionado { get => _productoSeleccionado; set { _productoSeleccionado = value; OnPropertyChanged(); ((RelayCommand)EditarProductoCommand).RaiseCanExecuteChanged(); ((RelayCommand)EliminarProductoCommand).RaiseCanExecuteChanged(); ((RelayCommand)AjustarStockProductoCommand).RaiseCanExecuteChanged(); } }
 
         private Globo _globoSeleccionado;
-        public Globo GloboSeleccionado { get => _globoSeleccionado; set { _globoSeleccionado = value; OnPropertyChanged(); (EditarGloboCommand as RelayCommand)?.RaiseCanExecuteChanged(); (EliminarGloboCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
+        public Globo GloboSeleccionado { get => _globoSeleccionado; set { _globoSeleccionado = value; OnPropertyChanged(); ((RelayCommand)EditarGloboCommand).RaiseCanExecuteChanged(); ((RelayCommand)EliminarGloboCommand).RaiseCanExecuteChanged(); ((RelayCommand)AjustarStockGloboCommand).RaiseCanExecuteChanged(); } }
 
         public ICommand AgregarProductoCommand { get; }
         public ICommand EditarProductoCommand { get; }
         public ICommand EliminarProductoCommand { get; }
+        public ICommand AjustarStockProductoCommand { get; }
         public ICommand AgregarGloboCommand { get; }
         public ICommand EditarGloboCommand { get; }
         public ICommand EliminarGloboCommand { get; }
+        public ICommand AjustarStockGloboCommand { get; }
 
         public InventarioViewModel()
         {
             CargarDatos();
 
             AgregarProductoCommand = new RelayCommand(ExecuteAgregarProducto);
-            EditarProductoCommand = new RelayCommand(ExecuteEditarProducto, CanExecuteEditarOEliminarProducto);
-            EliminarProductoCommand = new RelayCommand(ExecuteEliminarProducto, CanExecuteEditarOEliminarProducto);
+            EditarProductoCommand = new RelayCommand(ExecuteEditarProducto, CanExecuteAccionProducto);
+            EliminarProductoCommand = new RelayCommand(ExecuteEliminarProducto, CanExecuteAccionProducto);
+            AjustarStockProductoCommand = new RelayCommand(ExecuteAjustarStockProducto, CanExecuteAccionProducto);
 
             AgregarGloboCommand = new RelayCommand(ExecuteAgregarGlobo);
-            EditarGloboCommand = new RelayCommand(ExecuteEditarGlobo, CanExecuteEditarOEliminarGlobo);
-            EliminarGloboCommand = new RelayCommand(ExecuteEliminarGlobo, CanExecuteEditarOEliminarGlobo);
+            EditarGloboCommand = new RelayCommand(ExecuteEditarGlobo, CanExecuteAccionGlobo);
+            EliminarGloboCommand = new RelayCommand(ExecuteEliminarGlobo, CanExecuteAccionGlobo);
+            AjustarStockGloboCommand = new RelayCommand(ExecuteAjustarStockGlobo, CanExecuteAccionGlobo);
         }
 
         private void CargarDatos()
         {
-            var productos = new ObservableCollection<Producto>(_productoRepo.ObtenerProductos());
-            ProductosView = CollectionViewSource.GetDefaultView(productos);
-            ProductosView.Filter = item => string.IsNullOrEmpty(TextoBusquedaProducto) ||
-                                           (item as Producto).Nombre.Contains(TextoBusquedaProducto, StringComparison.OrdinalIgnoreCase);
+            Productos = new ObservableCollection<Producto>(_productoRepo.ObtenerProductos());
+            Globos = new ObservableCollection<Globo>(_globoRepo.ObtenerGlobos());
+            ProductosView = CollectionViewSource.GetDefaultView(Productos);
+            GlobosView = CollectionViewSource.GetDefaultView(Globos);
 
-            var globos = new ObservableCollection<Globo>(_globoRepo.ObtenerGlobos());
-            GlobosView = CollectionViewSource.GetDefaultView(globos);
-            GlobosView.Filter = item => string.IsNullOrEmpty(TextoBusquedaGlobo) ||
-                                        (item as Globo).Nombre.Contains(TextoBusquedaGlobo, StringComparison.OrdinalIgnoreCase);
+            ProductosView.Filter = item => string.IsNullOrEmpty(TextoBusquedaProducto) || (item as Producto).Nombre.Contains(TextoBusquedaProducto, StringComparison.OrdinalIgnoreCase);
+            GlobosView.Filter = item => string.IsNullOrEmpty(TextoBusquedaGlobo) || (item as Globo).Nombre.Contains(TextoBusquedaGlobo, StringComparison.OrdinalIgnoreCase);
 
-            var criticoProductos = _stockRepo.ObtenerProductosStockCritico()
-                .Select(p => new StockCriticoItem { Id = p.Id, Nombre = p.Nombre, StockActual = p.StockActual, Tipo = "Producto" });
-            var criticoGlobos = _stockRepo.ObtenerGlobosStockCritico()
-                .Select(g => new StockCriticoItem { Id = g.Id, Nombre = g.Nombre, StockActual = g.StockActual, Tipo = "Globo" });
+            var criticoProductos = _stockRepo.ObtenerProductosStockCritico().Select(p => new StockCriticoItem { Id = p.Id, Nombre = p.Nombre, StockActual = p.StockActual, Tipo = "Producto" });
+            var criticoGlobos = _stockRepo.ObtenerGlobosStockCritico().Select(g => new StockCriticoItem { Id = g.Id, Nombre = g.Nombre, StockActual = g.StockActual, Tipo = "Globo" });
             StockCritico = new ObservableCollection<StockCriticoItem>(criticoProductos.Concat(criticoGlobos));
 
-            OnPropertyChanged(nameof(ProductosView));
-            OnPropertyChanged(nameof(GlobosView));
-            OnPropertyChanged(nameof(StockCritico));
+            OnPropertyChanged(string.Empty);
         }
 
-        #region Lógica de Comandos para Productos
+        private bool CanExecuteAccionProducto(object obj) => ProductoSeleccionado != null;
+        private bool CanExecuteAccionGlobo(object obj) => GloboSeleccionado != null;
+
+        #region Comandos de Productos
         private void ExecuteAgregarProducto(object obj)
         {
             var nuevoProducto = new Producto { ProductoId = "PROD" + DateTime.Now.ToString("yyMMddHHmmss") };
             var ventana = new ProductoEditWindow(nuevoProducto);
-            if (ventana.ShowDialog() == true) { _productoRepo.AgregarProducto(ventana.Producto); CargarDatos(); }
+            if (ventana.ShowDialog() == true)
+            {
+                _productoRepo.AgregarProducto(ventana.Producto);
+                CargarDatos();
+            }
         }
 
         private void ExecuteEditarProducto(object obj)
         {
             var productoAEditar = ProductoSeleccionado.Clone();
             var ventana = new ProductoEditWindow(productoAEditar);
-            if (ventana.ShowDialog() == true) { _productoRepo.ActualizarProducto(ventana.Producto); CargarDatos(); }
+            if (ventana.ShowDialog() == true)
+            {
+                _productoRepo.ActualizarProducto(ventana.Producto);
+                CargarDatos();
+            }
         }
 
         private void ExecuteEliminarProducto(object obj)
         {
-            if (MessageBox.Show($"¿Estás seguro de eliminar '{ProductoSeleccionado.Nombre}'?", "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+            if (MessageBox.Show($"¿Desactivar '{ProductoSeleccionado.Nombre}'? No se borrará, solo se ocultará de las listas.", "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
             {
                 _productoRepo.EliminarProducto(ProductoSeleccionado.ProductoId);
                 CargarDatos();
             }
         }
 
-        private bool CanExecuteEditarOEliminarProducto(object obj) => ProductoSeleccionado != null;
+        private void ExecuteAjustarStockProducto(object obj)
+        {
+            var ventana = new AjustarStockWindow(ProductoSeleccionado.Nombre);
+            if (ventana.ShowDialog() == true)
+            {
+                int cantidadAnterior = ProductoSeleccionado.Stock;
+                ProductoSeleccionado.Stock = ventana.NuevaCantidad;
+                _productoRepo.ActualizarProducto(ProductoSeleccionado);
+                _productoRepo.RegistrarAjusteStock(ProductoSeleccionado.ProductoId, cantidadAnterior, ProductoSeleccionado.Stock, ventana.Motivo);
+                CargarDatos();
+            }
+        }
         #endregion
 
-        #region Lógica de Comandos para Globos
+        #region Comandos de Globos
         private void ExecuteAgregarGlobo(object obj)
         {
             var nuevoGlobo = new Globo { GloboId = "GLOBO" + DateTime.Now.ToString("yyMMddHHmmss") };
             var ventana = new GloboEditWindow(nuevoGlobo);
-            if (ventana.ShowDialog() == true) { _globoRepo.AgregarGlobo(ventana.Globo); CargarDatos(); }
+            if (ventana.ShowDialog() == true)
+            {
+                _globoRepo.AgregarGlobo(ventana.Globo);
+                CargarDatos();
+            }
         }
 
         private void ExecuteEditarGlobo(object obj)
         {
             var globoAEditar = GloboSeleccionado.Clone();
             var ventana = new GloboEditWindow(globoAEditar);
-            if (ventana.ShowDialog() == true) { _globoRepo.ActualizarGlobo(ventana.Globo); CargarDatos(); }
+            if (ventana.ShowDialog() == true)
+            {
+                _globoRepo.ActualizarGlobo(ventana.Globo);
+                CargarDatos();
+            }
         }
 
         private void ExecuteEliminarGlobo(object obj)
         {
-            if (MessageBox.Show($"¿Estás seguro de eliminar el globo '{GloboSeleccionado.Nombre}'?", "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+            if (MessageBox.Show($"¿Desactivar el globo '{GloboSeleccionado.Nombre}'?", "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
             {
                 _globoRepo.EliminarGlobo(GloboSeleccionado.GloboId);
                 CargarDatos();
             }
         }
 
-        private bool CanExecuteEditarOEliminarGlobo(object obj) => GloboSeleccionado != null;
+        private void ExecuteAjustarStockGlobo(object obj)
+        {
+            // Similar a productos, pero llamando a GloboRepository
+            // (Esta lógica se añadiría si necesitas ajustar stock de globos)
+            MessageBox.Show("Funcionalidad de ajuste de stock para globos por implementar.");
+        }
         #endregion
 
         public event PropertyChangedEventHandler PropertyChanged;
