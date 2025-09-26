@@ -49,9 +49,9 @@ namespace TiendaGlobosLaFiesta.Services
                     item.Venta.VentaId,
                     item.Globo.Material,
                     item.Globo.Color,
-                    item.Globo.Tamano,
-                    item.Globo.Forma,
-                    item.Globo.Tematica,
+                    FormatearVacio(item.Globo.Tamano),   // <--- CORRECCIÓN
+                    FormatearVacio(item.Globo.Forma),    // <--- CORRECCIÓN
+                    FormatearVacio(item.Globo.Tematica), // <--- CORRECCIÓN
                     item.Globo.Unidad,
                     item.Globo.Cantidad,
                     item.Globo.Costo,
@@ -63,6 +63,12 @@ namespace TiendaGlobosLaFiesta.Services
                 },
                 totalValue: todosGlobos.Sum(g => g.Globo.Importe));
         }
+
+
+            private static string FormatearVacio(string texto)
+                {
+                    return string.IsNullOrWhiteSpace(texto) ? "---" : texto;
+            }
 
         private static void CrearHoja<T>(XLWorkbook workbook, string nombreHoja, IEnumerable<T> items, string[] headers,
                                   Func<T, object[]> mapFila, Action<IXLCell, int> styleCell = null,

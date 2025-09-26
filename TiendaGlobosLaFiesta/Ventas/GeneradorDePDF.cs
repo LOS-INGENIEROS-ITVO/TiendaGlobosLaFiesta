@@ -191,9 +191,9 @@ namespace TiendaGlobosLaFiesta.Services
                                     table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(item.Venta.VentaId);
                                     table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(item.Globo.Material);
                                     table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(item.Globo.Color);
-                                    table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(item.Globo.Tamano);
-                                    table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(item.Globo.Forma);
-                                    table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(item.Globo.Tematica);
+                                    table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(FormatearVacio(item.Globo.Tamano));
+                                    table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(FormatearVacio(item.Globo.Forma));
+                                    table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(FormatearVacio(item.Globo.Tematica));
                                     table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(item.Globo.Unidad);
                                     table.Cell().Border(0.5f).Padding(3).AlignCenter().Text(item.Globo.Cantidad.ToString());
                                     table.Cell().Border(0.5f).Padding(3).AlignCenter()
@@ -232,6 +232,12 @@ namespace TiendaGlobosLaFiesta.Services
                 System.Windows.MessageBox.Show($"Error generando PDF: {ex.Message}", "Error",
                     System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
+
         }
+        private static string FormatearVacio(string texto)
+        {
+            return string.IsNullOrWhiteSpace(texto) ? "---" : texto;
+        }
+
     }
 }

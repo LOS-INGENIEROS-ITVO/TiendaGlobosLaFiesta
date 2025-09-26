@@ -10,6 +10,8 @@ using TiendaGlobosLaFiesta.Modelos;
 using TiendaGlobosLaFiesta.Models;
 using TiendaGlobosLaFiesta.Services;
 using TiendaGlobosLaFiesta.ViewModels;
+using System.Text.RegularExpressions;
+using System.Windows.Input;
 
 
 namespace TiendaGlobosLaFiesta.Views
@@ -38,18 +40,13 @@ namespace TiendaGlobosLaFiesta.Views
                 dgProductos.ItemsSource = VM.Productos;
                 dgGlobos.ItemsSource = VM.Globos;
                 dgHistorial.ItemsSource = VM.HistorialView;
-                ActualizarTotales();
             }
         }
 
-        private void ActualizarTotales()
+        private void Cantidad_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            if (VM != null)
-            {
-                txtTotalProductos.Text = VM.Productos.Sum(p => p.Cantidad).ToString();
-                txtTotalGlobos.Text = VM.Globos.Sum(g => g.Cantidad).ToString();
-                txtImporteTotal.Text = VM.ImporteTotal.ToString("C");
-            }
+            var regex = new Regex("[^0-9]+"); // Solo permite números
+            e.Handled = regex.IsMatch(e.Text);
         }
 
         private void BtnAumentarCantidad_Click(object sender, RoutedEventArgs e)
@@ -57,7 +54,6 @@ namespace TiendaGlobosLaFiesta.Views
             if (sender is Button btn && btn.Tag is ItemVenta item)
             {
                 item.Incrementar();
-                ActualizarTotales();
             }
         }
 
@@ -66,7 +62,6 @@ namespace TiendaGlobosLaFiesta.Views
             if (sender is Button btn && btn.Tag is ItemVenta item)
             {
                 item.Decrementar();
-                ActualizarTotales();
             }
         }
 

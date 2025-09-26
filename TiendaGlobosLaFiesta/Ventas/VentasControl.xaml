@@ -73,7 +73,10 @@
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                                     <Button Content="-" Style="{StaticResource CantidadButton}" Click="BtnDisminuirCantidad_Click" Tag="{Binding}" Background="#F44336" Margin="0,0,5,0"/>
                                                     <Border CornerRadius="5" Background="LightYellow" Width="60" Height="40">
-                                                        <TextBlock Text="{Binding Cantidad}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        <TextBox Text="{Binding Cantidad, UpdateSourceTrigger=PropertyChanged, FallbackValue=0}"
+                                                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                        BorderThickness="0" Background="Transparent" 
+                                                        PreviewTextInput="Cantidad_PreviewTextInput" />
                                                     </Border>
                                                     <Button Content="+" Style="{StaticResource CantidadButton}" Click="BtnAumentarCantidad_Click" Tag="{Binding}" Background="#4CAF50" Margin="5,0,0,0"/>
                                                 </StackPanel>
@@ -101,8 +104,12 @@
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                                     <Button Content="-" Style="{StaticResource CantidadButton}" Click="BtnDisminuirCantidad_Click" Tag="{Binding}" Background="#F44336" Margin="0,0,5,0"/>
                                                     <Border CornerRadius="5" Background="LightYellow" Width="60" Height="40">
-                                                        <TextBlock Text="{Binding Cantidad}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        <TextBox Text="{Binding Cantidad, UpdateSourceTrigger=PropertyChanged, FallbackValue=0}"
+                                                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                        BorderThickness="0" Background="Transparent" 
+                                                        PreviewTextInput="Cantidad_PreviewTextInput" />
                                                     </Border>
+
                                                     <Button Content="+" Style="{StaticResource CantidadButton}" Click="BtnAumentarCantidad_Click" Tag="{Binding}" Background="#4CAF50" Margin="5,0,0,0"/>
                                                 </StackPanel>
                                             </DataTemplate>
@@ -126,11 +133,13 @@
                                 <ColumnDefinition Width="120"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="Total Productos 🎁:" FontWeight="Bold" Grid.Column="0" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="txtTotalProductos" Text="0" Grid.Column="1" VerticalAlignment="Center" TextAlignment="Center"/>
-                            <TextBlock Text="Total Globos 🎈:" FontWeight="Bold" Grid.Column="2" VerticalAlignment="Center" Margin="20,0,10,0"/>
-                            <TextBlock x:Name="txtTotalGlobos" Text="0" Grid.Column="3" VerticalAlignment="Center" TextAlignment="Center"/>
-                            <TextBlock Text="Importe Total 💰:" FontWeight="Bold" Grid.Column="4" VerticalAlignment="Center" Margin="20,0,10,0" FontSize="16"/>
-                            <TextBlock x:Name="txtImporteTotal" Text="$0.00" Grid.Column="5" VerticalAlignment="Center" TextAlignment="Right" FontSize="18" FontWeight="Bold" Foreground="DarkGreen"/>
+                            <TextBlock Text="{Binding TotalProductos}" Grid.Column="1" VerticalAlignment="Center" TextAlignment="Center" Margin="5,0,20,0" FontWeight="SemiBold"/>
+
+                            <TextBlock Text="Total Globos 🎈:" FontWeight="Bold" Grid.Column="2" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding TotalGlobos}" Grid.Column="3" VerticalAlignment="Center" TextAlignment="Center" Margin="5,0,20,0" FontWeight="SemiBold"/>
+
+                            <TextBlock Text="Importe Total 💰:" FontWeight="Bold" Grid.Column="4" VerticalAlignment="Center" FontSize="16"/>
+                            <TextBlock Text="{Binding ImporteTotal, StringFormat=C}" Grid.Column="5" VerticalAlignment="Center" TextAlignment="Right" FontSize="18" FontWeight="Bold" Foreground="DarkGreen" Margin="5,0,0,0"/>
                         </Grid>
                     </Border>
 
