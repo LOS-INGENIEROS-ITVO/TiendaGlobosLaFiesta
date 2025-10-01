@@ -1,5 +1,4 @@
 ﻿// Archivo: ViewModels/RelayCommand.cs
-using System;
 using System.Windows.Input;
 
 namespace TiendaGlobosLaFiesta.ViewModels

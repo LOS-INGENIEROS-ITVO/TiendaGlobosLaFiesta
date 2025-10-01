@@ -1,11 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media.Imaging;
-using TiendaGlobosLaFiesta.Data;
 using TiendaGlobosLaFiesta.Modelos;
 using TiendaGlobosLaFiesta.Views;
-using TiendaGlobosLaFiesta.ViewModels;
 
 
 namespace TiendaGlobosLaFiesta
@@ -25,7 +21,7 @@ namespace TiendaGlobosLaFiesta
             ConfigurarPermisos(rol);
             CargarDashboard();
         }
- 
+
 
         private void ConfigurarPermisos(string rol)
         {

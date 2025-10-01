@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Data;
 using TiendaGlobosLaFiesta.Data;
@@ -35,7 +33,7 @@ namespace TiendaGlobosLaFiesta.ViewModels
             Productos = new ObservableCollection<ProductoVenta>(
                 _productoRepo.ObtenerProductos().Select(p => new ProductoVenta
                 {
-                    Id = p.ProductoId, 
+                    Id = p.ProductoId,
                     ProductoId = p.ProductoId,
                     Nombre = p.Nombre,
                     Costo = p.Costo,
@@ -47,7 +45,7 @@ namespace TiendaGlobosLaFiesta.ViewModels
             Globos = new ObservableCollection<GloboVenta>(
                 _globoRepo.ObtenerGlobos().Select(g => new GloboVenta
                 {
-                    Id = g.GloboId, 
+                    Id = g.GloboId,
                     GloboId = g.GloboId,
                     Material = g.Material,
                     Unidad = g.Unidad,
@@ -64,7 +62,7 @@ namespace TiendaGlobosLaFiesta.ViewModels
             foreach (var g in Globos) g.PropertyChanged += ItemVenta_PropertyChanged;
 
             CargarHistorial();
-            OnPropertyChanged(string.Empty); 
+            OnPropertyChanged(string.Empty);
         }
 
         public void CargarHistorial()
@@ -108,7 +106,7 @@ namespace TiendaGlobosLaFiesta.ViewModels
         public void LimpiarFiltros()
         {
             HistorialView.Filter = null;
-            HistorialView.Refresh(); 
+            HistorialView.Refresh();
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

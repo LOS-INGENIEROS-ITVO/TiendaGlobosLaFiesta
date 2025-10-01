@@ -1,8 +1,6 @@
-﻿using System;
-using System.Data;
+﻿using System.Data;
 using System.Data.SqlClient;
 using TiendaGlobosLaFiesta.Modelos;
-using TiendaGlobosLaFiesta.Services;
 
 namespace TiendaGlobosLaFiesta.Data
 {
@@ -43,7 +41,7 @@ namespace TiendaGlobosLaFiesta.Data
                     bool dbTest = Services.PasswordService.VerifyPassword(password, passwordHashFromDB);
                     bool dbTrimmedTest = Services.PasswordService.VerifyPassword(password, passwordHashFromDB.Trim());
 
- 
+
                 }
                 catch (Exception ex)
                 {

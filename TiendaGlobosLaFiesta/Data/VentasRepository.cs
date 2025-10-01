@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.SqlClient;
-using System.Collections.ObjectModel;
 using TiendaGlobosLaFiesta.Models;
-using System.Linq; // Necesario para FirstOrDefault
 
 namespace TiendaGlobosLaFiesta.Data
 {

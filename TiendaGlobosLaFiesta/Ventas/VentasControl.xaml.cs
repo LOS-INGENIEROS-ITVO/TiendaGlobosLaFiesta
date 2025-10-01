@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using ClosedXML.Excel;
+using Microsoft.Win32;
 using System.Collections.ObjectModel;
-using System.Linq;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
-using ClosedXML.Excel;
-using Microsoft.Win32;
+using System.Windows.Input;
 using TiendaGlobosLaFiesta.Modelos;
 using TiendaGlobosLaFiesta.Models;
 using TiendaGlobosLaFiesta.Services;
 using TiendaGlobosLaFiesta.ViewModels;
-using System.Text.RegularExpressions;
-using System.Windows.Input;
 
 
 namespace TiendaGlobosLaFiesta.Views

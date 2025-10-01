@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using LiveCharts;
+using LiveCharts.Wpf;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using LiveCharts;
-using LiveCharts.Wpf;
 using TiendaGlobosLaFiesta.Data;
-using TiendaGlobosLaFiesta.Modelos;
 
 namespace TiendaGlobosLaFiesta.Views
 {

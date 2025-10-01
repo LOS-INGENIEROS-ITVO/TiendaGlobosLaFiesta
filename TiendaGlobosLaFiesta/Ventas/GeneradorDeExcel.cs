@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using ClosedXML.Excel;
+﻿using ClosedXML.Excel;
 using TiendaGlobosLaFiesta.Models;
 
 namespace TiendaGlobosLaFiesta.Services
@@ -65,10 +62,10 @@ namespace TiendaGlobosLaFiesta.Services
         }
 
 
-            private static string FormatearVacio(string texto)
-                {
-                    return string.IsNullOrWhiteSpace(texto) ? "---" : texto;
-            }
+        private static string FormatearVacio(string texto)
+        {
+            return string.IsNullOrWhiteSpace(texto) ? "---" : texto;
+        }
 
         private static void CrearHoja<T>(XLWorkbook workbook, string nombreHoja, IEnumerable<T> items, string[] headers,
                                   Func<T, object[]> mapFila, Action<IXLCell, int> styleCell = null,

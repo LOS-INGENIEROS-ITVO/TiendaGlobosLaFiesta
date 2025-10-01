@@ -1,62 +1,57 @@
 ﻿using System;
 using System.Data;
 using System.Data.SqlClient;
+using System.Configuration;
 
 namespace TiendaGlobosLaFiesta.Data
 {
     public static class DbHelper
     {
-        private const string Servidor = @"LALOVG25\SQLEXPRESS";
-        private const string BaseDatos = "Globeriadb";
-        private const bool UsarWindowsAuth = true;
-
-        private static string ObtenerCadenaConexion()
+        private static string GetConnectionString()
         {
-            return UsarWindowsAuth
-                ? $"Server={Servidor};Database={BaseDatos};Integrated Security=True;"
-                : $"Server={Servidor};Database={BaseDatos};User Id=tuUsuario;Password=tuPassword;";
+            return ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
         }
 
-        internal static SqlConnection ObtenerConexion()
+        public static SqlConnection ObtenerConexion()
         {
-            var conn = new SqlConnection(ObtenerCadenaConexion());
+            var conn = new SqlConnection(GetConnectionString());
             conn.Open();
             return conn;
         }
 
-        public static DataTable ExecuteQuery(string query, params SqlParameter[] parametros)
+        public static DataTable ExecuteQuery(string query, SqlParameter[] parameters = null)
         {
             using var conn = ObtenerConexion();
             using var cmd = new SqlCommand(query, conn);
-
-            if (parametros != null)
-                cmd.Parameters.AddRange(parametros);
-
+            if (parameters != null)
+            {
+                cmd.Parameters.AddRange(parameters);
+            }
+            using var adapter = new SqlDataAdapter(cmd);
             var dt = new DataTable();
-            using var da = new SqlDataAdapter(cmd);
-            da.Fill(dt);
+            adapter.Fill(dt);
             return dt;
         }
 
-        public static int ExecuteNonQuery(string query, params SqlParameter[] parametros)
+        public static int ExecuteNonQuery(string query, SqlParameter[] parameters = null)
         {
             using var conn = ObtenerConexion();
             using var cmd = new SqlCommand(query, conn);
-
-            if (parametros != null)
-                cmd.Parameters.AddRange(parametros);
-
+            if (parameters != null)
+            {
+                cmd.Parameters.AddRange(parameters);
+            }
             return cmd.ExecuteNonQuery();
         }
 
-        public static object ExecuteScalar(string query, params SqlParameter[] parametros)
+        public static object ExecuteScalar(string query, SqlParameter[] parameters = null)
         {
             using var conn = ObtenerConexion();
             using var cmd = new SqlCommand(query, conn);
-
-            if (parametros != null)
-                cmd.Parameters.AddRange(parametros);
-
+            if (parameters != null)
+            {
+                cmd.Parameters.AddRange(parameters);
+            }
             return cmd.ExecuteScalar();
         }
     }

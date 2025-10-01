@@ -1,7 +1,4 @@
 ﻿// Archivo: Modelos/DashboardData.cs
-using System;
-using System.Collections.Generic;
-
 namespace TiendaGlobosLaFiesta.Modelos
 {
     public class DashboardData

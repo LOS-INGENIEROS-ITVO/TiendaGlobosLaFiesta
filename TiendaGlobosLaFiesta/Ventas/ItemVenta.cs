@@ -16,7 +16,7 @@ namespace TiendaGlobosLaFiesta.Models
             get => cantidad;
             set
             {
-                if (value > Stock) value = Stock; 
+                if (value > Stock) value = Stock;
                 if (value < 0) value = 0;
 
                 if (cantidad != value)
@@ -40,5 +40,5 @@ namespace TiendaGlobosLaFiesta.Models
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-      }
     }
+}

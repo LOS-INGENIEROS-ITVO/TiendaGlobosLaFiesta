@@ -1,10 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Windows;
-using LiveChartsCore;
+﻿using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
+using System.Windows;
 using TiendaGlobosLaFiesta.Models; // Asegúrate que el using a VentaHistorial sea correcto
 
 namespace TiendaGlobosLaFiesta
