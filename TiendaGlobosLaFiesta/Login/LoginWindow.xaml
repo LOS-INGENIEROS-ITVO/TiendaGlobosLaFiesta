@@ -15,7 +15,11 @@
     </Window.DataContext>
 
     <Window.Resources>
+        <!-- Convertidor y color de acento -->
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <SolidColorBrush x:Key="AccentColorBrush" Color="#EC407A"/>
+
+        <!-- Animación de fade y movimiento -->
         <Storyboard x:Key="FormFadeInAnimation">
             <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.7"/>
             <ThicknessAnimation Storyboard.TargetProperty="Margin" From="50,50,50,0" To="50,0" Duration="0:0:0.7">
@@ -24,7 +28,8 @@
                 </ThicknessAnimation.EasingFunction>
             </ThicknessAnimation>
         </Storyboard>
-        <SolidColorBrush x:Key="AccentColorBrush" Color="#EC407A"/>
+
+        <!-- Template moderno para TextBox y PasswordBox -->
         <ControlTemplate x:Key="InputBoxTemplate" TargetType="{x:Type Control}">
             <Border x:Name="border" Background="#F7F9FC" BorderBrush="#E0E6F1" BorderThickness="1" CornerRadius="8">
                 <Grid>
@@ -59,7 +64,7 @@
                     <Setter TargetName="border" Property="Background" Value="White"/>
                     <Setter TargetName="border" Property="Effect">
                         <Setter.Value>
-                            <DropShadowEffect ShadowDepth="0" BlurRadius="6" Color="#EC407A" Opacity="0.4"/>
+                            <DropShadowEffect ShadowDepth="0" BlurRadius="8" Color="#EC407A" Opacity="0.35"/>
                         </Setter.Value>
                     </Setter>
                 </Trigger>
@@ -67,6 +72,7 @@
         </ControlTemplate>
     </Window.Resources>
 
+    <!-- Fondo principal -->
     <Border CornerRadius="15" Background="White">
         <Border.Effect>
             <DropShadowEffect ShadowDepth="0" BlurRadius="30" Color="Black" Opacity="0.1"/>
@@ -77,7 +83,7 @@
                 <ColumnDefinition Width="5*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Panel izquierdo -->
+            <!-- Panel izquierdo con logo y eslogan -->
             <Border Grid.Column="0" CornerRadius="15,0,0,15">
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
@@ -86,44 +92,33 @@
                     </LinearGradientBrush>
                 </Border.Background>
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="20,0">
-                    <Image Source="/Recursos/Logo_App.png" Stretch="Uniform" Margin="0,0,0,25">
+                    <Image Source="/Recursos/Logo_App.png" Stretch="Uniform" Margin="0,0,0,10">
                         <Image.Effect>
                             <DropShadowEffect ShadowDepth="4" BlurRadius="15" Color="Black" Opacity="0.2"/>
                         </Image.Effect>
                     </Image>
+                    <TextBlock Text="Globos y sonrisas para tu fiesta" Foreground="White" FontSize="16" FontWeight="Light" Opacity="0.85" TextAlignment="Center"/>
                 </StackPanel>
             </Border>
 
-            <!-- Panel derecho -->
+            <!-- Panel derecho con login -->
             <Grid Grid.Column="1">
-                <!-- Botón cerrar -->
-                <Button Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Top"
+                <!-- Botón de cerrar -->
+                <Button Content="✖" Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Top"
                         Background="Transparent" BorderThickness="0" Foreground="#AAA" FontWeight="Bold" 
-                        FontSize="14" Click="BtnCerrar_Click" Cursor="Hand" Margin="0,15,15,0" ToolTip="Cerrar aplicación">
-                    <Button.Content>
-                        ✖
-                    </Button.Content>
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Border x:Name="border" CornerRadius="15" Background="{TemplateBinding Background}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="border" Property="Background" Value="#E74C3C"/>
-                                    <Setter Property="Foreground" Value="White"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
+                        FontSize="14" Click="BtnCerrar_Click" Cursor="Hand" Margin="0,15,15,0" ToolTip="Cerrar aplicación"/>
 
+                <!-- Formulario -->
                 <StackPanel x:Name="FormPanel" VerticalAlignment="Center" Margin="60,0">
                     <TextBlock Text="Iniciar Sesión" FontSize="38" FontWeight="Bold" Foreground="#333" Margin="0,0,0,40" TextAlignment="Center"/>
+
+                    <!-- Usuario -->
                     <TextBox x:Name="txtUsername" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" 
                              KeyDown="TxtUsername_KeyDown"
                              Template="{StaticResource InputBoxTemplate}"
                              Tag="/Recursos/user32.png" ToolTip="Nombre de usuario" FontSize="20"/>
+
+                    <!-- Contraseña con mostrar/ocultar -->
                     <Grid Margin="0,20,0,0">
                         <PasswordBox x:Name="txtPassword" KeyDown="TxtPassword_KeyDown"
                                      Template="{StaticResource InputBoxTemplate}"
@@ -133,9 +128,13 @@
                                  Tag="/Recursos/lock32.png" ToolTip="Contraseña"
                                  Visibility="Collapsed" FontSize="20"/>
                     </Grid>
+
+                    <!-- Caps Lock -->
                     <TextBlock x:Name="avisoCapsLock" Text="⚠️ Bloq Mayús está activado" 
                                Foreground="#D35400" FontWeight="SemiBold" 
                                Margin="5,5,0,0" Visibility="Collapsed"/>
+
+                    <!-- Opciones -->
                     <Grid Margin="5,15,5,20">
                         <CheckBox x:Name="chkShowPassword" Content="Mostrar contraseña" VerticalAlignment="Center"
                                   Checked="chkShowPassword_Handler" Unchecked="chkShowPassword_Handler"
@@ -146,12 +145,18 @@
                             </Hyperlink>
                         </TextBlock>
                     </Grid>
+
                     <CheckBox Content="Recordar usuario" IsChecked="{Binding IsRememberMe}"
                               Foreground="#666"/>
+
+                    <!-- Mensaje de error -->
                     <TextBlock Text="{Binding Message}" Foreground="Crimson" TextWrapping="Wrap" TextAlignment="Center" Margin="0,15,0,10" MinHeight="30"/>
+
+                    <!-- Barra de progreso -->
                     <ProgressBar Height="4" IsIndeterminate="True" Margin="0,0,0,10"
                                  Visibility="{Binding IsLoginInProgress, Converter={StaticResource BoolToVis}}"/>
-                    <!-- Botón Ingresar -->
+
+                    <!-- Botón ingresar con microinteracción -->
                     <Button x:Name="btnIngresar" Content="Ingresar" Height="50" FontSize="18" FontWeight="Bold" 
                             Cursor="Hand" Margin="0,10,0,0"
                             Click="BtnIngresar_Click">
@@ -169,7 +174,19 @@
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                     <Setter TargetName="border" Property="Effect">
                                                         <Setter.Value>
-                                                            <DropShadowEffect ShadowDepth="0" BlurRadius="10" Color="#EC407A" Opacity="0.5"/>
+                                                            <DropShadowEffect ShadowDepth="0" BlurRadius="12" Color="#EC407A" Opacity="0.45"/>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Setter TargetName="border" Property="RenderTransform">
+                                                        <Setter.Value>
+                                                            <ScaleTransform ScaleX="1.03" ScaleY="1.03"/>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter TargetName="border" Property="RenderTransform">
+                                                        <Setter.Value>
+                                                            <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
                                                         </Setter.Value>
                                                     </Setter>
                                                 </Trigger>

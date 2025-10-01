@@ -1,7 +1,8 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows.Input;
-using System.Windows.Threading;
 using TiendaGlobosLaFiesta.Data;
 
 namespace TiendaGlobosLaFiesta.ViewModels
@@ -43,8 +44,8 @@ namespace TiendaGlobosLaFiesta.ViewModels
         private int _intentosFallidos = 0;
         private const int MAX_INTENTOS = 5;
         private const int BLOQUEO_SEGUNDOS = 30;
-        private DispatcherTimer _bloqueoTimer;
         private int _segundosRestantes;
+        private bool _estaBloqueado = false;
 
         public LoginViewModel()
         {
@@ -53,12 +54,13 @@ namespace TiendaGlobosLaFiesta.ViewModels
                 Username = Properties.Settings.Default.UsuarioGuardado;
                 IsRememberMe = true;
             }
+
             LoginCommand = new RelayCommand(async (parameter) => await ExecuteLogin(parameter), CanExecuteLogin);
         }
 
         private bool CanExecuteLogin(object parameter)
         {
-            return !IsLoginInProgress && (_bloqueoTimer == null || !_bloqueoTimer.IsEnabled);
+            return !IsLoginInProgress && !_estaBloqueado;
         }
 
         private async Task ExecuteLogin(object parameter)
@@ -67,7 +69,6 @@ namespace TiendaGlobosLaFiesta.ViewModels
             Message = "";
 
             string password = parameter as string;
-
 
             if (string.IsNullOrEmpty(Username) || string.IsNullOrEmpty(password))
             {
@@ -78,46 +79,53 @@ namespace TiendaGlobosLaFiesta.ViewModels
 
             string rolDelUsuario = string.Empty;
             string mensajeError = string.Empty;
-            bool loginExitoso = await Task.Run(() => AuthService.Login(Username, password, out rolDelUsuario, out mensajeError));
 
-            if (loginExitoso)
+            try
             {
-                Properties.Settings.Default.UsuarioGuardado = IsRememberMe ? Username : string.Empty;
-                Properties.Settings.Default.Save();
-                OnLoginSuccess?.Invoke(rolDelUsuario);
-            }
-            else
-            {
-                _intentosFallidos++;
-                Message = string.IsNullOrEmpty(mensajeError) ? $"Usuario o contraseña incorrectos. Intento {_intentosFallidos}/{MAX_INTENTOS}" : mensajeError;
-                if (_intentosFallidos >= MAX_INTENTOS)
+                bool loginExitoso = await Task.Run(() =>
+                    AuthService.Login(Username, password, out rolDelUsuario, out mensajeError));
+
+                if (loginExitoso)
                 {
-                    ActivarBloqueo();
+                    Properties.Settings.Default.UsuarioGuardado = IsRememberMe ? Username : string.Empty;
+                    Properties.Settings.Default.Save();
+
+                    _intentosFallidos = 0;
+                    _estaBloqueado = false;
+                    OnLoginSuccess?.Invoke(rolDelUsuario);
+                }
+                else
+                {
+                    _intentosFallidos++;
+                    Message = string.IsNullOrEmpty(mensajeError)
+                        ? $"Usuario o contraseña incorrectos. Intento {_intentosFallidos}/{MAX_INTENTOS}"
+                        : mensajeError;
+
+                    if (_intentosFallidos >= MAX_INTENTOS)
+                        await ActivarBloqueoAsync();
                 }
             }
-            IsLoginInProgress = false;
-        }
-
-        private void ActivarBloqueo()
-        {
-            _segundosRestantes = BLOQUEO_SEGUNDOS;
-            Message = $"Demasiados intentos. Intenta de nuevo en {_segundosRestantes} segundos.";
-
-            _bloqueoTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-            _bloqueoTimer.Tick += Temporizador_Tick;
-            _bloqueoTimer.Start();
-        }
-
-        private void Temporizador_Tick(object sender, EventArgs e)
-        {
-            _segundosRestantes--;
-            Message = $"Demasiados intentos. Intenta de nuevo en {_segundosRestantes} segundos.";
-            if (_segundosRestantes <= 0)
+            finally
             {
-                _bloqueoTimer.Stop();
-                _intentosFallidos = 0;
-                Message = "Puedes intentar de nuevo.";
+                IsLoginInProgress = false;
             }
+        }
+
+        private async Task ActivarBloqueoAsync()
+        {
+            _estaBloqueado = true;
+            _segundosRestantes = BLOQUEO_SEGUNDOS;
+
+            while (_segundosRestantes > 0)
+            {
+                Message = $"Demasiados intentos. Intenta de nuevo en {_segundosRestantes} segundos.";
+                await Task.Delay(1000);
+                _segundosRestantes--;
+            }
+
+            _intentosFallidos = 0;
+            _estaBloqueado = false;
+            Message = "Puedes intentar de nuevo.";
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

@@ -1,5 +1,7 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media.Animation;
 using TiendaGlobosLaFiesta.ViewModels;
 
 namespace TiendaGlobosLaFiesta
@@ -20,7 +22,7 @@ namespace TiendaGlobosLaFiesta
                 };
             }
 
-            // Suscripción a eventos para el aviso de Bloq Mayús
+            // Eventos CapsLock
             txtPassword.GotFocus += PasswordBox_FocusChanged;
             txtPassword.LostFocus += PasswordBox_FocusChanged;
             txtPassword.KeyDown += PasswordBox_KeyDown_CapsLock;
@@ -29,7 +31,14 @@ namespace TiendaGlobosLaFiesta
             txtPasswordVisible.KeyDown += PasswordBox_KeyDown_CapsLock;
         }
 
-        private void BtnCerrar_Click(object sender, RoutedEventArgs e) { Application.Current.Shutdown(); }
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Animación de fade al cargar
+            var fade = (Storyboard)FindResource("FormFadeInAnimation");
+            fade.Begin();
+        }
+
+        private void BtnCerrar_Click(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
 
         private void TxtUsername_KeyDown(object sender, KeyEventArgs e)
         {
@@ -46,9 +55,24 @@ namespace TiendaGlobosLaFiesta
             if (DataContext is LoginViewModel vm)
             {
                 string password = chkShowPassword.IsChecked == true ? txtPasswordVisible.Text : txtPassword.Password;
+
+                if (!string.IsNullOrEmpty(password) && string.IsNullOrEmpty(vm.Username))
+                {
+                    txtUsername.Focus();
+                    return;
+                }
+
                 if (vm.LoginCommand.CanExecute(password))
                 {
+                    bool preMessage = !string.IsNullOrEmpty(vm.Message);
                     vm.LoginCommand.Execute(password);
+
+                    if (!string.IsNullOrEmpty(vm.Message) && preMessage == false)
+                    {
+                        // Ejecutar shake animation si hay error
+                        var shake = (Storyboard)FindResource("ShakeAnimation");
+                        shake.Begin();
+                    }
                 }
             }
         }
@@ -61,6 +85,11 @@ namespace TiendaGlobosLaFiesta
 
             txtPassword.Visibility = chkShowPassword.IsChecked == true ? Visibility.Collapsed : Visibility.Visible;
             txtPasswordVisible.Visibility = chkShowPassword.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+
+            // Fade in/out para suavizar
+            txtPasswordVisible.Opacity = chkShowPassword.IsChecked == true ? 0 : 1;
+            txtPasswordVisible.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200)));
+            txtPassword.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200)));
         }
 
         private void RecuperarContrasena_Click(object sender, RoutedEventArgs e)
@@ -69,7 +98,7 @@ namespace TiendaGlobosLaFiesta
             ventana.ShowDialog();
         }
 
-        private void ActualizarAvisoCapsLock() { avisoCapsLock.Visibility = Console.CapsLock ? Visibility.Visible : Visibility.Collapsed; }
+        private void ActualizarAvisoCapsLock() => avisoCapsLock.Visibility = Console.CapsLock ? Visibility.Visible : Visibility.Collapsed;
 
         private void PasswordBox_FocusChanged(object sender, RoutedEventArgs e)
         {

@@ -99,7 +99,6 @@ namespace TiendaGlobosLaFiesta.Data
                     return false;
                 }
 
-                // Si la verificación es exitosa, procedemos a actualizar la contraseña.
                 string nuevoHash = Services.PasswordService.HashPassword(nuevaContrasena);
 
                 string queryUpdate = "UPDATE Usuarios SET passwordHash = @hash WHERE username = @username";
