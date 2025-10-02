@@ -1,5 +1,5 @@
 ﻿using System.Data;
-using TiendaGlobosLaFiesta.Modelos;
+using TiendaGlobosLaFiesta.Models;
 
 namespace TiendaGlobosLaFiesta.Data
 {

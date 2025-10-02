@@ -3,7 +3,7 @@ using System.Data.SqlClient;
 using TiendaGlobosLaFiesta.Data;
 using TiendaGlobosLaFiesta.Models;
 
-namespace TiendaGlobosLaFiesta.Repositories
+namespace TiendaGlobosLaFiesta.Data
 {
     public static class AjusteStockRepository
     {

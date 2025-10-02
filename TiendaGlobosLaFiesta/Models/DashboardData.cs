@@ -1,5 +1,4 @@
-﻿// Archivo: Modelos/DashboardData.cs
-namespace TiendaGlobosLaFiesta.Modelos
+﻿namespace TiendaGlobosLaFiesta.Models
 {
     public class DashboardData
     {
