@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
 
@@ -11,11 +12,15 @@ namespace TiendaGlobosLaFiesta.Converters
             if (value is int stock)
             {
                 if (stock == 0) return Brushes.Red;
-                if (stock <= 5) return Brushes.OrangeRed;
-                if (stock <= 10) return Brushes.Gold;
+                if (stock <= 10) return Brushes.Orange;
+                return Brushes.Green;
             }
-            return Brushes.Transparent;
+            return Brushes.Gray;
         }
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

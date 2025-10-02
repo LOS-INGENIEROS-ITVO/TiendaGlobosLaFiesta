@@ -1,4 +1,5 @@
-﻿using System.Windows.Input;
+﻿using System;
+using System.Windows.Input;
 
 namespace TiendaGlobosLaFiesta.ViewModels
 {
@@ -15,10 +16,7 @@ namespace TiendaGlobosLaFiesta.ViewModels
 
         public event EventHandler CanExecuteChanged;
 
-        public void RaiseCanExecuteChanged()
-        {
-            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
-        }
+        public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 
         public bool CanExecute(object parameter) => _canExecute == null || _canExecute(parameter);
 

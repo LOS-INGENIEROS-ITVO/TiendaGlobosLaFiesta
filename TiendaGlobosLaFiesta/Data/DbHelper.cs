@@ -12,6 +12,7 @@ namespace TiendaGlobosLaFiesta.Data
             return ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
         }
 
+        // Obtener conexión abierta
         public static SqlConnection ObtenerConexion()
         {
             var conn = new SqlConnection(GetConnectionString());
@@ -19,40 +20,64 @@ namespace TiendaGlobosLaFiesta.Data
             return conn;
         }
 
-        public static DataTable ExecuteQuery(string query, SqlParameter[] parameters = null)
+        // Ejecutar consulta que devuelve DataTable
+        public static DataTable ExecuteQuery(string query, SqlParameter[] parameters = null, SqlConnection conn = null, SqlTransaction tran = null)
         {
-            using var conn = ObtenerConexion();
-            using var cmd = new SqlCommand(query, conn);
-            if (parameters != null)
+            bool cerrarConexion = false;
+            if (conn == null)
             {
-                cmd.Parameters.AddRange(parameters);
+                conn = ObtenerConexion();
+                cerrarConexion = true;
             }
+
+            using var cmd = new SqlCommand(query, conn);
+            if (tran != null) cmd.Transaction = tran;
+            if (parameters != null) cmd.Parameters.AddRange(parameters);
+
             using var adapter = new SqlDataAdapter(cmd);
             var dt = new DataTable();
             adapter.Fill(dt);
+
+            if (cerrarConexion) conn.Close();
             return dt;
         }
 
-        public static int ExecuteNonQuery(string query, SqlParameter[] parameters = null)
+        // Ejecutar comandos que no devuelven resultados (INSERT, UPDATE, DELETE)
+        public static int ExecuteNonQuery(string query, SqlParameter[] parameters = null, SqlConnection conn = null, SqlTransaction tran = null)
         {
-            using var conn = ObtenerConexion();
-            using var cmd = new SqlCommand(query, conn);
-            if (parameters != null)
+            bool cerrarConexion = false;
+            if (conn == null)
             {
-                cmd.Parameters.AddRange(parameters);
+                conn = ObtenerConexion();
+                cerrarConexion = true;
             }
-            return cmd.ExecuteNonQuery();
+
+            using var cmd = new SqlCommand(query, conn);
+            if (tran != null) cmd.Transaction = tran;
+            if (parameters != null) cmd.Parameters.AddRange(parameters);
+
+            int filas = cmd.ExecuteNonQuery();
+            if (cerrarConexion) conn.Close();
+            return filas;
         }
 
-        public static object ExecuteScalar(string query, SqlParameter[] parameters = null)
+        // Ejecutar consultas que devuelven un valor escalar
+        public static object ExecuteScalar(string query, SqlParameter[] parameters = null, SqlConnection conn = null, SqlTransaction tran = null)
         {
-            using var conn = ObtenerConexion();
-            using var cmd = new SqlCommand(query, conn);
-            if (parameters != null)
+            bool cerrarConexion = false;
+            if (conn == null)
             {
-                cmd.Parameters.AddRange(parameters);
+                conn = ObtenerConexion();
+                cerrarConexion = true;
             }
-            return cmd.ExecuteScalar();
+
+            using var cmd = new SqlCommand(query, conn);
+            if (tran != null) cmd.Transaction = tran;
+            if (parameters != null) cmd.Parameters.AddRange(parameters);
+
+            object result = cmd.ExecuteScalar();
+            if (cerrarConexion) conn.Close();
+            return result;
         }
     }
 }

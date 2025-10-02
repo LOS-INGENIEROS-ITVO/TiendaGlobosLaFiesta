@@ -11,7 +11,6 @@ namespace TiendaGlobosLaFiesta.Modelos
         public int TotalStockCritico { get; set; }
         public int TotalClientesFrecuentes { get; set; }
 
-        // Listas de Nombres y Detalles
         public List<string> NombresStockCritico { get; set; } = new List<string>();
         public List<string> NombresClientesFrecuentes { get; set; } = new List<string>();
 

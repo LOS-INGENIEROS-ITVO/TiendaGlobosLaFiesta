@@ -1,4 +1,6 @@
-﻿using System.Data;
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using TiendaGlobosLaFiesta.Modelos;
 using TiendaGlobosLaFiesta.Models;
@@ -7,36 +9,56 @@ namespace TiendaGlobosLaFiesta.Data
 {
     public class ProductoRepository
     {
-        public List<Producto> ObtenerProductos()
+        #region Obtener Productos
+
+        public List<Producto> ObtenerProductos(bool soloActivos = true)
         {
-            // 🔹 CAMBIO: Se añade "WHERE Activo = 1" y se obtienen las nuevas columnas
-            string query = @"
-                SELECT productoId, nombre, unidad, costo, stock, proveedorId, categoriaId, Activo 
-                FROM Producto 
-                WHERE Activo = 1";
+            string query = "SELECT productoId, nombre, unidad, costo, stock, proveedorId, categoriaId, Activo FROM Producto";
+            if (soloActivos) query += " WHERE Activo = 1";
 
             DataTable dt = DbHelper.ExecuteQuery(query);
             var lista = new List<Producto>();
+
             foreach (DataRow row in dt.Rows)
             {
-                lista.Add(new Producto
-                {
-                    ProductoId = row["productoId"].ToString(),
-                    Nombre = row["nombre"].ToString(),
-                    Unidad = Convert.ToInt32(row["unidad"]),
-                    Costo = Convert.ToDecimal(row["costo"]),
-                    Stock = Convert.ToInt32(row["stock"]),
-                    ProveedorId = row["proveedorId"] != DBNull.Value ? row["proveedorId"].ToString() : null,
-                    CategoriaId = row["categoriaId"] != DBNull.Value ? Convert.ToInt32(row["categoriaId"]) : (int?)null,
-                    Activo = Convert.ToBoolean(row["Activo"])
-                });
+                lista.Add(MapearProducto(row));
             }
             return lista;
         }
 
+        public Producto? ObtenerProductoPorId(string productoId)
+        {
+            string query = @"SELECT productoId, nombre, unidad, costo, stock, proveedorId, categoriaId, Activo
+                             FROM Producto WHERE productoId=@id";
+            var parametros = new[] { new SqlParameter("@id", productoId) };
+            DataTable dt = DbHelper.ExecuteQuery(query, parametros);
+
+            if (dt.Rows.Count == 0) return null;
+            return MapearProducto(dt.Rows[0]);
+        }
+
+        private Producto MapearProducto(DataRow row)
+        {
+            return new Producto
+            {
+                ProductoId = row["productoId"].ToString(),
+                Nombre = row["nombre"].ToString(),
+                Unidad = Convert.ToInt32(row["unidad"]),
+                Costo = Convert.ToDecimal(row["costo"]),
+                Stock = Convert.ToInt32(row["stock"]),
+                ProveedorId = row["proveedorId"] != DBNull.Value ? row["proveedorId"].ToString() : null,
+                CategoriaId = row["categoriaId"] != DBNull.Value ? Convert.ToInt32(row["categoriaId"]) : (int?)null,
+                Activo = Convert.ToBoolean(row["Activo"]),
+                VentasHoy = 0
+            };
+        }
+
+        #endregion
+
+        #region CRUD Productos
+
         public bool AgregarProducto(Producto producto)
         {
-            // 🔹 CAMBIO: La consulta INSERT ahora incluye las nuevas columnas
             string query = @"
                 INSERT INTO Producto (productoId, nombre, unidad, costo, stock, proveedorId, categoriaId, Activo)
                 VALUES (@id, @nombre, @unidad, @costo, @stock, @proveedorId, @categoriaId, 1)";
@@ -57,7 +79,6 @@ namespace TiendaGlobosLaFiesta.Data
 
         public bool ActualizarProducto(Producto producto)
         {
-            // 🔹 CAMBIO: La consulta UPDATE ahora incluye las nuevas columnas
             string query = @"
                 UPDATE Producto 
                 SET nombre=@nombre, unidad=@unidad, costo=@costo, stock=@stock, 
@@ -80,44 +101,22 @@ namespace TiendaGlobosLaFiesta.Data
 
         public bool EliminarProducto(string productoId)
         {
-            // 🔹 CAMBIO: Ahora es un UPDATE (borrado lógico) en lugar de un DELETE
             string query = "UPDATE Producto SET Activo = 0 WHERE productoId=@id";
             var parametros = new[] { new SqlParameter("@id", productoId) };
             return DbHelper.ExecuteNonQuery(query, parametros) > 0;
         }
 
+        #endregion
 
+        #region Stock y Ajustes
 
-        public void ActualizarStock(string productoId, int cantidadVendida, SqlConnection conn, SqlTransaction tran)
+        public void ActualizarStock(string productoId, int cantidad, SqlConnection conn, SqlTransaction tran)
         {
             string query = "UPDATE Producto SET stock = stock - @cantidad WHERE productoId = @productoId";
             using var cmd = new SqlCommand(query, conn, tran);
-            cmd.Parameters.AddWithValue("@cantidad", cantidadVendida);
+            cmd.Parameters.AddWithValue("@cantidad", cantidad);
             cmd.Parameters.AddWithValue("@productoId", productoId);
             cmd.ExecuteNonQuery();
-        }
-
-
-        public Producto? ObtenerProductoPorId(string productoId)
-        {
-            string query = @"SELECT productoId, nombre, unidad, costo, stock
-                             FROM Producto WHERE productoId=@id";
-
-            var parametros = new[] { new SqlParameter("@id", productoId) };
-            DataTable dt = DbHelper.ExecuteQuery(query, parametros);
-
-            if (dt.Rows.Count == 0) return null;
-
-            DataRow row = dt.Rows[0];
-            return new Producto
-            {
-                ProductoId = row["productoId"].ToString(),
-                Nombre = row["nombre"].ToString(),
-                Unidad = Convert.ToInt32(row["unidad"]),
-                Costo = Convert.ToDecimal(row["costo"]),
-                Stock = Convert.ToInt32(row["stock"]),
-                VentasHoy = 0
-            };
         }
 
         public void RegistrarAjusteStock(string productoId, int cantidadAnterior, int cantidadNueva, string motivo)
@@ -136,5 +135,7 @@ namespace TiendaGlobosLaFiesta.Data
             };
             DbHelper.ExecuteNonQuery(query, parametros);
         }
+
+        #endregion
     }
 }

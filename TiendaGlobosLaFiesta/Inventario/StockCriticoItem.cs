@@ -1,4 +1,4 @@
-﻿namespace TiendaGlobosLaFiesta.Modelos
+﻿namespace TiendaGlobosLaFiesta.Models
 {
     public class StockCriticoItem
     {

@@ -7,13 +7,9 @@
         public int Unidad { get; set; }
         public decimal Costo { get; set; }
         public int Stock { get; set; }
-
-        // 🔹 PROPIEDADES AÑADIDAS 🔹
         public string ProveedorId { get; set; }
-        public int? CategoriaId { get; set; } // Puede ser nulo
+        public int? CategoriaId { get; set; }
         public bool Activo { get; set; } = true;
-
-        // Propiedad extra para reportes (no va en la BD)
         public int VentasHoy { get; set; }
 
         public Producto Clone()
