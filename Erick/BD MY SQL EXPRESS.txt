@@ -1,0 +1,305 @@
+-- ============================================
+-- 1. CONFIGURACIÓN INICIAL
+-- ============================================
+-- Si la base de datos ya existe, la elimina para empezar de cero
+IF DB_ID('Globeriadb') IS NOT NULL
+BEGIN
+    ALTER DATABASE Globeriadb SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE Globeriadb;
+END
+GO
+
+CREATE DATABASE Globeriadb;
+GO
+
+USE Globeriadb;
+GO
+
+-- ============================================
+-- 2. CREACIÓN DE TABLAS BASE
+-- ============================================
+CREATE TABLE Puesto(
+    puestoId NVARCHAR(20) PRIMARY KEY,
+    descripcion NVARCHAR(200)
+);
+GO
+
+CREATE TABLE Direccion(
+    claveDireccion INT IDENTITY(1,1) PRIMARY KEY,
+    calle NVARCHAR(50),
+    numero INT,
+    colonia NVARCHAR(50),
+    codigoPostal INT
+);
+GO
+
+CREATE TABLE Proveedor(
+    proveedorId NVARCHAR(30) PRIMARY KEY,
+    razonSocial NVARCHAR(50),
+    telefono BIGINT,
+    correo NVARCHAR(50)
+);
+GO
+
+CREATE TABLE Cliente(
+    clienteId NVARCHAR(20) PRIMARY KEY,
+    primerNombre NVARCHAR(50),
+    segundoNombre NVARCHAR(50) NULL,
+    apellidoP NVARCHAR(30),
+    apellidoM NVARCHAR(30),
+    telefono BIGINT NULL,
+    Activo BIT NOT NULL DEFAULT 1
+);
+GO
+
+CREATE TABLE Categoria (
+    categoriaId INT IDENTITY(1,1) PRIMARY KEY,
+    nombre NVARCHAR(50) UNIQUE NOT NULL
+);
+GO
+
+-- ============================================
+-- 3. CREACIÓN DE TABLAS DE INVENTARIO
+-- ============================================
+CREATE TABLE Producto(
+    productoId NVARCHAR(20) PRIMARY KEY,
+    nombre NVARCHAR(30),
+    unidad INT,
+    stock INT,
+    costo DECIMAL(10,2),
+    proveedorId NVARCHAR(30) NULL,
+    categoriaId INT NULL,
+    Activo BIT NOT NULL DEFAULT 1,
+    FOREIGN KEY (proveedorId) REFERENCES Proveedor(proveedorId),
+    FOREIGN KEY (categoriaId) REFERENCES Categoria(categoriaId)
+);
+GO
+
+CREATE TABLE Globo(
+    globoId NVARCHAR(30) PRIMARY KEY,
+    material NVARCHAR(20) CHECK (material IN ('Metalicos','Latex','Burbuja')),
+    unidad NVARCHAR(40),
+    color NVARCHAR(40),
+    stock INT,
+    costo DECIMAL(10,2),
+    proveedorId NVARCHAR(30) NULL,
+    Activo BIT NOT NULL DEFAULT 1,
+    FOREIGN KEY (proveedorId) REFERENCES Proveedor(proveedorId)
+);
+GO
+
+CREATE TABLE Globo_Tamanio(
+    claveGloboTamanio INT IDENTITY(1,1) PRIMARY KEY,
+    globoId NVARCHAR(30),
+    tamanio NVARCHAR(30),
+    FOREIGN KEY (globoId) REFERENCES Globo(globoId) ON DELETE CASCADE ON UPDATE CASCADE
+);
+GO
+
+CREATE TABLE Globo_Forma(
+    claveGloboForma INT IDENTITY(1,1) PRIMARY KEY,
+    globoId NVARCHAR(30),
+    forma NVARCHAR(50),
+    FOREIGN KEY (globoId) REFERENCES Globo(globoId) ON DELETE CASCADE ON UPDATE CASCADE
+);
+GO
+
+CREATE TABLE Tematica(
+    claveTematica NVARCHAR(40) PRIMARY KEY,
+    globoId NVARCHAR(30),
+    nombre NVARCHAR(40),
+    FOREIGN KEY (globoId) REFERENCES Globo(globoId) ON DELETE CASCADE ON UPDATE CASCADE
+);
+GO
+
+-- ============================================
+-- 4. CREACIÓN DE TABLAS DE PERSONAL Y USUARIOS
+-- ============================================
+CREATE TABLE Empleado(
+    empleadoId INT PRIMARY KEY,
+    puestoId NVARCHAR(20),
+    claveDireccion INT,
+    primerNombre NVARCHAR(50),
+    segundoNombre NVARCHAR(50) NULL,
+    apellidoP NVARCHAR(30),
+    apellidoM NVARCHAR(30),
+    telefono BIGINT,
+    Activo BIT NOT NULL DEFAULT 1,
+    FOREIGN KEY (puestoId) REFERENCES Puesto(puestoId),
+    FOREIGN KEY (claveDireccion) REFERENCES Direccion(claveDireccion)
+);
+GO
+
+CREATE TABLE Usuarios(
+    usuarioId INT PRIMARY KEY,
+    empleadoId INT NOT NULL,
+    username NVARCHAR(50) UNIQUE NOT NULL,
+    passwordHash NVARCHAR(128) NOT NULL,
+    activo BIT DEFAULT 1,
+    fechaCreacion DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (empleadoId) REFERENCES Empleado(empleadoId)
+);
+GO
+
+-- ============================================
+-- 5. CREACIÓN DE TABLAS DE TRANSACCIONES
+-- ============================================
+CREATE TABLE Venta(
+    ventaId NVARCHAR(30) PRIMARY KEY,
+    empleadoId INT,
+    clienteId NVARCHAR(20),
+    fechaVenta DATETIME,
+    importeTotal DECIMAL(10,2),
+    Estatus NVARCHAR(20) NOT NULL DEFAULT 'Completada',
+    FOREIGN KEY (empleadoId) REFERENCES Empleado(empleadoId),
+    FOREIGN KEY (clienteId) REFERENCES Cliente(clienteId)
+);
+GO
+
+CREATE TABLE Detalle_Venta_Producto(
+    detalleProductoId INT IDENTITY(1,1) PRIMARY KEY,
+    ventaId NVARCHAR(30),
+    productoId NVARCHAR(20),
+    cantidad INT,
+    costo DECIMAL(10,2),
+    importe DECIMAL(12,2),
+    FOREIGN KEY (ventaId) REFERENCES Venta(ventaId) ON DELETE CASCADE,
+    FOREIGN KEY (productoId) REFERENCES Producto(productoId)
+);
+GO
+
+CREATE TABLE Detalle_Venta_Globo(
+    detalleGloboId INT IDENTITY(1,1) PRIMARY KEY,
+    ventaId NVARCHAR(30),
+    globoId NVARCHAR(30),
+    cantidad INT,
+    costo DECIMAL(10,2),
+    importe DECIMAL(12,2),
+    FOREIGN KEY (ventaId) REFERENCES Venta(ventaId) ON DELETE CASCADE,
+    FOREIGN KEY (globoId) REFERENCES Globo(globoId)
+);
+GO
+
+CREATE TABLE Pedido (
+    pedidoId INT IDENTITY(1,1) PRIMARY KEY,
+    proveedorId NVARCHAR(30) NOT NULL,
+    fechaPedido DATETIME NOT NULL DEFAULT GETDATE(),
+    estatus NVARCHAR(20) NOT NULL DEFAULT 'Pendiente',
+    total DECIMAL(12,2) NULL,
+    FOREIGN KEY (proveedorId) REFERENCES Proveedor(proveedorId)
+);
+GO
+
+CREATE TABLE Detalle_Pedido_Producto(
+    detallePedidoProductoId INT IDENTITY(1,1) PRIMARY KEY,
+    pedidoId INT NOT NULL, 
+    productoId NVARCHAR(20),
+    cantidadSolicitada INT,
+    costoUnitario DECIMAL(10,2),
+    FOREIGN KEY (pedidoId) REFERENCES Pedido(pedidoId) ON DELETE CASCADE,
+    FOREIGN KEY (productoId) REFERENCES Producto(productoId)
+);
+GO
+
+CREATE TABLE Detalle_Pedido_Globo(
+    detallePedidoGloboId INT IDENTITY(1,1) PRIMARY KEY,
+    pedidoId INT NOT NULL,
+    globoId NVARCHAR(30),
+    cantidadSolicitada INT,
+    costoUnitario DECIMAL(10,2),
+    FOREIGN KEY (pedidoId) REFERENCES Pedido(pedidoId) ON DELETE CASCADE,
+    FOREIGN KEY (globoId) REFERENCES Globo(globoId)
+);
+GO
+
+-- ============================================
+-- 6. TABLA DE AUDITORÍA
+-- ============================================
+CREATE TABLE HistorialAjusteStock (
+    AjusteId INT IDENTITY(1,1) PRIMARY KEY,
+    ProductoId NVARCHAR(30) NOT NULL,
+    FechaAjuste DATETIME NOT NULL DEFAULT GETDATE(),
+    CantidadAnterior INT NOT NULL,
+    CantidadNueva INT NOT NULL,
+    Motivo NVARCHAR(200),
+    EmpleadoId INT,
+    FOREIGN KEY (EmpleadoId) REFERENCES dbo.Empleado(empleadoId)
+);
+GO
+
+
+CREATE TABLE HistorialAjusteStockGlobo (
+    AjusteId INT IDENTITY(1,1) PRIMARY KEY,
+    GloboId NVARCHAR(30) NOT NULL,
+    FechaAjuste DATETIME NOT NULL DEFAULT GETDATE(),
+    CantidadAnterior INT NOT NULL,
+    CantidadNueva INT NOT NULL,
+    Motivo NVARCHAR(200),
+    EmpleadoId INT,
+    FOREIGN KEY (GloboId) REFERENCES Globo(globoId),
+    FOREIGN KEY (EmpleadoId) REFERENCES Empleado(empleadoId)
+);
+GO
+
+
+-- ============================================
+-- 7. MEJORAS DE RENDIMIENTO E INTEGRIDAD
+-- ============================================
+PRINT 'Creando índices y restricciones...';
+CREATE INDEX IDX_Producto_Nombre ON Producto(nombre);
+CREATE INDEX IDX_Cliente_ApellidosNombre ON Cliente(apellidoP, primerNombre);
+CREATE INDEX IDX_Venta_FechaVenta ON Venta(fechaVenta);
+GO
+
+ALTER TABLE Producto ADD CONSTRAINT CHK_Producto_StockPositivo CHECK (stock >= 0);
+ALTER TABLE Producto ADD CONSTRAINT CHK_Producto_CostoPositivo CHECK (costo >= 0);
+ALTER TABLE Globo ADD CONSTRAINT CHK_Globo_StockPositivo CHECK (stock >= 0);
+ALTER TABLE Globo ADD CONSTRAINT CHK_Globo_CostoPositivo CHECK (costo >= 0);
+GO
+
+-- ============================================
+-- 8. PROCEDIMIENTOS ALMACENADOS
+-- ============================================
+PRINT 'Creando procedimientos almacenados...';
+GO
+
+CREATE OR ALTER PROCEDURE sp_ObtenerKPIsDashboard
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @Hoy DATE = CAST(GETDATE() AS DATE);
+    DECLARE @InicioSemana DATE = DATEADD(DAY, -6, @Hoy);
+    DECLARE @InicioMes DATE = DATEFROMPARTS(YEAR(@Hoy), MONTH(@Hoy), 1);
+
+    -- RESULTADO 1: KPIs numéricos principales
+    SELECT 
+        ISNULL(SUM(CASE WHEN CAST(fechaVenta AS DATE) = @Hoy THEN importeTotal ELSE 0 END), 0) AS VentasHoy,
+        ISNULL(SUM(CASE WHEN CAST(fechaVenta AS DATE) >= @InicioSemana THEN importeTotal ELSE 0 END), 0) AS Ventas7Dias,
+        ISNULL(SUM(CASE WHEN fechaVenta >= @InicioMes THEN importeTotal ELSE 0 END), 0) AS VentasMes,
+        ISNULL(AVG(CASE WHEN CAST(fechaVenta AS DATE) = @Hoy THEN importeTotal ELSE NULL END), 0) AS TicketPromedioHoy,
+        (SELECT COUNT(*) FROM (SELECT productoId FROM Producto WHERE stock <= 10 AND Activo = 1 UNION ALL SELECT globoId FROM Globo WHERE stock <= 10 AND Activo = 1) AS T) AS TotalStockCritico,
+        (SELECT COUNT(DISTINCT clienteId) FROM Venta WHERE fechaVenta >= @InicioMes) AS TotalClientesFrecuentes
+    FROM Venta;
+
+    -- RESULTADO 2: Top 3 de productos en stock crítico
+    SELECT TOP 3 Nombre, Stock FROM (SELECT nombre, stock FROM Producto WHERE stock <= 10 AND Activo = 1 UNION ALL SELECT SUBSTRING(material, 1, 1) + '.' + color + ' ' + tamanio AS Nombre, stock FROM Globo g LEFT JOIN Globo_Tamanio gt ON g.globoId = gt.globoId WHERE g.stock <= 10 AND g.Activo = 1) AS ItemsCriticos ORDER BY Stock ASC;
+
+    -- RESULTADO 3: Top 3 de clientes frecuentes del mes
+    SELECT TOP 3 c.primerNombre + ' ' + c.apellidoP AS NombreCliente FROM Venta v JOIN Cliente c ON v.clienteId = c.clienteId WHERE v.fechaVenta >= @InicioMes AND c.Activo = 1 GROUP BY c.primerNombre, c.apellidoP ORDER BY COUNT(v.ventaId) DESC;
+
+    -- RESULTADO 4: Top cliente del mes por monto
+    SELECT TOP 1 c.primerNombre + ' ' + c.apellidoP AS NombreTopCliente, SUM(v.importeTotal) AS TotalTopCliente FROM Venta v JOIN Cliente c ON v.clienteId = c.clienteId WHERE v.fechaVenta >= @InicioMes AND c.Activo = 1 GROUP BY c.primerNombre, c.apellidoP ORDER BY SUM(v.importeTotal) DESC;
+
+    -- RESULTADO 5: Productos más vendidos (Día, Semana, Mes)
+    WITH VentasDetalle AS (SELECT 'Producto' AS Tipo, p.nombre, dvp.cantidad, v.fechaVenta FROM Detalle_Venta_Producto dvp JOIN Venta v ON dvp.ventaId = v.ventaId JOIN Producto p ON dvp.productoId = p.productoId WHERE p.Activo = 1 UNION ALL SELECT 'Globo' AS Tipo, SUBSTRING(g.material, 1, 1) + '.' + g.color + ' ' + gt.tamanio, dvg.cantidad, v.fechaVenta FROM Detalle_Venta_Globo dvg JOIN Venta v ON dvg.ventaId = v.ventaId JOIN Globo g ON dvg.globoId = g.globoId LEFT JOIN Globo_Tamanio gt ON g.globoId = gt.globoId WHERE g.Activo = 1), RankingVentas AS (SELECT Periodo, Nombre, CantidadTotal, ROW_NUMBER() OVER(PARTITION BY Periodo ORDER BY CantidadTotal DESC) as rn FROM (SELECT 'Dia' AS Periodo, Nombre, SUM(cantidad) as CantidadTotal FROM VentasDetalle WHERE CAST(fechaVenta AS DATE) = @Hoy GROUP BY Nombre UNION ALL SELECT 'Semana' AS Periodo, Nombre, SUM(cantidad) as CantidadTotal FROM VentasDetalle WHERE CAST(fechaVenta AS DATE) >= @InicioSemana GROUP BY Nombre UNION ALL SELECT 'Mes' AS Periodo, Nombre, SUM(cantidad) as CantidadTotal FROM VentasDetalle WHERE fechaVenta >= @InicioMes GROUP BY Nombre) Sub) SELECT Periodo, Nombre, CantidadTotal FROM RankingVentas WHERE rn = 1;
+
+    -- RESULTADO 6: Ventas detalladas de los últimos 7 días para la gráfica
+    SELECT CAST(fechaVenta AS DATE) AS Fecha, SUM(importeTotal) AS Total
+    FROM Venta WHERE CAST(fechaVenta AS DATE) >= @InicioSemana
+    GROUP BY CAST(fechaVenta AS DATE) ORDER BY Fecha ASC;
+
+END
+GO
+
+PRINT 'Base de datos Globeriadb y sus objetos han sido creados exitosamente.';
+GO
