@@ -1,5 +1,8 @@
-﻿using System.Windows;
-using System.Windows.Input; // Necesario para KeyEventArgs
+﻿using System;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Media;
 using TiendaGlobosLaFiesta.Data;
 
 namespace TiendaGlobosLaFiesta
@@ -9,42 +12,70 @@ namespace TiendaGlobosLaFiesta
         public RecuperarContrasenaWindow()
         {
             InitializeComponent();
-            txtUsername.Focus(); // Pone el foco en el primer campo al abrir
+            txtUsername.Focus(); // foco inicial
         }
 
-        private void BtnConfirmar_Click(object sender, RoutedEventArgs e)
+        private async void BtnConfirmar_Click(object sender, RoutedEventArgs e)
         {
+            // limpias el mensaje antes
+            lblMensaje.Text = "";
+            lblMensaje.Foreground = Brushes.Crimson;
+
             // Validaciones de la UI
             if (string.IsNullOrWhiteSpace(txtUsername.Text) ||
                 string.IsNullOrWhiteSpace(txtTelefono.Text) ||
                 string.IsNullOrWhiteSpace(txtNuevaContrasena.Password) ||
                 string.IsNullOrWhiteSpace(txtConfirmarContrasena.Password))
             {
-                MessageBox.Show("Todos los campos son obligatorios.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                lblMensaje.Text = "Todos los campos son obligatorios.";
                 return;
             }
 
             if (!long.TryParse(txtTelefono.Text, out long telefono))
             {
-                MessageBox.Show("El número de teléfono debe contener solo números.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                lblMensaje.Text = "El número de teléfono debe contener solo números.";
                 return;
             }
 
             if (txtNuevaContrasena.Password != txtConfirmarContrasena.Password)
             {
-                MessageBox.Show("Las nuevas contraseñas no coinciden.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                lblMensaje.Text = "Las nuevas contraseñas no coinciden.";
                 return;
             }
 
-            // Llamada al servicio de autenticación
-            if (AuthService.RestablecerContrasena(txtUsername.Text, telefono, txtNuevaContrasena.Password, out string mensaje))
+            // Deshabilitar botón y ejecutar en hilo de fondo
+            btnConfirmar.IsEnabled = false;
+            lblMensaje.Text = "Procesando, espere...";
+
+            try
             {
-                MessageBox.Show(mensaje, "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
-                this.Close(); // Cierra la ventana si el cambio fue exitoso
+                // Inicializa 'mensaje' antes de usarlo con out
+                string mensaje = "";
+                bool exito = await Task.Run(() =>
+                    AuthService.RestablecerContrasena(txtUsername.Text.Trim(), telefono, txtNuevaContrasena.Password, out mensaje)
+                );
+
+                if (exito)
+                {
+                    lblMensaje.Foreground = Brushes.Green;
+                    lblMensaje.Text = string.IsNullOrWhiteSpace(mensaje) ? "Contraseña actualizada correctamente." : mensaje;
+                    await Task.Delay(1200);
+                    this.Close();
+                }
+                else
+                {
+                    lblMensaje.Foreground = Brushes.Crimson;
+                    lblMensaje.Text = string.IsNullOrWhiteSpace(mensaje) ? "No se pudo actualizar la contraseña." : mensaje;
+                }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show(mensaje, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                lblMensaje.Foreground = Brushes.Crimson;
+                lblMensaje.Text = "Error inesperado: " + ex.Message;
+            }
+            finally
+            {
+                btnConfirmar.IsEnabled = true;
             }
         }
 
@@ -54,37 +85,24 @@ namespace TiendaGlobosLaFiesta
         }
 
         // --- MÉTODOS PARA EL FLUJO CON LA TECLA ENTER ---
-
         private void TxtUsername_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Enter)
-            {
-                txtTelefono.Focus();
-            }
+            if (e.Key == Key.Enter) txtTelefono.Focus();
         }
 
         private void TxtTelefono_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Enter)
-            {
-                txtNuevaContrasena.Focus();
-            }
+            if (e.Key == Key.Enter) txtNuevaContrasena.Focus();
         }
 
         private void TxtNuevaContrasena_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Enter)
-            {
-                txtConfirmarContrasena.Focus();
-            }
+            if (e.Key == Key.Enter) txtConfirmarContrasena.Focus();
         }
 
         private void TxtConfirmarContrasena_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Enter)
-            {
-                BtnConfirmar_Click(sender, new RoutedEventArgs());
-            }
+            if (e.Key == Key.Enter) BtnConfirmar_Click(sender, new RoutedEventArgs());
         }
     }
 }

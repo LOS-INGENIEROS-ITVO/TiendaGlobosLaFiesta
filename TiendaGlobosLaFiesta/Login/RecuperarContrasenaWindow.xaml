@@ -1,38 +1,98 @@
 ﻿<Window x:Class="TiendaGlobosLaFiesta.RecuperarContrasenaWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Recuperar Contraseña" Height="450" Width="400"
+        Title="Recuperar Contraseña" Height="543" Width="400"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None" AllowsTransparency="True"
         Background="Transparent" ResizeMode="NoResize">
 
-    <Border CornerRadius="15" Background="White" BorderBrush="#DDD" BorderThickness="1" Margin="0,0,0,-78">
+    <Window.Resources>
+        <SolidColorBrush x:Key="AccentColorBrush" Color="#FF7E5F"/>
+
+        <!-- Plantilla para TextBox/PasswordBox con borde redondeado e icono -->
+        <ControlTemplate x:Key="InputBoxTemplate" TargetType="{x:Type Control}">
+            <Border x:Name="border" Background="White" BorderBrush="#C4C4C4" BorderThickness="1" CornerRadius="8" Padding="5">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Image Source="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"
+                           Width="18" Height="18" Margin="4,0,8,0" VerticalAlignment="Center"/>
+                    <ScrollViewer x:Name="PART_ContentHost" Grid.Column="1" VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                    <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentColorBrush}" />
+                    <Setter TargetName="border" Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect ShadowDepth="0" BlurRadius="6" Color="#FF7E5F" Opacity="0.15"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+    </Window.Resources>
+
+    <Border CornerRadius="20">
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#F8FBFF" Offset="0"/>
+                <GradientStop Color="#E0E7FF" Offset="1"/>
+            </LinearGradientBrush>
+        </Border.Background>
         <Border.Effect>
-            <DropShadowEffect ShadowDepth="0" BlurRadius="20" Color="Black" Opacity="0.1"/>
+            <DropShadowEffect ShadowDepth="0" BlurRadius="15" Color="Black" Opacity="0.12"/>
         </Border.Effect>
-        <Grid Height="526" VerticalAlignment="Bottom">
-            <Button Content="✖" Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Top"
-                    Background="Transparent" BorderThickness="0" Foreground="#AAA" FontWeight="Bold" 
-                    FontSize="14" Click="BtnCerrar_Click" Cursor="Hand" Margin="0,10,10,0"/>
 
-            <StackPanel VerticalAlignment="Center" Margin="30">
-                <TextBlock Text="🔑" FontSize="48" TextAlignment="Center" Margin="0,0,0,10"/>
-                <TextBlock Text="Recuperar Contraseña" FontSize="24" FontWeight="Bold" Foreground="#333" TextAlignment="Center" Margin="0,0,0,20"/>
+        <Grid Margin="15">
+            <!-- Botón cerrar -->
+            <Button Content="✖" Width="28" Height="28"
+                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                    Background="Transparent" BorderThickness="0"
+                    Foreground="#777" FontWeight="Bold" 
+                    FontSize="14" Click="BtnCerrar_Click"
+                    Cursor="Hand" ToolTip="Cerrar ventana"/>
 
-                <TextBlock Text="Nombre de Usuario:" Margin="0,0,0,5"/>
-                <TextBox x:Name="txtUsername" Padding="5" FontSize="14" KeyDown="TxtUsername_KeyDown"/>
+            <!-- Contenido principal -->
+            <StackPanel x:Name="FormPanel" VerticalAlignment="Top" Margin="0,40,0,0" Orientation="Vertical">
+                <TextBlock Text="🔑" FontSize="48" TextAlignment="Center" Margin="0,0,0,8" HorizontalAlignment="Center"/>
+                <TextBlock Text="Recuperar Contraseña" FontSize="22" FontWeight="Bold" 
+                           Foreground="#333" TextAlignment="Center" Margin="0,0,0,15"/>
 
-                <TextBlock Text="Número de Teléfono Registrado:" Margin="0,15,0,5"/>
-                <TextBox x:Name="txtTelefono" Padding="5" FontSize="14" KeyDown="TxtTelefono_KeyDown"/>
+                <!-- Usuario -->
+                <TextBlock Text="👤 Usuario:" FontWeight="SemiBold" Foreground="#444" Margin="0,0,0,3"/>
+                <TextBox x:Name="txtUsername" FontSize="14" KeyDown="TxtUsername_KeyDown"
+                         Template="{StaticResource InputBoxTemplate}" Tag="/Recursos/user32.png" />
 
-                <TextBlock Text="Nueva Contraseña:" Margin="0,15,0,5"/>
-                <PasswordBox x:Name="txtNuevaContrasena" Padding="5" FontSize="14" KeyDown="TxtNuevaContrasena_KeyDown"/>
+                <!-- Teléfono -->
+                <TextBlock Text="📱 Teléfono Registrado:" FontWeight="SemiBold" Foreground="#444" Margin="0,10,0,3"/>
+                <TextBox x:Name="txtTelefono" FontSize="14" KeyDown="TxtTelefono_KeyDown"
+                         Template="{StaticResource InputBoxTemplate}" Tag="/Recursos/phone32.png"/>
 
-                <TextBlock Text="Confirmar Nueva Contraseña:" Margin="0,15,0,5"/>
-                <PasswordBox x:Name="txtConfirmarContrasena" Padding="5" FontSize="14" KeyDown="TxtConfirmarContrasena_KeyDown"/>
+                <!-- Nueva contraseña -->
+                <TextBlock Text="🔒 Nueva Contraseña:" FontWeight="SemiBold" Foreground="#444" Margin="0,10,0,3"/>
+                <PasswordBox x:Name="txtNuevaContrasena" FontSize="14" KeyDown="TxtNuevaContrasena_KeyDown"
+                             Template="{StaticResource InputBoxTemplate}" Tag="/Recursos/lock32.png"/>
 
-                <Button x:Name="btnConfirmar" Content="Confirmar" Height="40" FontSize="16" FontWeight="Bold" Margin="0,25,0,0"
-                        Click="BtnConfirmar_Click" Foreground="White" Background="#FF7E5F"/>
+                <!-- Confirmar contraseña -->
+                <TextBlock Text="✅ Confirmar Contraseña:" FontWeight="SemiBold" Foreground="#444" Margin="0,10,0,3"/>
+                <PasswordBox x:Name="txtConfirmarContrasena" FontSize="14" KeyDown="TxtConfirmarContrasena_KeyDown"
+                             Template="{StaticResource InputBoxTemplate}" Tag="/Recursos/lock32.png"/>
+
+                <!-- Mensaje interno -->
+                <TextBlock x:Name="lblMensaje" Text="" Foreground="Crimson" TextWrapping="Wrap" TextAlignment="Center" Margin="0,8,0,0" MinHeight="25"/>
+
+                <!-- Botón confirmar -->
+                <Button x:Name="btnConfirmar" Content="Confirmar" Height="42" Margin="0,10,0,0"
+                        FontSize="15" FontWeight="Bold" Cursor="Hand"
+                        Click="BtnConfirmar_Click"
+                        Foreground="White" Background="{StaticResource AccentColorBrush}">
+                    <Button.Effect>
+                        <DropShadowEffect ShadowDepth="1" BlurRadius="6" Color="Black" Opacity="0.18"/>
+                    </Button.Effect>
+                </Button>
             </StackPanel>
         </Grid>
     </Border>

@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System;
+using System.Data;
 using System.Data.SqlClient;
 using TiendaGlobosLaFiesta.Modelos;
 
@@ -32,24 +33,9 @@ namespace TiendaGlobosLaFiesta.Data
                 }
 
                 DataRow row = dt.Rows[0];
-                string passwordHashFromDB = row["passwordHash"].ToString();
+                string passwordHashFromDB = row["passwordHash"].ToString().Trim();
 
-                try
-                {
-                    string hashGeneradoAhora = Services.PasswordService.HashPassword("admin");
-                    bool controlTest = Services.PasswordService.VerifyPassword("admin", hashGeneradoAhora);
-                    bool dbTest = Services.PasswordService.VerifyPassword(password, passwordHashFromDB);
-                    bool dbTrimmedTest = Services.PasswordService.VerifyPassword(password, passwordHashFromDB.Trim());
-
-
-                }
-                catch (Exception ex)
-                {
-                    System.Windows.MessageBox.Show($"Error en la validación: {ex.Message}");
-                }
-
-                // Lógica de Verificación Real
-                if (!Services.PasswordService.VerifyPassword(password, passwordHashFromDB.Trim()))
+                if (!Services.PasswordService.VerifyPassword(password, passwordHashFromDB))
                 {
                     mensaje = "Contraseña incorrecta.";
                     return false;
@@ -72,17 +58,15 @@ namespace TiendaGlobosLaFiesta.Data
             }
         }
 
-
         public static bool RestablecerContrasena(string username, long telefono, string nuevaContrasena, out string mensaje)
         {
             try
             {
-                // Primero, verificamos que el usuario y el teléfono coincidan.
                 string queryVerificacion = @"
-            SELECT e.telefono 
-            FROM Usuarios u
-            INNER JOIN Empleado e ON u.empleadoId = e.empleadoId
-            WHERE u.username = @username";
+                    SELECT e.telefono 
+                    FROM Usuarios u
+                    INNER JOIN Empleado e ON u.empleadoId = e.empleadoId
+                    WHERE u.username = @username";
 
                 var paramVerificacion = new[] { new SqlParameter("@username", username) };
                 object telefonoResult = DbHelper.ExecuteScalar(queryVerificacion, paramVerificacion);
@@ -104,9 +88,9 @@ namespace TiendaGlobosLaFiesta.Data
                 string queryUpdate = "UPDATE Usuarios SET passwordHash = @hash WHERE username = @username";
                 var paramUpdate = new[]
                 {
-            new SqlParameter("@hash", nuevoHash),
-            new SqlParameter("@username", username)
-        };
+                    new SqlParameter("@hash", nuevoHash),
+                    new SqlParameter("@username", username)
+                };
 
                 int filasAfectadas = DbHelper.ExecuteNonQuery(queryUpdate, paramUpdate);
 

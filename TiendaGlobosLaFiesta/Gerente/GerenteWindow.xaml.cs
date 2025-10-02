@@ -1,8 +1,8 @@
-﻿using System.Windows;
+﻿using System.Collections.Generic;
+using System.Windows;
 using System.Windows.Controls;
 using TiendaGlobosLaFiesta.Modelos;
 using TiendaGlobosLaFiesta.Views;
-
 
 namespace TiendaGlobosLaFiesta
 {
@@ -16,12 +16,11 @@ namespace TiendaGlobosLaFiesta
             InitializeComponent();
             RolUsuario = rol;
 
-            txtBienvenida.Text = $"Bienvenido, {SesionActual.Username}";
+            txtBienvenida.Text = $"Bienvenido, {SesionActual.NombreEmpleadoCompleto}";
 
             ConfigurarPermisos(rol);
             CargarDashboard();
         }
-
 
         private void ConfigurarPermisos(string rol)
         {
@@ -39,8 +38,6 @@ namespace TiendaGlobosLaFiesta
             boton.IsEnabled = false;
         }
 
-
-
         private void MostrarModulo(UserControl control)
         {
             MainContent.Content = control;
@@ -48,6 +45,13 @@ namespace TiendaGlobosLaFiesta
         }
 
         // BOTONES DEL MENÚ
+        private void BtnDashboard_Click(object sender, RoutedEventArgs e)
+        {
+            if (!Modulos.ContainsKey("Dashboard"))
+                Modulos["Dashboard"] = new DashboardGerenteControl();
+            MostrarModulo(Modulos["Dashboard"]);
+        }
+
         private void BtnVentas_Click(object sender, RoutedEventArgs e)
         {
             if (!Modulos.ContainsKey("Ventas"))
@@ -55,23 +59,17 @@ namespace TiendaGlobosLaFiesta
                 var ventasControl = new VentasControl();
                 Modulos["Ventas"] = ventasControl;
 
-                // 🔗 Suscribir evento cuando el módulo Ventas se crea
-                if (Modulos.ContainsKey("Dashboard") && Modulos["Dashboard"] is TiendaGlobosLaFiesta.Views.DashboardGerenteControl dashboardControl)
-                {
+                // Suscribir evento para refrescar dashboard si es necesario
+                if (Modulos.ContainsKey("Dashboard") && Modulos["Dashboard"] is DashboardGerenteControl dashboardControl)
                     ventasControl.VentaRealizada += dashboardControl.RefrescarKPIs;
-                }
             }
-
             MostrarModulo(Modulos["Ventas"]);
         }
-
 
         private void BtnInventario_Click(object sender, RoutedEventArgs e)
         {
             if (!Modulos.ContainsKey("Inventario"))
-            {
                 Modulos["Inventario"] = new InventarioControl();
-            }
             MostrarModulo(Modulos["Inventario"]);
         }
 
@@ -103,19 +101,10 @@ namespace TiendaGlobosLaFiesta
             this.Close();
         }
 
-
         private void CargarDashboard()
         {
             if (!Modulos.ContainsKey("Dashboard"))
-                Modulos["Dashboard"] = new TiendaGlobosLaFiesta.Views.DashboardGerenteControl();
-
-            MostrarModulo(Modulos["Dashboard"]);
-        }
-
-        private void BtnDashboard_Click(object sender, RoutedEventArgs e)
-        {
-            if (!Modulos.ContainsKey("Dashboard"))
-                Modulos["Dashboard"] = new TiendaGlobosLaFiesta.Views.DashboardGerenteControl();
+                Modulos["Dashboard"] = new DashboardGerenteControl();
             MostrarModulo(Modulos["Dashboard"]);
         }
     }
