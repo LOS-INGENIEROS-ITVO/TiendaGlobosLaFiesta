@@ -1,125 +1,184 @@
 ﻿<UserControl x:Class="TiendaGlobosLaFiesta.Views.InventarioControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:TiendaGlobosLaFiesta.ViewModels"
+             xmlns:local="clr-namespace:TiendaGlobosLaFiesta.Views"
              xmlns:conv="clr-namespace:TiendaGlobosLaFiesta.Converters"
-             Width="800" Height="600">
+             MinHeight="600" MinWidth="900">
 
     <UserControl.Resources>
         <!-- Converters -->
-        <conv:LessThanOrEqualTo10Converter x:Key="LessThanOrEqualTo10Converter"/>
-        <conv:StockStatusToColorConverter x:Key="StockStatusToColorConverter"/>
-        <conv:NullOrEmptyToDashConverter x:Key="NullOrEmptyToDashConverter"/>
+        <conv:StockStatusToColorConverter x:Key="StockColor"/>
+        <conv:NullOrEmptyToDashConverter x:Key="NullToDash"/>
 
-        <!-- RowStyle para resaltar stock crítico -->
-        <Style x:Key="ProductoRowStyle" TargetType="DataGridRow">
-            <Setter Property="Background" Value="{Binding Stock, Converter={StaticResource StockStatusToColorConverter}}"/>
+        <!-- Estilos generales -->
+        <Style TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="RowBackground" Value="White"/>
+            <Setter Property="AlternatingRowBackground" Value="#F0F0F0"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="Margin" Value="5"/>
         </Style>
-        <Style x:Key="GloboRowStyle" TargetType="DataGridRow">
-            <Setter Property="Background" Value="{Binding Stock, Converter={StaticResource StockStatusToColorConverter}}"/>
+
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Background" Value="#3498db"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#2980b9"/>
+            <Setter Property="FontWeight" Value="Bold"/>
         </Style>
     </UserControl.Resources>
 
-    <UserControl.DataContext>
-        <vm:InventarioViewModel/>
-    </UserControl.DataContext>
-
     <Grid Margin="10">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
-
         <TabControl>
-            <!-- Productos Tab -->
+
+            <!-- STOCK CRÍTICO -->
+            <TabItem Header="Stock Crítico">
+                <DataGrid ItemsSource="{Binding StockCritico}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                          RowHeight="35" FontSize="14" >
+                    <DataGrid.Columns>
+
+                        <!-- Icono -->
+                        <DataGridTemplateColumn Header="" Width="40">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Image Width="24" Height="24">
+                                        <Image.Source>
+                                            <MultiBinding Converter="{StaticResource NullToDash}">
+                                                <Binding Path="Tipo"/>
+                                            </MultiBinding>
+                                        </Image.Source>
+                                    </Image>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- Tipo -->
+                        <DataGridTextColumn Header="Tipo" Binding="{Binding Tipo}" Width="100">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <!-- Nombre -->
+                        <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre, Converter={StaticResource NullToDash}}" Width="*">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <!-- Color -->
+                        <DataGridTextColumn Header="Color" Binding="{Binding Color, Converter={StaticResource NullToDash}}" Width="100">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <!-- Unidad -->
+                        <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad, Converter={StaticResource NullToDash}}" Width="80">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <!-- Stock -->
+                        <DataGridTextColumn Header="Stock" Binding="{Binding StockActual}" Width="80">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{Binding StockActual, Converter={StaticResource StockColor}}"/>
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <!-- Precio -->
+                        <DataGridTextColumn Header="Precio" Binding="{Binding Precio, StringFormat=C2, Converter={StaticResource NullToDash}}" Width="100">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <!-- PRODUCTOS -->
             <TabItem Header="Productos">
-                <Grid Margin="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- Filtro de búsqueda -->
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <TextBlock Text="Buscar producto:" VerticalAlignment="Center"/>
-                        <TextBox Width="200" Margin="5,0,0,0" 
-                                 Text="{Binding TextoBusquedaProducto, UpdateSourceTrigger=PropertyChanged}"/>
+                <DockPanel Margin="5">
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Agregar" Command="{Binding AgregarProductoCommand}"/>
+                        <Button Content="Editar" Command="{Binding EditarProductoCommand}"/>
+                        <Button Content="Eliminar" Command="{Binding EliminarProductoCommand}"/>
                     </StackPanel>
-
-                    <!-- DataGrid Productos -->
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding ProductosView}" 
-                              SelectedItem="{Binding ProductoSeleccionado}" 
-                              AutoGenerateColumns="False" 
-                              RowStyle="{StaticResource ProductoRowStyle}" 
-                              CanUserAddRows="False">
+                    <DataGrid ItemsSource="{Binding ProductosView}" SelectedItem="{Binding ProductoSeleccionado}" RowHeight="30" FontSize="14">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="ID" Binding="{Binding ProductoId}"/>
-                            <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}"/>
-                            <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad}"/>
-                            <DataGridTextColumn Header="Costo" Binding="{Binding Costo, StringFormat=C}"/>
-                            <DataGridTextColumn Header="Stock" Binding="{Binding Stock}"/>
+                            <DataGridTextColumn Header="ID" Binding="{Binding ProductoId, Converter={StaticResource NullToDash}}" Width="80"/>
+                            <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre, Converter={StaticResource NullToDash}}" Width="*"/>
+                            <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad, Converter={StaticResource NullToDash}}" Width="80"/>
+                            <DataGridTextColumn Header="Stock" Binding="{Binding Stock}" Width="80">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{Binding Stock, Converter={StaticResource StockColor}}"/>
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Costo" Binding="{Binding Costo, StringFormat=C2}" Width="100"/>
+                            <DataGridTextColumn Header="Proveedor" Binding="{Binding ProveedorId, Converter={StaticResource NullToDash}}" Width="150"/>
                         </DataGrid.Columns>
                     </DataGrid>
-
-                    <!-- Botones -->
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-                        <Button Content="Agregar" Width="100" Margin="5"
-                                Command="{Binding AgregarProductoCommand}"/>
-                        <Button Content="Editar" Width="100" Margin="5"
-                                Command="{Binding EditarProductoCommand}"/>
-                        <Button Content="Eliminar" Width="100" Margin="5"
-                                Command="{Binding EliminarProductoCommand}"/>
-                    </StackPanel>
-                </Grid>
+                </DockPanel>
             </TabItem>
 
-            <!-- Globos Tab -->
+            <!-- GLOBOS -->
             <TabItem Header="Globos">
-                <Grid Margin="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- Filtro de búsqueda -->
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <TextBlock Text="Buscar globo:" VerticalAlignment="Center"/>
-                        <TextBox Width="200" Margin="5,0,0,0" 
-                                 Text="{Binding TextoBusquedaGlobo, UpdateSourceTrigger=PropertyChanged}"/>
+                <DockPanel Margin="5">
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Agregar" Command="{Binding AgregarGloboCommand}"/>
+                        <Button Content="Editar" Command="{Binding EditarGloboCommand}"/>
+                        <Button Content="Eliminar" Command="{Binding EliminarGloboCommand}"/>
                     </StackPanel>
-
-                    <!-- DataGrid Globos -->
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding GlobosView}" 
-                              SelectedItem="{Binding GloboSeleccionado}" 
-                              AutoGenerateColumns="False" 
-                              RowStyle="{StaticResource GloboRowStyle}" 
-                              CanUserAddRows="False">
+                    <DataGrid ItemsSource="{Binding GlobosView}" SelectedItem="{Binding GloboSeleccionado}" RowHeight="30" FontSize="14">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="ID" Binding="{Binding GloboId}"/>
-                            <DataGridTextColumn Header="Material" Binding="{Binding Material}"/>
-                            <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad}"/>
-                            <DataGridTextColumn Header="Color" Binding="{Binding Color}"/>
-                            <DataGridTextColumn Header="Tamaño" Binding="{Binding Tamano, Converter={StaticResource NullOrEmptyToDashConverter}}"/>
-                            <DataGridTextColumn Header="Forma" Binding="{Binding Forma, Converter={StaticResource NullOrEmptyToDashConverter}}"/>
-                            <DataGridTextColumn Header="Temática" Binding="{Binding Tematica, Converter={StaticResource NullOrEmptyToDashConverter}}"/>
-                            <DataGridTextColumn Header="Stock" Binding="{Binding Stock}"/>
-                            <DataGridTextColumn Header="Costo" Binding="{Binding Costo, StringFormat=C}"/>
+                            <DataGridTextColumn Header="ID" Binding="{Binding GloboId, Converter={StaticResource NullToDash}}" Width="80"/>
+                            <DataGridTextColumn Header="Material" Binding="{Binding Material, Converter={StaticResource NullToDash}}" Width="120"/>
+                            <DataGridTextColumn Header="Color" Binding="{Binding Color, Converter={StaticResource NullToDash}}" Width="100"/>
+                            <DataGridTextColumn Header="Tamaño" Binding="{Binding TamanosString, Converter={StaticResource NullToDash}}" Width="120"/>
+                            <DataGridTextColumn Header="Forma" Binding="{Binding FormasString, Converter={StaticResource NullToDash}}" Width="120"/>
+                            <DataGridTextColumn Header="Temática" Binding="{Binding TematicasString, Converter={StaticResource NullToDash}}" Width="120"/>
+                            <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad, Converter={StaticResource NullToDash}}" Width="80"/>
+                            <DataGridTextColumn Header="Stock" Binding="{Binding Stock}" Width="80">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{Binding Stock, Converter={StaticResource StockColor}}"/>
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Costo" Binding="{Binding Costo, StringFormat=C2}" Width="100"/>
+                            <DataGridTextColumn Header="Proveedor" Binding="{Binding ProveedorId, Converter={StaticResource NullToDash}}" Width="150"/>
                         </DataGrid.Columns>
                     </DataGrid>
-
-                    <!-- Botones -->
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-                        <Button Content="Agregar" Width="100" Margin="5"
-                                Command="{Binding AgregarGloboCommand}"/>
-                        <Button Content="Editar" Width="100" Margin="5"
-                                Command="{Binding EditarGloboCommand}"/>
-                        <Button Content="Eliminar" Width="100" Margin="5"
-                                Command="{Binding EliminarGloboCommand}"/>
-                    </StackPanel>
-                </Grid>
+                </DockPanel>
             </TabItem>
+
         </TabControl>
     </Grid>
 </UserControl>

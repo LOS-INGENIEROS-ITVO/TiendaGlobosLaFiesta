@@ -1,17 +1,18 @@
 ﻿using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using TiendaGlobosLaFiesta.Models;
+using TiendaGlobosLaFiesta.Data;
 using System.Windows.Input;
 
 namespace TiendaGlobosLaFiesta.ViewModels
 {
-    public class InventarioViewModel : INotifyPropertyChanged
+    public class InventarioViewModel : BaseViewModel
     {
-        public ObservableCollection<StockCriticoItem> StockCritico { get; set; }
+        // Colecciones
         public ObservableCollection<Producto> ProductosView { get; set; }
         public ObservableCollection<Globo> GlobosView { get; set; }
+        public ObservableCollection<StockCriticoItem> StockCritico { get; set; }
 
+        // Selecciones
         private Producto _productoSeleccionado;
         public Producto ProductoSeleccionado
         {
@@ -26,9 +27,6 @@ namespace TiendaGlobosLaFiesta.ViewModels
             set { _globoSeleccionado = value; OnPropertyChanged(); }
         }
 
-        public string TextoBusquedaProducto { get; set; }
-        public string TextoBusquedaGlobo { get; set; }
-
         // Comandos
         public ICommand AgregarProductoCommand { get; set; }
         public ICommand EditarProductoCommand { get; set; }
@@ -40,29 +38,76 @@ namespace TiendaGlobosLaFiesta.ViewModels
 
         public InventarioViewModel()
         {
-            StockCritico = new ObservableCollection<StockCriticoItem>();
             ProductosView = new ObservableCollection<Producto>();
             GlobosView = new ObservableCollection<Globo>();
+            StockCritico = new ObservableCollection<StockCriticoItem>();
 
+            // Inicializar comandos
             AgregarProductoCommand = new RelayCommand(_ => AgregarProducto());
-            EditarProductoCommand = new RelayCommand(_ => EditarProducto());
-            EliminarProductoCommand = new RelayCommand(_ => EliminarProducto());
+            EditarProductoCommand = new RelayCommand(_ => EditarProducto(), _ => ProductoSeleccionado != null);
+            EliminarProductoCommand = new RelayCommand(_ => EliminarProducto(), _ => ProductoSeleccionado != null);
 
             AgregarGloboCommand = new RelayCommand(_ => AgregarGlobo());
-            EditarGloboCommand = new RelayCommand(_ => EditarGlobo());
-            EliminarGloboCommand = new RelayCommand(_ => EliminarGlobo());
+            EditarGloboCommand = new RelayCommand(_ => EditarGlobo(), _ => GloboSeleccionado != null);
+            EliminarGloboCommand = new RelayCommand(_ => EliminarGlobo(), _ => GloboSeleccionado != null);
+
+            // Cargar datos al iniciar
+            CargarDatos();
         }
 
-        private void AgregarProducto() { /* lógica */ }
-        private void EditarProducto() { /* lógica */ }
-        private void EliminarProducto() { /* lógica */ }
+        #region Carga de Datos
 
-        private void AgregarGlobo() { /* lógica */ }
-        private void EditarGlobo() { /* lógica */ }
-        private void EliminarGlobo() { /* lógica */ }
+        private void CargarDatos()
+        {
+            CargarProductos();
+            CargarGlobos();
+            CargarStockCritico();
+        }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string name = null) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        private void CargarProductos()
+        {
+            ProductosView.Clear();
+            var repo = new ProductoRepository();
+            foreach (var p in repo.ObtenerProductos())
+                ProductosView.Add(p);
+        }
+
+        private void CargarGlobos()
+        {
+            GlobosView.Clear();
+            var repo = new GloboRepository();
+            foreach (var g in repo.ObtenerGlobos())
+                GlobosView.Add(g);
+        }
+
+        private void CargarStockCritico()
+        {
+            StockCritico.Clear();
+            var repo = new StockRepository();
+
+            foreach (var p in repo.ObtenerProductosStockCritico())
+                StockCritico.Add(p);
+
+            foreach (var g in repo.ObtenerGlobosStockCritico())
+                StockCritico.Add(g);
+        }
+
+        #endregion
+
+        #region CRUD Productos
+
+        private void AgregarProducto() { /* lógica con ProductoRepository y ventana de edición */ }
+        private void EditarProducto() { /* lógica con ProductoRepository y ventana de edición */ }
+        private void EliminarProducto() { /* lógica con ProductoRepository y ventana de confirmación */ }
+
+        #endregion
+
+        #region CRUD Globos
+
+        private void AgregarGlobo() { /* lógica con GloboRepository y ventana de edición */ }
+        private void EditarGlobo() { /* lógica con GloboRepository y ventana de edición */ }
+        private void EliminarGlobo() { /* lógica con GloboRepository y ventana de confirmación */ }
+
+        #endregion
     }
 }

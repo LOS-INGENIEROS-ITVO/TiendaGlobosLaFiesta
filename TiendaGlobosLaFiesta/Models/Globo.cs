@@ -31,5 +31,10 @@ namespace TiendaGlobosLaFiesta.Models
             clon.Tematicas = new List<string>(this.Tematicas);
             return clon;
         }
+
+        public string TamanosString => Tamanos != null && Tamanos.Count > 0 ? string.Join(", ", Tamanos) : "---";
+        public string FormasString => Formas != null && Formas.Count > 0 ? string.Join(", ", Formas) : "---";
+        public string TematicasString => Tematicas != null && Tematicas.Count > 0 ? string.Join(", ", Tematicas) : "---";
+
     }
 }

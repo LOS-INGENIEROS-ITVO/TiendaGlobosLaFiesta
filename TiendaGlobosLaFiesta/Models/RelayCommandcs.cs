@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Input;
 
-namespace TiendaGlobosLaFiesta.ViewModels
+namespace TiendaGlobosLaFiesta
 {
     public class RelayCommand : ICommand
     {
@@ -14,12 +14,14 @@ namespace TiendaGlobosLaFiesta.ViewModels
             _canExecute = canExecute;
         }
 
-        public event EventHandler CanExecuteChanged;
-
-        public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
-
-        public bool CanExecute(object parameter) => _canExecute == null || _canExecute(parameter);
+        public bool CanExecute(object parameter) => _canExecute?.Invoke(parameter) ?? true;
 
         public void Execute(object parameter) => _execute(parameter);
+
+        public event EventHandler CanExecuteChanged
+        {
+            add => CommandManager.RequerySuggested += value;
+            remove => CommandManager.RequerySuggested -= value;
+        }
     }
 }
