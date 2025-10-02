@@ -34,6 +34,8 @@ namespace TiendaGlobosLaFiesta.Models
 
         public string TamanosString => Tamanos != null && Tamanos.Count > 0 ? string.Join(", ", Tamanos) : "---";
         public string FormasString => Formas != null && Formas.Count > 0 ? string.Join(", ", Formas) : "---";
+
+        public string UnidadDisplay => string.IsNullOrWhiteSpace(Unidad) ? "---" : Unidad;
         public string TematicasString => Tematicas != null && Tematicas.Count > 0 ? string.Join(", ", Tematicas) : "---";
 
     }

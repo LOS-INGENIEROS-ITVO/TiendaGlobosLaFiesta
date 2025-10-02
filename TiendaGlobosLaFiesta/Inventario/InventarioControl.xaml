@@ -39,7 +39,6 @@
                 <DataGrid ItemsSource="{Binding StockCritico}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                           RowHeight="35" FontSize="14" >
                     <DataGrid.Columns>
-
                         <!-- Icono -->
                         <DataGridTemplateColumn Header="" Width="40">
                             <DataGridTemplateColumn.CellTemplate>

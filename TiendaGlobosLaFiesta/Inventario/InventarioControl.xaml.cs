@@ -12,7 +12,7 @@ namespace TiendaGlobosLaFiesta.Views
 
         public InventarioControl()
         {
-            InitializeComponent(); // Esto ya funcionará
+            InitializeComponent();
 
             ViewModel = new InventarioViewModel();
             this.DataContext = ViewModel;
@@ -26,6 +26,7 @@ namespace TiendaGlobosLaFiesta.Views
             var vm = this.DataContext;
             if (vm == null) return;
 
+            // Intenta invocar CargarDatos o CargarDatosIniciales
             var mi = vm.GetType().GetMethod("CargarDatos", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                   ?? vm.GetType().GetMethod("CargarDatosIniciales", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
@@ -33,3 +34,4 @@ namespace TiendaGlobosLaFiesta.Views
         }
     }
 }
+ 
