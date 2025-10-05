@@ -1,7 +1,10 @@
-﻿using System.Collections.ObjectModel;
-using TiendaGlobosLaFiesta.Models;
-using TiendaGlobosLaFiesta.Data;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Windows.Data;
 using System.Windows.Input;
+using TiendaGlobosLaFiesta.Data;
+using TiendaGlobosLaFiesta.Models;
 
 namespace TiendaGlobosLaFiesta.ViewModels
 {
@@ -31,18 +34,45 @@ namespace TiendaGlobosLaFiesta.ViewModels
         public ICommand AgregarProductoCommand { get; set; }
         public ICommand EditarProductoCommand { get; set; }
         public ICommand EliminarProductoCommand { get; set; }
-
         public ICommand AgregarGloboCommand { get; set; }
         public ICommand EditarGloboCommand { get; set; }
         public ICommand EliminarGloboCommand { get; set; }
 
+        // Filtros
+        private string _stockCriticoFilter;
+        public string StockCriticoFilter
+        {
+            get => _stockCriticoFilter;
+            set { _stockCriticoFilter = value; OnPropertyChanged(); StockCriticoView?.Refresh(); }
+        }
+
+        private string _productosFilter;
+        public string ProductosFilter
+        {
+            get => _productosFilter;
+            set { _productosFilter = value; OnPropertyChanged(); ProductosViewFiltered?.Refresh(); }
+        }
+
+        private string _globosFilter;
+        public string GlobosFilter
+        {
+            get => _globosFilter;
+            set { _globosFilter = value; OnPropertyChanged(); GlobosViewFiltered?.Refresh(); }
+        }
+
+        // Vistas filtradas
+        public ICollectionView StockCriticoView { get; set; }
+        public ICollectionView ProductosViewFiltered { get; set; }
+        public ICollectionView GlobosViewFiltered { get; set; }
+
+        // Constructor
         public InventarioViewModel()
         {
             ProductosView = new ObservableCollection<Producto>();
             GlobosView = new ObservableCollection<Globo>();
             StockCritico = new ObservableCollection<StockCriticoItem>();
 
-            // Inicializar comandos
+            // Comandos
             AgregarProductoCommand = new RelayCommand(_ => AgregarProducto());
             EditarProductoCommand = new RelayCommand(_ => EditarProducto(), _ => ProductoSeleccionado != null);
             EliminarProductoCommand = new RelayCommand(_ => EliminarProducto(), _ => ProductoSeleccionado != null);
@@ -51,12 +81,41 @@ namespace TiendaGlobosLaFiesta.ViewModels
             EditarGloboCommand = new RelayCommand(_ => EditarGlobo(), _ => GloboSeleccionado != null);
             EliminarGloboCommand = new RelayCommand(_ => EliminarGlobo(), _ => GloboSeleccionado != null);
 
-            // Cargar datos al iniciar
+            // Cargar datos
             CargarDatos();
+
+            // Inicializar vistas filtradas
+            StockCriticoView = CollectionViewSource.GetDefaultView(StockCritico);
+            ProductosViewFiltered = CollectionViewSource.GetDefaultView(ProductosView);
+            GlobosViewFiltered = CollectionViewSource.GetDefaultView(GlobosView);
+
+            // Filtros
+            StockCriticoView.Filter = o =>
+            {
+                if (string.IsNullOrEmpty(StockCriticoFilter)) return true;
+                if (o is StockCriticoItem item)
+                    return item.Nombre.Contains(StockCriticoFilter, StringComparison.OrdinalIgnoreCase);
+                return false;
+            };
+
+            ProductosViewFiltered.Filter = o =>
+            {
+                if (string.IsNullOrEmpty(ProductosFilter)) return true;
+                if (o is Producto p)
+                    return !string.IsNullOrEmpty(p.Nombre) && p.Nombre.Contains(ProductosFilter, StringComparison.OrdinalIgnoreCase);
+                return false;
+            };
+
+            GlobosViewFiltered.Filter = o =>
+            {
+                if (string.IsNullOrEmpty(GlobosFilter)) return true;
+                if (o is Globo g)
+                    return !string.IsNullOrEmpty(g.Nombre) && g.Nombre.Contains(GlobosFilter, StringComparison.OrdinalIgnoreCase);
+                return false;
+            };
         }
 
         #region Carga de Datos
-
         private void CargarDatos()
         {
             CargarProductos();
@@ -84,30 +143,20 @@ namespace TiendaGlobosLaFiesta.ViewModels
         {
             StockCritico.Clear();
             var repo = new StockRepository();
-
             foreach (var p in repo.ObtenerProductosStockCritico())
                 StockCritico.Add(p);
-
             foreach (var g in repo.ObtenerGlobosStockCritico())
                 StockCritico.Add(g);
         }
-
         #endregion
 
-        #region CRUD Productos
-
-        private void AgregarProducto() { /* lógica con ProductoRepository y ventana de edición */ }
-        private void EditarProducto() { /* lógica con ProductoRepository y ventana de edición */ }
-        private void EliminarProducto() { /* lógica con ProductoRepository y ventana de confirmación */ }
-
-        #endregion
-
-        #region CRUD Globos
-
-        private void AgregarGlobo() { /* lógica con GloboRepository y ventana de edición */ }
-        private void EditarGlobo() { /* lógica con GloboRepository y ventana de edición */ }
-        private void EliminarGlobo() { /* lógica con GloboRepository y ventana de confirmación */ }
-
+        #region CRUD Placeholder
+        private void AgregarProducto() { }
+        private void EditarProducto() { }
+        private void EliminarProducto() { }
+        private void AgregarGlobo() { }
+        private void EditarGlobo() { }
+        private void EliminarGlobo() { }
         #endregion
     }
 }

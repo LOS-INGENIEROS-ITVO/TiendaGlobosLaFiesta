@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace TiendaGlobosLaFiesta.Models
+﻿namespace TiendaGlobosLaFiesta.Models
 {
     public class Globo
     {
@@ -17,12 +15,14 @@ namespace TiendaGlobosLaFiesta.Models
         public List<string> Formas { get; set; } = new();
         public List<string> Tematicas { get; set; } = new();
 
-        public string Tamano => string.Join(", ", Tamanos);
-        public string Forma => string.Join(", ", Formas);
-        public string Tematica => string.Join(", ", Tematicas);
+        public string Tamano => Tamanos != null && Tamanos.Count > 0 ? string.Join(", ", Tamanos) : "---";
+        public string Forma => Formas != null && Formas.Count > 0 ? string.Join(", ", Formas) : "---";
+        public string Tematica => Tematicas != null && Tematicas.Count > 0 ? string.Join(", ", Tematicas) : "---";
+
         public string Nombre => $"{Material} {Tamano} {Forma}".Trim();
         public int VentasHoy { get; set; }
 
+        public string UnidadDisplay => string.IsNullOrWhiteSpace(Unidad) ? "---" : Unidad;
         public Globo Clone()
         {
             var clon = (Globo)this.MemberwiseClone();
@@ -31,12 +31,5 @@ namespace TiendaGlobosLaFiesta.Models
             clon.Tematicas = new List<string>(this.Tematicas);
             return clon;
         }
-
-        public string TamanosString => Tamanos != null && Tamanos.Count > 0 ? string.Join(", ", Tamanos) : "---";
-        public string FormasString => Formas != null && Formas.Count > 0 ? string.Join(", ", Formas) : "---";
-
-        public string UnidadDisplay => string.IsNullOrWhiteSpace(Unidad) ? "---" : Unidad;
-        public string TematicasString => Tematicas != null && Tematicas.Count > 0 ? string.Join(", ", Tematicas) : "---";
-
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
 using System.Windows.Data;
 
 namespace TiendaGlobosLaFiesta.Converters
@@ -7,16 +8,11 @@ namespace TiendaGlobosLaFiesta.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value == null || string.IsNullOrWhiteSpace(value.ToString()))
-            {
-                return "---";
-            }
+            if (value == null) return "---";
+            if (value is string s && string.IsNullOrWhiteSpace(s)) return "---";
             return value;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
     }
 }

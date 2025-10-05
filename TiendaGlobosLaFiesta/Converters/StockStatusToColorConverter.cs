@@ -11,16 +11,13 @@ namespace TiendaGlobosLaFiesta.Converters
         {
             if (value is int stock)
             {
-                if (stock == 0) return Brushes.Red;
+                if (stock <= 5) return Brushes.Red;
                 if (stock <= 10) return Brushes.Orange;
                 return Brushes.Green;
             }
-            return Brushes.Gray;
+            return Brushes.Black;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
     }
 }
