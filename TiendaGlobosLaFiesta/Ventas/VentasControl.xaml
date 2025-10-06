@@ -9,9 +9,7 @@
              d:DesignHeight="700" d:DesignWidth="1200"
              Background="White">
 
-    <UserControl.DataContext>
-        <vm:ModeloDeVistaVentas/>
-    </UserControl.DataContext>
+
 
     <UserControl.Resources>
         <conv:NullOrEmptyToDashConverter x:Key="EmptyToDashConverter"/>
@@ -44,6 +42,7 @@
                    HorizontalAlignment="Center" Margin="0,0,0,25"/>
 
         <TabControl Grid.Row="1" FontSize="14">
+            <!-- Registrar Venta -->
             <TabItem Header="Registrar Venta">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
@@ -53,75 +52,104 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
+                    <!-- Selección de Cliente -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,15">
                         <TextBlock Text="Cliente:" VerticalAlignment="Center" Margin="0,0,5,0" FontSize="16"/>
                         <ComboBox x:Name="cmbClientes" ItemsSource="{Binding Clientes}" Width="350" DisplayMemberPath="NombreCompleto"/>
                     </StackPanel>
 
+                    <!-- Pestañas Productos y Globos -->
                     <TabControl Grid.Row="1" Margin="0,0,0,15" FontSize="14">
+                        <!-- Productos -->
                         <TabItem Header="Productos 🎁">
-                            <DataGrid x:Name="dgProductos" ItemsSource="{Binding Productos}" AutoGenerateColumns="False" CanUserAddRows="False" MinHeight="350" RowHeight="40" IsReadOnly="True" ColumnHeaderStyle="{StaticResource CenteredHeader}" SelectionMode="Single" SelectionUnit="FullRow" HorizontalAlignment="Stretch" ColumnWidth="*">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="ID" Binding="{Binding ProductoId}" Width="170" ElementStyle="{StaticResource CenteredCell}"/>
-                                    <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
-                                    <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad}" Width="120" ElementStyle="{StaticResource CenteredCell}"/>
-                                    <DataGridTextColumn Header="Stock" Binding="{Binding Stock}" Width="100" ElementStyle="{StaticResource CenteredCell}"/>
-                                    <DataGridTextColumn Header="Costo" Binding="{Binding Costo, StringFormat=C}" Width="100" ElementStyle="{StaticResource CenteredCell}"/>
-                                    <DataGridTemplateColumn Header="Cantidad" Width="140">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                                    <Button Content="-" Style="{StaticResource CantidadButton}" Click="BtnDisminuirCantidad_Click" Tag="{Binding}" Background="#F44336" Margin="0,0,5,0"/>
-                                                    <Border CornerRadius="5" Background="LightYellow" Width="60" Height="40">
-                                                        <TextBox Text="{Binding Cantidad, UpdateSourceTrigger=PropertyChanged, FallbackValue=0}"
-                                                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                                        BorderThickness="0" Background="Transparent" 
-                                                        PreviewTextInput="Cantidad_PreviewTextInput" />
-                                                    </Border>
-                                                    <Button Content="+" Style="{StaticResource CantidadButton}" Click="BtnAumentarCantidad_Click" Tag="{Binding}" Background="#4CAF50" Margin="5,0,0,0"/>
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="Importe 💰" Binding="{Binding Importe, StringFormat=C}" Width="90" ElementStyle="{StaticResource CenteredCell}"/>
-                                </DataGrid.Columns>
-                            </DataGrid>
+                            <DockPanel LastChildFill="True">
+                                <!-- Barra de búsqueda -->
+                                <TextBox x:Name="txtBuscarProducto" Width="250" Height="30" Margin="0,0,0,5" DockPanel.Dock="Top"
+                                         HorizontalAlignment="Right" VerticalAlignment="Top"
+                                         FontStyle="Italic" Foreground="Gray"
+                                         Text="Buscar producto..." GotFocus="TextBox_GotFocus" LostFocus="TextBox_LostFocus"
+                                         TextChanged="TxtBuscarProducto_TextChanged"/>
+                                <!-- DataGrid de productos -->
+                                <DataGrid x:Name="dgProductos" ItemsSource="{Binding Productos}" AutoGenerateColumns="False"
+                                          CanUserAddRows="False" MinHeight="350" RowHeight="40" IsReadOnly="True"
+                                          ColumnHeaderStyle="{StaticResource CenteredHeader}" SelectionMode="Single"
+                                          SelectionUnit="FullRow" HorizontalAlignment="Stretch" ColumnWidth="*">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="ID" Binding="{Binding ProductoId}" Width="170" ElementStyle="{StaticResource CenteredCell}"/>
+                                        <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
+                                        <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad}" Width="120" ElementStyle="{StaticResource CenteredCell}"/>
+                                        <DataGridTextColumn Header="Stock" Binding="{Binding Stock}" Width="100" ElementStyle="{StaticResource CenteredCell}"/>
+                                        <DataGridTextColumn Header="Costo 💵" Binding="{Binding Costo, StringFormat=C}" Width="100" ElementStyle="{StaticResource CenteredCell}"/>
+                                        <DataGridTemplateColumn Header="Cantidad" Width="140">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                        <Button Content="-" Style="{StaticResource CantidadButton}" Click="BtnDisminuirCantidad_Click" Tag="{Binding}" Background="#F44336" Margin="0,0,5,0"/>
+                                                        <Border CornerRadius="5" Background="LightYellow" Width="60" Height="40">
+                                                            <TextBox Text="{Binding Cantidad, UpdateSourceTrigger=PropertyChanged, FallbackValue=0}"
+                                                                     HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                                     BorderThickness="0" Background="Transparent" 
+                                                                     PreviewTextInput="Cantidad_PreviewTextInput"/>
+                                                        </Border>
+                                                        <Button Content="+" Style="{StaticResource CantidadButton}" Click="BtnAumentarCantidad_Click" Tag="{Binding}" Background="#4CAF50" Margin="5,0,0,0"/>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTextColumn Header="Importe 💰" Binding="{Binding Importe, StringFormat=C}" Width="90" ElementStyle="{StaticResource CenteredCell}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </DockPanel>
                         </TabItem>
-                        <TabItem Header="Globos 🎈">
-                            <DataGrid x:Name="dgGlobos" ItemsSource="{Binding Globos}" AutoGenerateColumns="False" CanUserAddRows="False" MinHeight="350" RowHeight="40" IsReadOnly="True" ColumnHeaderStyle="{StaticResource CenteredHeader}" SelectionMode="Single" SelectionUnit="FullRow" HorizontalAlignment="Stretch" ColumnWidth="*">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="ID" Binding="{Binding GloboId}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
-                                    <DataGridTextColumn Header="Material 🎈" Binding="{Binding Material}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
-                                    <DataGridTextColumn Header="Color 🎨" Binding="{Binding Color}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
-                                    <DataGridTextColumn Header="Tamaño 📏" Binding="{Binding Tamano, Converter={StaticResource EmptyToDashConverter}}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
-                                    <DataGridTextColumn Header="Forma 🔷" Binding="{Binding Forma, Converter={StaticResource EmptyToDashConverter}}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
-                                    <DataGridTextColumn Header="Temática 🎉" Binding="{Binding Tematica, Converter={StaticResource EmptyToDashConverter}}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
-                                    <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad}" Width="120" ElementStyle="{StaticResource CenteredCell}"/>
-                                    <DataGridTextColumn Header="Stock" Binding="{Binding Stock}" Width="70" ElementStyle="{StaticResource CenteredCell}"/>
-                                    <DataGridTemplateColumn Header="Cantidad" Width="140">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                                    <Button Content="-" Style="{StaticResource CantidadButton}" Click="BtnDisminuirCantidad_Click" Tag="{Binding}" Background="#F44336" Margin="0,0,5,0"/>
-                                                    <Border CornerRadius="5" Background="LightYellow" Width="60" Height="40">
-                                                        <TextBox Text="{Binding Cantidad, UpdateSourceTrigger=PropertyChanged, FallbackValue=0}"
-                                                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                                        BorderThickness="0" Background="Transparent" 
-                                                        PreviewTextInput="Cantidad_PreviewTextInput" />
-                                                    </Border>
 
-                                                    <Button Content="+" Style="{StaticResource CantidadButton}" Click="BtnAumentarCantidad_Click" Tag="{Binding}" Background="#4CAF50" Margin="5,0,0,0"/>
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="Costo 💵" Binding="{Binding Costo, StringFormat=C}" Width="90" ElementStyle="{StaticResource CenteredCell}"/>
-                                    <DataGridTextColumn Header="Importe 💰" Binding="{Binding Importe, StringFormat=C}" Width="90" ElementStyle="{StaticResource CenteredCell}"/>
-                                </DataGrid.Columns>
-                            </DataGrid>
+                        <!-- Globos -->
+                        <TabItem Header="Globos 🎈">
+                            <DockPanel LastChildFill="True">
+                                <!-- Barra de búsqueda -->
+                                <TextBox x:Name="txtBuscarGlobo" Width="250" Height="30" Margin="0,0,0,5" DockPanel.Dock="Top"
+                                         HorizontalAlignment="Right" VerticalAlignment="Top"
+                                         FontStyle="Italic" Foreground="Gray"
+                                         Text="Buscar globo..." GotFocus="TextBox_GotFocus" LostFocus="TextBox_LostFocus"
+                                         TextChanged="TxtBuscarGlobo_TextChanged"/>
+                                <!-- DataGrid de globos -->
+                                <DataGrid x:Name="dgGlobos" ItemsSource="{Binding Globos}" AutoGenerateColumns="False"
+                                          CanUserAddRows="False" MinHeight="350" RowHeight="40" IsReadOnly="True"
+                                          ColumnHeaderStyle="{StaticResource CenteredHeader}" SelectionMode="Single"
+                                          SelectionUnit="FullRow" HorizontalAlignment="Stretch" ColumnWidth="*">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="ID" Binding="{Binding GloboId}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
+                                        <DataGridTextColumn Header="Material 🎈" Binding="{Binding Material}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
+                                        <DataGridTextColumn Header="Color 🎨" Binding="{Binding Color}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
+                                        <DataGridTextColumn Header="Tamaño 📏" Binding="{Binding Tamano, Converter={StaticResource EmptyToDashConverter}}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
+                                        <DataGridTextColumn Header="Forma 🔷" Binding="{Binding Forma, Converter={StaticResource EmptyToDashConverter}}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
+                                        <DataGridTextColumn Header="Temática 🎉" Binding="{Binding Tematica, Converter={StaticResource EmptyToDashConverter}}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
+                                        <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad}" Width="120" ElementStyle="{StaticResource CenteredCell}"/>
+                                        <DataGridTextColumn Header="Stock" Binding="{Binding Stock}" Width="70" ElementStyle="{StaticResource CenteredCell}"/>
+                                        <DataGridTemplateColumn Header="Cantidad" Width="140">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                        <Button Content="-" Style="{StaticResource CantidadButton}" Click="BtnDisminuirCantidad_Click" Tag="{Binding}" Background="#F44336" Margin="0,0,5,0"/>
+                                                        <Border CornerRadius="5" Background="LightYellow" Width="60" Height="40">
+                                                            <TextBox Text="{Binding Cantidad, UpdateSourceTrigger=PropertyChanged, FallbackValue=0}"
+                                                                     HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                                     BorderThickness="0" Background="Transparent" 
+                                                                     PreviewTextInput="Cantidad_PreviewTextInput"/>
+                                                        </Border>
+                                                        <Button Content="+" Style="{StaticResource CantidadButton}" Click="BtnAumentarCantidad_Click" Tag="{Binding}" Background="#4CAF50" Margin="5,0,0,0"/>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTextColumn Header="Costo 💵" Binding="{Binding Costo, StringFormat=C}" Width="90" ElementStyle="{StaticResource CenteredCell}"/>
+                                        <DataGridTextColumn Header="Importe 💰" Binding="{Binding Importe, StringFormat=C}" Width="90" ElementStyle="{StaticResource CenteredCell}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </DockPanel>
                         </TabItem>
                     </TabControl>
 
+                    <!-- Totales -->
                     <Border Grid.Row="2" Background="#F5F5F5" Padding="15" CornerRadius="10" Margin="0,15,0,0">
                         <Grid HorizontalAlignment="Center">
                             <Grid.ColumnDefinitions>
@@ -134,15 +162,14 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="Total Productos 🎁:" FontWeight="Bold" Grid.Column="0" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding TotalProductos}" Grid.Column="1" VerticalAlignment="Center" TextAlignment="Center" Margin="5,0,20,0" FontWeight="SemiBold"/>
-
                             <TextBlock Text="Total Globos 🎈:" FontWeight="Bold" Grid.Column="2" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding TotalGlobos}" Grid.Column="3" VerticalAlignment="Center" TextAlignment="Center" Margin="5,0,20,0" FontWeight="SemiBold"/>
-
                             <TextBlock Text="Importe Total 💰:" FontWeight="Bold" Grid.Column="4" VerticalAlignment="Center" FontSize="16"/>
                             <TextBlock Text="{Binding ImporteTotal, StringFormat=C}" Grid.Column="5" VerticalAlignment="Center" TextAlignment="Right" FontSize="18" FontWeight="Bold" Foreground="DarkGreen" Margin="5,0,0,0"/>
                         </Grid>
                     </Border>
 
+                    <!-- Botón Registrar Venta -->
                     <Button Content="🛒 Registrar Venta" Grid.Row="3" Height="50" Width="220"
                             HorizontalAlignment="Center" Margin="0,15,0,0"
                             Background="#4CAF50" Foreground="White" FontWeight="Bold"
@@ -150,6 +177,7 @@
                 </Grid>
             </TabItem>
 
+            <!-- Historial de Ventas -->
             <TabItem Header="Historial de Ventas 📜">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
@@ -157,44 +185,38 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <Border Grid.Row="0" Padding="10" Margin="0,0,0,15" Background="#F8F9FA" CornerRadius="8">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        </StackPanel>
-                    </Border>
-
+                    <!-- Filtros y botones -->
                     <Border Grid.Row="0" Padding="12" Margin="0,0,0,15" Background="#F8F9FA" CornerRadius="8">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="220"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="140"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="140"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <StackPanel Orientation="Horizontal" Grid.Column="0" Grid.ColumnSpan="6">
+                            <!-- Filtros -->
+                            <StackPanel Orientation="Horizontal" Grid.Column="0">
                                 <TextBlock Text="Cliente:" VerticalAlignment="Center" Margin="0,0,5,0"/>
                                 <ComboBox x:Name="cmbFiltroCliente" ItemsSource="{Binding Clientes}" DisplayMemberPath="NombreCompleto" Width="220"/>
-                                <TextBlock Text="Fecha desde:" VerticalAlignment="Center" Margin="15,0,5,0"/>
+                                <TextBlock Text="Desde:" VerticalAlignment="Center" Margin="15,0,5,0"/>
                                 <DatePicker x:Name="dpFechaDesde" Width="120"/>
-                                <TextBlock Text="hasta:" VerticalAlignment="Center" Margin="10,0,5,0"/>
+                                <TextBlock Text="Hasta:" VerticalAlignment="Center" Margin="10,0,5,0"/>
                                 <DatePicker x:Name="dpFechaHasta" Width="120"/>
                             </StackPanel>
 
-                            <StackPanel Orientation="Horizontal" Grid.Column="7" HorizontalAlignment="Right">
-                                <Button Content="Filtrar 🔍" Width="90" Click="BtnFiltrarHistorial_Click" Background="#2196F3" Foreground="White" Margin="15,0,0,0"/>
+                            <!-- Botones acciones -->
+                            <StackPanel Orientation="Horizontal" Grid.Column="1" HorizontalAlignment="Right">
+                                <Button Content="Filtrar 🔍" Width="90" Click="BtnFiltrarHistorial_Click" Background="#2196F3" Foreground="White" Margin="5,0,0,0"/>
                                 <Button Content="Limpiar ✖" Width="90" Click="BtnLimpiarFiltros_Click" Background="#F44336" Foreground="White" Margin="5,0,0,0"/>
-                                <Button Content="📊 Excel" Width="90" Background="#1D6F42" Foreground="White" Margin="15,0,0,0" Click="BtnExportarExcel_Click"/>
+                                <Button Content="📊 Excel" Width="90" Background="#1D6F42" Foreground="White" Margin="5,0,0,0" Click="BtnExportarExcel_Click"/>
                                 <Button Content="📄 PDF" Width="90" Background="#9C27B0" Foreground="White" Margin="5,0,0,0" Click="BtnExportarPDF_Click"/>
                                 <Button Content="📈 Gráfica" Width="90" Background="#FF9800" Foreground="White" Margin="5,0,0,0" Click="BtnMostrarGrafica_Click"/>
                             </StackPanel>
                         </Grid>
                     </Border>
 
-                    <DataGrid x:Name="dgHistorial" ItemsSource="{Binding HistorialView}" Grid.Row="1" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" ColumnHeaderStyle="{StaticResource CenteredHeader}" RowHeight="35">
+                    <!-- DataGrid Historial -->
+                    <DataGrid x:Name="dgHistorial" ItemsSource="{Binding HistorialView}" Grid.Row="1" AutoGenerateColumns="False"
+                              CanUserAddRows="False" IsReadOnly="True" ColumnHeaderStyle="{StaticResource CenteredHeader}" RowHeight="35">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="ID Venta" Binding="{Binding VentaId}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
                             <DataGridTextColumn Header="Cliente 🎁" Binding="{Binding ClienteNombre}" Width="2*" ElementStyle="{StaticResource CenteredCell}"/>

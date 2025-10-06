@@ -12,12 +12,16 @@ namespace TiendaGlobosLaFiesta.Data
         // CRUD Básico
         // ========================
 
-        public bool AgregarCliente(Cliente cliente)
+        public bool AgregarCliente(Cliente cliente, out string mensaje)
         {
+            mensaje = string.Empty;
             try
             {
                 if (ClienteExiste(cliente.ClienteId))
-                    throw new Exception($"El cliente con ID '{cliente.ClienteId}' ya existe.");
+                {
+                    mensaje = $"El cliente con ID '{cliente.ClienteId}' ya existe.";
+                    return false;
+                }
 
                 string query = @"INSERT INTO Cliente (clienteId, primerNombre, segundoNombre, apellidoP, apellidoM, telefono)
                                  VALUES (@id, @nombre1, @nombre2, @apellidoP, @apellidoM, @telefono)";
@@ -32,19 +36,28 @@ namespace TiendaGlobosLaFiesta.Data
                     new SqlParameter("@telefono", (object?)cliente.Telefono ?? DBNull.Value)
                 };
 
-                return DbHelper.ExecuteNonQuery(query, parametros) > 0;
+                bool result = DbHelper.ExecuteNonQuery(query, parametros) > 0;
+                mensaje = result ? "Cliente agregado correctamente." : "No se pudo agregar el cliente.";
+                return result;
             }
             catch (Exception ex)
             {
-                // Aquí podrías loguear el error
-                throw new Exception("Error al agregar cliente: " + ex.Message, ex);
+                mensaje = "Error al agregar cliente: " + ex.Message;
+                return false;
             }
         }
 
-        public bool ActualizarCliente(Cliente cliente)
+        public bool ActualizarCliente(Cliente cliente, out string mensaje)
         {
+            mensaje = string.Empty;
             try
             {
+                if (!ClienteExiste(cliente.ClienteId))
+                {
+                    mensaje = $"El cliente con ID '{cliente.ClienteId}' no existe.";
+                    return false;
+                }
+
                 string query = @"UPDATE Cliente 
                                  SET primerNombre=@nombre1, segundoNombre=@nombre2, 
                                      apellidoP=@apellidoP, apellidoM=@apellidoM, telefono=@telefono
@@ -60,25 +73,38 @@ namespace TiendaGlobosLaFiesta.Data
                     new SqlParameter("@telefono", (object?)cliente.Telefono ?? DBNull.Value)
                 };
 
-                return DbHelper.ExecuteNonQuery(query, parametros) > 0;
+                bool result = DbHelper.ExecuteNonQuery(query, parametros) > 0;
+                mensaje = result ? "Cliente actualizado correctamente." : "No se pudo actualizar el cliente.";
+                return result;
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al actualizar cliente: " + ex.Message, ex);
+                mensaje = "Error al actualizar cliente: " + ex.Message;
+                return false;
             }
         }
 
-        public bool EliminarCliente(string clienteId)
+        public bool EliminarCliente(string clienteId, out string mensaje)
         {
+            mensaje = string.Empty;
             try
             {
+                if (!ClienteExiste(clienteId))
+                {
+                    mensaje = $"El cliente con ID '{clienteId}' no existe.";
+                    return false;
+                }
+
                 string query = "UPDATE Cliente SET Activo = 0 WHERE clienteId=@id";
                 var parametros = new[] { new SqlParameter("@id", clienteId) };
-                return DbHelper.ExecuteNonQuery(query, parametros) > 0;
+                bool result = DbHelper.ExecuteNonQuery(query, parametros) > 0;
+                mensaje = result ? "Cliente eliminado correctamente." : "No se pudo eliminar el cliente.";
+                return result;
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al eliminar cliente: " + ex.Message, ex);
+                mensaje = "Error al eliminar cliente: " + ex.Message;
+                return false;
             }
         }
 
@@ -118,11 +144,6 @@ namespace TiendaGlobosLaFiesta.Data
             return MapearCliente(dt.Rows[0]);
         }
 
-        // ========================
-        // Métodos para Dashboard / Reportes
-        // ========================
-
-        // Clientes frecuentes (top N)
         public List<Cliente> ObtenerClientesFrecuentes(int top = 5)
         {
             string query = @"
@@ -144,7 +165,6 @@ namespace TiendaGlobosLaFiesta.Data
             return lista;
         }
 
-        // Clientes que compraron en un rango de fechas
         public List<Cliente> ObtenerClientesPorFecha(DateTime inicio, DateTime fin)
         {
             string query = @"
@@ -168,7 +188,6 @@ namespace TiendaGlobosLaFiesta.Data
             return lista;
         }
 
-        // Buscar clientes por nombre o apellido
         public List<Cliente> BuscarClientes(string criterio)
         {
             string query = @"
@@ -206,6 +225,7 @@ namespace TiendaGlobosLaFiesta.Data
         }
 
         private string SafeString(object value) => value == DBNull.Value ? "" : value.ToString()!;
-        private long? SafeLongNullable(object value) => value == DBNull.Value ? null : Convert.ToInt64(value);
+        private long? SafeLongNullable(object value) =>
+            value == DBNull.Value ? null : Convert.ToInt64(value);
     }
 }

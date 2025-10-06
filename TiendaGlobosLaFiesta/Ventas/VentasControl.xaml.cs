@@ -5,11 +5,12 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using TiendaGlobosLaFiesta.Modelos;
 using TiendaGlobosLaFiesta.Models;
 using TiendaGlobosLaFiesta.Services;
 using TiendaGlobosLaFiesta.ViewModels;
-
+using System.Linq;
 
 namespace TiendaGlobosLaFiesta.Views
 {
@@ -28,6 +29,7 @@ namespace TiendaGlobosLaFiesta.Views
             this.Loaded += VentasControl_Loaded;
         }
 
+
         private void VentasControl_Loaded(object sender, RoutedEventArgs e)
         {
             if (VM != null)
@@ -40,6 +42,7 @@ namespace TiendaGlobosLaFiesta.Views
             }
         }
 
+        #region Cantidad
         private void Cantidad_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             var regex = new Regex("[^0-9]+"); // Solo permite números
@@ -49,19 +52,17 @@ namespace TiendaGlobosLaFiesta.Views
         private void BtnAumentarCantidad_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is ItemVenta item)
-            {
                 item.Incrementar();
-            }
         }
 
         private void BtnDisminuirCantidad_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is ItemVenta item)
-            {
                 item.Decrementar();
-            }
         }
+        #endregion
 
+        #region Registrar Venta
         private void BtnRegistrarVenta_Click(object sender, RoutedEventArgs e)
         {
             if (cmbClientes.SelectedItem is not Cliente cliente)
@@ -83,7 +84,7 @@ namespace TiendaGlobosLaFiesta.Views
             {
                 VentaId = $"VEN{DateTime.Now:yyMMddHHmmss}",
                 ClienteId = cliente.ClienteId,
-                EmpleadoId = SesionActual.EmpleadoId,
+                EmpleadoId = SesionActual.EmpleadoId ?? 0,
                 FechaVenta = DateTime.Now,
                 ImporteTotal = VM.ImporteTotal,
                 Productos = productosSeleccionados,
@@ -105,19 +106,24 @@ namespace TiendaGlobosLaFiesta.Views
 
         private void LimpiarFormulario()
         {
-            // 1. Llama al método del ViewModel que recarga todas las listas desde la BD.
             VM.CargarDatosIniciales();
-
-            // 2. 🔹 CORRECCIÓN: Vuelve a enlazar las listas actualizadas a los controles de la UI 🔹
-            // Esto le dice a las tablas en pantalla que muestren los nuevos datos.
             dgProductos.ItemsSource = VM.Productos;
             dgGlobos.ItemsSource = VM.Globos;
             dgHistorial.ItemsSource = VM.HistorialView;
-
-            // 3. Limpia la selección del cliente.
             cmbClientes.SelectedIndex = -1;
-        }
 
+            // Limpiar barras de búsqueda
+            txtBuscarProducto.Text = "Buscar producto...";
+            txtBuscarProducto.Foreground = Brushes.Gray;
+            txtBuscarProducto.FontStyle = FontStyles.Italic;
+
+            txtBuscarGlobo.Text = "Buscar globo...";
+            txtBuscarGlobo.Foreground = Brushes.Gray;
+            txtBuscarGlobo.FontStyle = FontStyles.Italic;
+        }
+        #endregion
+
+        #region Historial
         private void BtnFiltrarHistorial_Click(object sender, RoutedEventArgs e)
         {
             VM.FiltrarHistorial(cmbFiltroCliente.SelectedItem as Cliente, dpFechaDesde.SelectedDate, dpFechaHasta.SelectedDate);
@@ -176,5 +182,48 @@ namespace TiendaGlobosLaFiesta.Views
             var ventana = new VentasGraficaWindow(HistorialFiltrado);
             ventana.ShowDialog();
         }
+        #endregion
+
+        #region Placeholders y Búsqueda
+        private void TextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is TextBox tb && (tb.Text == "Buscar producto..." || tb.Text == "Buscar globo..."))
+            {
+                tb.Text = "";
+                tb.Foreground = Brushes.Black;
+                tb.FontStyle = FontStyles.Normal;
+            }
+        }
+
+        private void TextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is TextBox tb && string.IsNullOrWhiteSpace(tb.Text))
+            {
+                if (tb.Name == "txtBuscarProducto") tb.Text = "Buscar producto...";
+                else if (tb.Name == "txtBuscarGlobo") tb.Text = "Buscar globo...";
+
+                tb.Foreground = Brushes.Gray;
+                tb.FontStyle = FontStyles.Italic;
+            }
+        }
+
+        private void TxtBuscarProducto_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (VM == null) return;
+            var filtro = txtBuscarProducto.Text.ToLower();
+            if (filtro == "buscar producto...") filtro = "";
+            dgProductos.ItemsSource = VM.Productos
+                .Where(p => string.IsNullOrEmpty(filtro) || p.Nombre.ToLower().Contains(filtro));
+        }
+
+        private void TxtBuscarGlobo_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (VM == null) return;
+            var filtro = txtBuscarGlobo.Text.ToLower();
+            if (filtro == "buscar globo...") filtro = "";
+            dgGlobos.ItemsSource = VM.Globos
+                .Where(g => string.IsNullOrEmpty(filtro) || g.Material.ToLower().Contains(filtro) || g.Color.ToLower().Contains(filtro));
+        }
+        #endregion
     }
 }

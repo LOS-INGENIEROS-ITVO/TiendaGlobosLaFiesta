@@ -7,6 +7,9 @@ namespace TiendaGlobosLaFiesta.Data
 {
     public static class AuthService
     {
+        // ============================
+        // MÉTODO DE LOGIN
+        // ============================
         public static bool Login(string username, string password, out string rol, out string mensaje)
         {
             rol = string.Empty;
@@ -33,7 +36,7 @@ namespace TiendaGlobosLaFiesta.Data
                 }
 
                 DataRow row = dt.Rows[0];
-                string passwordHashFromDB = row["passwordHash"].ToString().Trim();
+                string passwordHashFromDB = row["passwordHash"]?.ToString().Trim() ?? "";
 
                 if (!Services.PasswordService.VerifyPassword(password, passwordHashFromDB))
                 {
@@ -41,7 +44,7 @@ namespace TiendaGlobosLaFiesta.Data
                     return false;
                 }
 
-                // Guardar en SesionActual
+                // Guardar datos en SesionActual
                 SesionActual.UsuarioId = Convert.ToInt32(row["usuarioId"]);
                 SesionActual.EmpleadoId = Convert.ToInt32(row["empleadoId"]);
                 SesionActual.Username = row["username"].ToString();
@@ -58,10 +61,16 @@ namespace TiendaGlobosLaFiesta.Data
             }
         }
 
-        public static bool RestablecerContrasena(string username, long telefono, string nuevaContrasena, out string mensaje)
+        // ============================
+        // MÉTODO PARA RESTABLECER CONTRASEÑA
+        // ============================
+        public static bool RestablecerContrasena(string username, string telefono, string nuevaContrasena, out string mensaje)
         {
+            mensaje = string.Empty;
+
             try
             {
+                // Verificar si el usuario existe y obtener su teléfono
                 string queryVerificacion = @"
                     SELECT e.telefono 
                     FROM Usuarios u
@@ -73,18 +82,21 @@ namespace TiendaGlobosLaFiesta.Data
 
                 if (telefonoResult == null || telefonoResult == DBNull.Value)
                 {
-                    mensaje = "El nombre de usuario no fue encontrado.";
+                    mensaje = "El usuario no fue encontrado.";
                     return false;
                 }
 
-                if (Convert.ToInt64(telefonoResult) != telefono)
+                string telefonoBD = telefonoResult.ToString().Trim();
+                if (telefonoBD != telefono.Trim())
                 {
                     mensaje = "El número de teléfono no coincide con el registrado.";
                     return false;
                 }
 
+                // Generar hash de la nueva contraseña
                 string nuevoHash = Services.PasswordService.HashPassword(nuevaContrasena);
 
+                // Actualizar contraseña en la base de datos
                 string queryUpdate = "UPDATE Usuarios SET passwordHash = @hash WHERE username = @username";
                 var paramUpdate = new[]
                 {

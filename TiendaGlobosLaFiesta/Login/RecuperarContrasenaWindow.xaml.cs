@@ -17,7 +17,7 @@ namespace TiendaGlobosLaFiesta
 
         private async void BtnConfirmar_Click(object sender, RoutedEventArgs e)
         {
-            // limpias el mensaje antes
+            // Limpiar mensaje antes
             lblMensaje.Text = "";
             lblMensaje.Foreground = Brushes.Crimson;
 
@@ -31,7 +31,8 @@ namespace TiendaGlobosLaFiesta
                 return;
             }
 
-            if (!long.TryParse(txtTelefono.Text, out long telefono))
+            // Validar que el teléfono solo tenga números
+            if (!txtTelefono.Text.All(char.IsDigit))
             {
                 lblMensaje.Text = "El número de teléfono debe contener solo números.";
                 return;
@@ -43,16 +44,20 @@ namespace TiendaGlobosLaFiesta
                 return;
             }
 
-            // Deshabilitar botón y ejecutar en hilo de fondo
+            // Deshabilitar botón y mostrar mensaje de espera
             btnConfirmar.IsEnabled = false;
             lblMensaje.Text = "Procesando, espere...";
 
             try
             {
-                // Inicializa 'mensaje' antes de usarlo con out
                 string mensaje = "";
                 bool exito = await Task.Run(() =>
-                    AuthService.RestablecerContrasena(txtUsername.Text.Trim(), telefono, txtNuevaContrasena.Password, out mensaje)
+                    AuthService.RestablecerContrasena(
+                        txtUsername.Text.Trim(),
+                        txtTelefono.Text.Trim(), // <-- ahora se pasa como string
+                        txtNuevaContrasena.Password,
+                        out mensaje
+                    )
                 );
 
                 if (exito)

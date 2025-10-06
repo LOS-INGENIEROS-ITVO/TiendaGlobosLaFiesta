@@ -4,14 +4,14 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using TiendaGlobosLaFiesta.Models;
+using TiendaGlobosLaFiesta.Modelos;
 
 namespace TiendaGlobosLaFiesta.Data
 {
     public class GloboRepository
     {
-        // ========================
-        // Obtener globos
-        // ========================
+        #region Obtener Globos
+
         public List<Globo> ObtenerGlobos(bool soloActivos = true)
         {
             string query = @"
@@ -42,6 +42,9 @@ namespace TiendaGlobosLaFiesta.Data
 
         public Globo? ObtenerGloboPorId(string globoId)
         {
+            if (string.IsNullOrWhiteSpace(globoId))
+                throw new ArgumentException("El ID del globo no puede ser vacío.", nameof(globoId));
+
             string query = @"
                 SELECT g.globoId, g.material, g.unidad, g.color, g.costo, g.stock, g.proveedorId, g.Activo,
                        ISNULL(Tam.Tamanos, '') AS Tamano,
@@ -67,11 +70,33 @@ namespace TiendaGlobosLaFiesta.Data
             return dt.Rows.Count == 0 ? null : MapearGlobo(dt.Rows[0]);
         }
 
-        // ========================
-        // CRUD globos
-        // ========================
+        private Globo MapearGlobo(DataRow row)
+        {
+            return new Globo
+            {
+                GloboId = row["globoId"]?.ToString() ?? string.Empty,
+                Material = row["material"]?.ToString() ?? string.Empty,
+                Unidad = row["unidad"]?.ToString() ?? string.Empty,
+                Color = row["color"]?.ToString() ?? string.Empty,
+                Costo = row["costo"] != DBNull.Value ? Convert.ToDecimal(row["costo"]) : 0,
+                Stock = row["stock"] != DBNull.Value ? Convert.ToInt32(row["stock"]) : 0,
+                ProveedorId = row["proveedorId"] != DBNull.Value ? row["proveedorId"].ToString() : null,
+                Activo = row["Activo"] != DBNull.Value && Convert.ToBoolean(row["Activo"]),
+                Tamanos = row["Tamano"].ToString().Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).Distinct().ToList(),
+                Formas = row["Forma"].ToString().Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).Distinct().ToList(),
+                Tematicas = row["Tematica"].ToString().Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).Distinct().ToList(),
+                VentasHoy = 0
+            };
+        }
+
+        #endregion
+
+        #region CRUD Globos
+
         public bool AgregarGlobo(Globo globo)
         {
+            if (globo == null) throw new ArgumentNullException(nameof(globo));
+
             using var conn = DbHelper.ObtenerConexion();
             using var tran = conn.BeginTransaction();
             try
@@ -106,6 +131,8 @@ namespace TiendaGlobosLaFiesta.Data
 
         public bool ActualizarGlobo(Globo globo)
         {
+            if (globo == null) throw new ArgumentNullException(nameof(globo));
+
             using var conn = DbHelper.ObtenerConexion();
             using var tran = conn.BeginTransaction();
             try
@@ -141,25 +168,40 @@ namespace TiendaGlobosLaFiesta.Data
 
         public bool EliminarGlobo(string globoId)
         {
+            if (string.IsNullOrWhiteSpace(globoId))
+                throw new ArgumentException("El ID del globo no puede ser vacío.", nameof(globoId));
+
             string query = "UPDATE Globo SET Activo = 0 WHERE globoId=@id";
             var parametros = new[] { new SqlParameter("@id", globoId) };
             return DbHelper.ExecuteNonQuery(query, parametros) > 0;
         }
 
-        // ========================
-        // Stock y auditoría
-        // ========================
+        #endregion
+
+        #region Stock y Auditoría
+
         public void ActualizarStock(string globoId, int cantidad, int? empleadoId, SqlConnection conn, SqlTransaction tran)
         {
-            int stockActual = (int)new SqlCommand("SELECT stock FROM Globo WHERE globoId=@globoId", conn, tran)
-            { Parameters = { new SqlParameter("@globoId", globoId) } }.ExecuteScalar();
+            if (string.IsNullOrWhiteSpace(globoId))
+                throw new ArgumentException("El ID del globo no puede ser vacío.", nameof(globoId));
 
-            int stockNuevo = stockActual - cantidad;
+            int stockActual;
+            using (var cmdSelect = new SqlCommand("SELECT stock FROM Globo WHERE globoId=@globoId", conn, tran))
+            {
+                cmdSelect.Parameters.AddWithValue("@globoId", globoId);
+                object result = cmdSelect.ExecuteScalar();
+                if (result == null) throw new Exception($"Globo {globoId} no encontrado.");
+                stockActual = Convert.ToInt32(result);
+            }
 
-            using var cmdUpdate = new SqlCommand("UPDATE Globo SET stock=@nuevoStock WHERE globoId=@globoId", conn, tran);
-            cmdUpdate.Parameters.AddWithValue("@nuevoStock", stockNuevo);
-            cmdUpdate.Parameters.AddWithValue("@globoId", globoId);
-            cmdUpdate.ExecuteNonQuery();
+            int stockNuevo = Math.Max(stockActual - cantidad, 0);
+
+            using (var cmdUpdate = new SqlCommand("UPDATE Globo SET stock=@nuevoStock WHERE globoId=@globoId", conn, tran))
+            {
+                cmdUpdate.Parameters.AddWithValue("@nuevoStock", stockNuevo);
+                cmdUpdate.Parameters.AddWithValue("@globoId", globoId);
+                cmdUpdate.ExecuteNonQuery();
+            }
 
             using var cmdHist = new SqlCommand(@"
                 INSERT INTO HistorialAjusteStockGlobo (GloboId, CantidadAnterior, CantidadNueva, EmpleadoId)
@@ -172,24 +214,9 @@ namespace TiendaGlobosLaFiesta.Data
             cmdHist.ExecuteNonQuery();
         }
 
-        // ========================
-        // Métodos auxiliares
-        // ========================
-        private Globo MapearGlobo(DataRow row) => new Globo
-        {
-            GloboId = row["globoId"].ToString(),
-            Material = row["material"].ToString(),
-            Unidad = row["unidad"].ToString(),
-            Color = row["color"].ToString(),
-            Costo = Convert.ToDecimal(row["costo"]),
-            Stock = Convert.ToInt32(row["stock"]),
-            ProveedorId = row["proveedorId"] != DBNull.Value ? row["proveedorId"].ToString() : null,
-            Activo = Convert.ToBoolean(row["Activo"]),
-            Tamanos = row["Tamano"].ToString().Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).Distinct().ToList(),
-            Formas = row["Forma"].ToString().Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).Distinct().ToList(),
-            Tematicas = row["Tematica"].ToString().Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).Distinct().ToList(),
-            VentasHoy = 0
-        };
+        #endregion
+
+        #region Métodos auxiliares
 
         private void BorrarCaracteristicas(string globoId, string tabla, SqlConnection conn, SqlTransaction tran)
         {
@@ -229,5 +256,7 @@ namespace TiendaGlobosLaFiesta.Data
             BorrarCaracteristicas(globoId, tabla, conn, tran);
             InsertarCaracteristicasUnicas(globoId, tabla, columna, valores, conn, tran, usarGuidComoPK);
         }
+
+        #endregion
     }
 }

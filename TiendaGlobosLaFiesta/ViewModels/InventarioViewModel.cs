@@ -10,6 +10,9 @@ namespace TiendaGlobosLaFiesta.ViewModels
 {
     public class InventarioViewModel : BaseViewModel
     {
+        // Repositorio
+        private readonly StockManagerRepository _stockManager;
+
         // Colecciones
         public ObservableCollection<Producto> ProductosView { get; set; }
         public ObservableCollection<Globo> GlobosView { get; set; }
@@ -65,9 +68,10 @@ namespace TiendaGlobosLaFiesta.ViewModels
         public ICollectionView ProductosViewFiltered { get; set; }
         public ICollectionView GlobosViewFiltered { get; set; }
 
-        // Constructor
         public InventarioViewModel()
         {
+            _stockManager = new StockManagerRepository();
+
             ProductosView = new ObservableCollection<Producto>();
             GlobosView = new ObservableCollection<Globo>();
             StockCritico = new ObservableCollection<StockCriticoItem>();
@@ -142,10 +146,9 @@ namespace TiendaGlobosLaFiesta.ViewModels
         private void CargarStockCritico()
         {
             StockCritico.Clear();
-            var repo = new StockRepository();
-            foreach (var p in repo.ObtenerProductosStockCritico())
+            foreach (var p in _stockManager.ObtenerProductosStockCritico())
                 StockCritico.Add(p);
-            foreach (var g in repo.ObtenerGlobosStockCritico())
+            foreach (var g in _stockManager.ObtenerGlobosStockCritico())
                 StockCritico.Add(g);
         }
         #endregion

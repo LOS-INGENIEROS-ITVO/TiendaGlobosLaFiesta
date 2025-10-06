@@ -1,13 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
-using TiendaGlobosLaFiesta.Data;
 using TiendaGlobosLaFiesta.Models;
 
 namespace TiendaGlobosLaFiesta.Data
 {
-    public static class AjusteStockRepository
+    public class StockManagerRepository
     {
-        public static void AjustarProductoStock(string productoId, int nuevaCantidad, string motivo, int empleadoId)
+        #region AJUSTE DE STOCK
+
+        public void AjustarProductoStock(string productoId, int nuevaCantidad, string motivo, int empleadoId)
         {
             var repo = new ProductoRepository();
             var producto = repo.ObtenerProductoPorId(productoId);
@@ -50,7 +53,7 @@ namespace TiendaGlobosLaFiesta.Data
             }
         }
 
-        public static void AjustarGloboStock(string globoId, int nuevaCantidad, string motivo, int empleadoId)
+        public void AjustarGloboStock(string globoId, int nuevaCantidad, string motivo, int empleadoId)
         {
             var repo = new GloboRepository();
             var globo = repo.ObtenerGloboPorId(globoId);
@@ -92,5 +95,55 @@ namespace TiendaGlobosLaFiesta.Data
                 throw;
             }
         }
+
+        #endregion
+
+        #region STOCK CRÍTICO
+
+        public List<StockCriticoItem> ObtenerProductosStockCritico()
+        {
+            string query = "SELECT productoId, nombre, stock, unidad FROM Producto WHERE stock <= 10 AND Activo = 1 ORDER BY stock ASC";
+            DataTable dt = DbHelper.ExecuteQuery(query);
+            var lista = new List<StockCriticoItem>();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                lista.Add(new StockCriticoItem
+                {
+                    Id = row["productoId"].ToString(),
+                    Nombre = row["nombre"].ToString(),
+                    StockActual = Convert.ToInt32(row["stock"]),
+                    Tipo = "Producto",
+                    Unidad = row["unidad"] != DBNull.Value ? row["unidad"].ToString() : string.Empty,
+                    Color = string.Empty
+                });
+            }
+
+            return lista;
+        }
+
+        public List<StockCriticoItem> ObtenerGlobosStockCritico()
+        {
+            string query = "SELECT globoId, (material + ' ' + color) AS Nombre, stock, unidad, color FROM Globo WHERE stock <= 10 AND Activo = 1 ORDER BY stock ASC";
+            DataTable dt = DbHelper.ExecuteQuery(query);
+            var lista = new List<StockCriticoItem>();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                lista.Add(new StockCriticoItem
+                {
+                    Id = row["globoId"].ToString(),
+                    Nombre = row["Nombre"].ToString(),
+                    StockActual = Convert.ToInt32(row["stock"]),
+                    Tipo = "Globo",
+                    Unidad = row.Table.Columns.Contains("unidad") && row["unidad"] != DBNull.Value ? row["unidad"].ToString() : string.Empty,
+                    Color = row.Table.Columns.Contains("color") && row["color"] != DBNull.Value ? row["color"].ToString() : string.Empty
+                });
+            }
+
+            return lista;
+        }
+
+        #endregion
     }
 }
