@@ -13,7 +13,7 @@ namespace TiendaGlobosLaFiesta.Services
         {
             mensajeError = string.Empty;
 
-            // Validar Stock
+            // Validar Stock de productos y globos
             foreach (var item in venta.Productos.Cast<ItemVenta>().Concat(venta.Globos))
             {
                 if (item.Cantidad > item.Stock)
@@ -28,24 +28,30 @@ namespace TiendaGlobosLaFiesta.Services
             using var tran = conn.BeginTransaction();
             try
             {
+                // Insertar venta maestro
                 _ventasRepo.InsertarVentaMaestro(venta, conn, tran);
 
+                // Insertar detalle productos y actualizar stock
                 foreach (var p in venta.Productos)
                 {
                     _ventasRepo.InsertarDetalleProducto(venta.VentaId, p, conn, tran);
-                    _productoRepo.ActualizarStock(p.ProductoId, p.Cantidad, conn, tran);
+                    _productoRepo.ActualizarStock(p.ProductoId, p.Cantidad, null, conn, tran); // empleadoId null
                 }
+
+                // Insertar detalle globos y actualizar stock
                 foreach (var g in venta.Globos)
                 {
                     _ventasRepo.InsertarDetalleGlobo(venta.VentaId, g, conn, tran);
-                    _globoRepo.ActualizarStock(g.GloboId, g.Cantidad, conn, tran);
+                    _globoRepo.ActualizarStock(g.GloboId, g.Cantidad, null, conn, tran); // empleadoId null
                 }
 
+                // Confirmar transacción
                 tran.Commit();
                 return true;
             }
             catch (Exception ex)
             {
+                // Revertir transacción en caso de error
                 tran.Rollback();
                 mensajeError = $"Error en BD: {ex.Message}";
                 return false;

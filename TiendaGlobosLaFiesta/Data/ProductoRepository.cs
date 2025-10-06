@@ -13,16 +13,22 @@ namespace TiendaGlobosLaFiesta.Data
 
         public List<Producto> ObtenerProductos(bool soloActivos = true)
         {
+            var lista = new List<Producto>();
             string query = "SELECT productoId, nombre, unidad, costo, stock, proveedorId, categoriaId, Activo FROM Producto";
             if (soloActivos) query += " WHERE Activo = 1";
 
-            DataTable dt = DbHelper.ExecuteQuery(query);
-            var lista = new List<Producto>();
-
-            foreach (DataRow row in dt.Rows)
+            try
             {
-                lista.Add(MapearProducto(row));
+                using SqlConnection conn = DbHelper.ObtenerConexion();
+                DataTable dt = DbHelper.ExecuteQuery(query, null, conn);
+                foreach (DataRow row in dt.Rows)
+                    lista.Add(MapearProducto(row));
             }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener productos: " + ex.Message, ex);
+            }
+
             return lista;
         }
 
@@ -31,10 +37,18 @@ namespace TiendaGlobosLaFiesta.Data
             string query = @"SELECT productoId, nombre, unidad, costo, stock, proveedorId, categoriaId, Activo
                              FROM Producto WHERE productoId=@id";
             var parametros = new[] { new SqlParameter("@id", productoId) };
-            DataTable dt = DbHelper.ExecuteQuery(query, parametros);
 
-            if (dt.Rows.Count == 0) return null;
-            return MapearProducto(dt.Rows[0]);
+            try
+            {
+                using SqlConnection conn = DbHelper.ObtenerConexion();
+                DataTable dt = DbHelper.ExecuteQuery(query, parametros, conn);
+                if (dt.Rows.Count == 0) return null;
+                return MapearProducto(dt.Rows[0]);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al obtener el producto {productoId}: {ex.Message}", ex);
+            }
         }
 
         private Producto MapearProducto(DataRow row)
@@ -74,7 +88,15 @@ namespace TiendaGlobosLaFiesta.Data
                 new SqlParameter("@categoriaId", (object)producto.CategoriaId ?? DBNull.Value)
             };
 
-            return DbHelper.ExecuteNonQuery(query, parametros) > 0;
+            try
+            {
+                using SqlConnection conn = DbHelper.ObtenerConexion();
+                return DbHelper.ExecuteNonQuery(query, parametros, conn) > 0;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al agregar producto: " + ex.Message, ex);
+            }
         }
 
         public bool ActualizarProducto(Producto producto)
@@ -96,27 +118,66 @@ namespace TiendaGlobosLaFiesta.Data
                 new SqlParameter("@categoriaId", (object)producto.CategoriaId ?? DBNull.Value)
             };
 
-            return DbHelper.ExecuteNonQuery(query, parametros) > 0;
+            try
+            {
+                using SqlConnection conn = DbHelper.ObtenerConexion();
+                return DbHelper.ExecuteNonQuery(query, parametros, conn) > 0;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al actualizar producto {producto.ProductoId}: {ex.Message}", ex);
+            }
         }
 
         public bool EliminarProducto(string productoId)
         {
             string query = "UPDATE Producto SET Activo = 0 WHERE productoId=@id";
             var parametros = new[] { new SqlParameter("@id", productoId) };
-            return DbHelper.ExecuteNonQuery(query, parametros) > 0;
+
+            try
+            {
+                using SqlConnection conn = DbHelper.ObtenerConexion();
+                return DbHelper.ExecuteNonQuery(query, parametros, conn) > 0;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al desactivar producto {productoId}: {ex.Message}", ex);
+            }
         }
 
         #endregion
 
         #region Stock y Ajustes
 
-        public void ActualizarStock(string productoId, int cantidad, SqlConnection conn, SqlTransaction tran)
+        public void ActualizarStock(string productoId, int cantidad, int? empleadoId, SqlConnection conn, SqlTransaction tran)
         {
-            string query = "UPDATE Producto SET stock = stock - @cantidad WHERE productoId = @productoId";
-            using var cmd = new SqlCommand(query, conn, tran);
-            cmd.Parameters.AddWithValue("@cantidad", cantidad);
-            cmd.Parameters.AddWithValue("@productoId", productoId);
-            cmd.ExecuteNonQuery();
+            // Obtener stock actual
+            int stockActual = 0;
+            using (var cmdSelect = new SqlCommand("SELECT stock FROM Producto WHERE productoId=@productoId", conn, tran))
+            {
+                cmdSelect.Parameters.AddWithValue("@productoId", productoId);
+                stockActual = (int)cmdSelect.ExecuteScalar();
+            }
+
+            int stockNuevo = stockActual - cantidad;
+
+            // Actualizar stock
+            using (var cmdUpdate = new SqlCommand("UPDATE Producto SET stock=@nuevoStock WHERE productoId=@productoId", conn, tran))
+            {
+                cmdUpdate.Parameters.AddWithValue("@nuevoStock", stockNuevo);
+                cmdUpdate.Parameters.AddWithValue("@productoId", productoId);
+                cmdUpdate.ExecuteNonQuery();
+            }
+
+            // Insertar auditoría (opcional)
+            using var cmdHist = new SqlCommand(@"
+        INSERT INTO HistorialAjusteStock (ProductoId, CantidadAnterior, CantidadNueva, EmpleadoId)
+        VALUES (@productoId, @anterior, @nuevo, @empleado)", conn, tran);
+            cmdHist.Parameters.AddWithValue("@productoId", productoId);
+            cmdHist.Parameters.AddWithValue("@anterior", stockActual);
+            cmdHist.Parameters.AddWithValue("@nuevo", stockNuevo);
+            cmdHist.Parameters.AddWithValue("@empleado", (object)empleadoId ?? DBNull.Value);
+            cmdHist.ExecuteNonQuery();
         }
 
         public void RegistrarAjusteStock(string productoId, int cantidadAnterior, int cantidadNueva, string motivo)
@@ -133,7 +194,16 @@ namespace TiendaGlobosLaFiesta.Data
                 new SqlParameter("@Motivo", motivo),
                 new SqlParameter("@EmpleadoId", SesionActual.EmpleadoId)
             };
-            DbHelper.ExecuteNonQuery(query, parametros);
+
+            try
+            {
+                using SqlConnection conn = DbHelper.ObtenerConexion();
+                DbHelper.ExecuteNonQuery(query, parametros, conn);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al registrar ajuste de stock del producto {productoId}: {ex.Message}", ex);
+            }
         }
 
         #endregion

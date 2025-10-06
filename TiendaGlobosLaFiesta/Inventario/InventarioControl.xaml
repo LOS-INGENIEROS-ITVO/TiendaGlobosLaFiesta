@@ -62,7 +62,7 @@
                                 <Setter Property="BorderThickness" Value="0,0,0,1"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding StockActual, Converter={StaticResource StockColor}}" Value="Red">
-                                        <Setter Property="Background" Value="red"/>
+                                        <Setter Property="Background" Value="Red"/>
                                         <Setter Property="Foreground" Value="White"/>
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding StockActual, Converter={StaticResource StockColor}}" Value="Orange">
@@ -169,7 +169,7 @@
                                 <Setter Property="BorderThickness" Value="0,0,0,1"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding Stock, Converter={StaticResource StockColor}}" Value="Red">
-                                        <Setter Property="Background" Value="red"/>
+                                        <Setter Property="Background" Value="Red"/>
                                         <Setter Property="Foreground" Value="White"/>
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding Stock, Converter={StaticResource StockColor}}" Value="Orange">

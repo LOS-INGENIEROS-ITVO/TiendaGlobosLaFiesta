@@ -1,28 +1,33 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using TiendaGlobosLaFiesta.Models;
+using TiendaGlobosLaFiesta.Data;
+using TiendaGlobosLaFiesta.Views;
 using TiendaGlobosLaFiesta.ViewModels;
 
 namespace TiendaGlobosLaFiesta.Views
 {
     public partial class InventarioControl : UserControl
     {
-        public InventarioViewModel VM { get; set; }
+        private readonly ProductoRepository _productoRepo = new();
+        private readonly GloboRepository _globoRepo = new();
+        public InventarioViewModel VM { get; private set; }
 
         public InventarioControl()
         {
             InitializeComponent();
-
-            VM = new InventarioViewModel(); // Instanciamos el ViewModel aquí
-            this.DataContext = VM;
+            VM = new InventarioViewModel();
+            DataContext = VM;
         }
 
-        #region PRODUCTOS
+        #region Productos
+
         private void AgregarProducto_Click(object sender, RoutedEventArgs e)
         {
-            var ventana = new ProductoEditWindow(new Producto());
-            if (ventana.ShowDialog() == true)
+            var ventana = new ProductoEditWindow(); // Ventana para agregar
+            if (ventana.ShowDialog() == true && ventana.Producto != null)
             {
+                _productoRepo.AgregarProducto(ventana.Producto);
                 VM.ProductosView.Add(ventana.Producto);
                 VM.ProductosViewFiltered.Refresh();
             }
@@ -30,33 +35,41 @@ namespace TiendaGlobosLaFiesta.Views
 
         private void EditarProducto_Click(object sender, RoutedEventArgs e)
         {
-            if ((sender as Button)?.DataContext is Producto p)
+            if (ProductosDataGrid.SelectedItem is Producto p)
             {
-                var ventana = new ProductoEditWindow(p);
-                ventana.ShowDialog();
-                VM.ProductosViewFiltered.Refresh();
+                var ventana = new ProductoEditWindow(p); // Ventana para editar
+                if (ventana.ShowDialog() == true && ventana.Producto != null)
+                {
+                    _productoRepo.ActualizarProducto(ventana.Producto);
+                    VM.ProductosViewFiltered.Refresh();
+                }
             }
         }
 
         private void EliminarProducto_Click(object sender, RoutedEventArgs e)
         {
-            if ((sender as Button)?.DataContext is Producto p)
+            if (ProductosDataGrid.SelectedItem is Producto p)
             {
-                if (MessageBox.Show($"¿Eliminar producto {p.Nombre}?", "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                if (MessageBox.Show($"¿Eliminar el producto {p.Nombre}?", "Confirmar",
+                    MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                 {
+                    _productoRepo.EliminarProducto(p.ProductoId);
                     VM.ProductosView.Remove(p);
                     VM.ProductosViewFiltered.Refresh();
                 }
             }
         }
+
         #endregion
 
-        #region GLOBOS
+        #region Globos
+
         private void AgregarGlobo_Click(object sender, RoutedEventArgs e)
         {
-            var ventana = new GloboEditWindow(new Globo());
-            if (ventana.ShowDialog() == true)
+            var ventana = new GloboEditWindow(); // Ventana para agregar
+            if (ventana.ShowDialog() == true && ventana.Globo != null)
             {
+                _globoRepo.AgregarGlobo(ventana.Globo);
                 VM.GlobosView.Add(ventana.Globo);
                 VM.GlobosViewFiltered.Refresh();
             }
@@ -64,63 +77,31 @@ namespace TiendaGlobosLaFiesta.Views
 
         private void EditarGlobo_Click(object sender, RoutedEventArgs e)
         {
-            if ((sender as Button)?.DataContext is Globo g)
+            if (GlobosDataGrid.SelectedItem is Globo g)
             {
-                var ventana = new GloboEditWindow(g);
-                ventana.ShowDialog();
-                VM.GlobosViewFiltered.Refresh();
+                var ventana = new GloboEditWindow(g); // Ventana para editar
+                if (ventana.ShowDialog() == true && ventana.Globo != null)
+                {
+                    _globoRepo.ActualizarGlobo(ventana.Globo);
+                    VM.GlobosViewFiltered.Refresh();
+                }
             }
         }
 
         private void EliminarGlobo_Click(object sender, RoutedEventArgs e)
         {
-            if ((sender as Button)?.DataContext is Globo g)
+            if (GlobosDataGrid.SelectedItem is Globo g)
             {
-                if (MessageBox.Show($"¿Eliminar globo {g.Nombre}?", "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                if (MessageBox.Show($"¿Eliminar el globo {g.Color}?", "Confirmar",
+                    MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                 {
+                    _globoRepo.EliminarGlobo(g.GloboId);
                     VM.GlobosView.Remove(g);
                     VM.GlobosViewFiltered.Refresh();
                 }
             }
         }
-        #endregion
 
-        #region STOCK CRÍTICO
-        private void EditarStock_Click(object sender, RoutedEventArgs e)
-        {
-            if ((sender as Button)?.DataContext is StockCriticoItem item)
-            {
-                if (item.Tipo == "Producto")
-                {
-                    var ventana = new ProductoEditWindow(item.Producto);
-                    ventana.ShowDialog();
-                }
-                else
-                {
-                    var ventana = new GloboEditWindow(item.Globo);
-                    ventana.ShowDialog();
-                }
-            }
-        }
-
-        private void AjustarStock_Click(object sender, RoutedEventArgs e)
-        {
-            if ((sender as Button)?.DataContext is StockCriticoItem item)
-            {
-                var ventana = new AjustarStockWindow(item.Nombre);
-                if (ventana.ShowDialog() == true)
-                {
-                    if (item.Tipo == "Producto")
-                        item.Producto.Stock = ventana.NuevaCantidad;
-                    else
-                        item.Globo.Stock = ventana.NuevaCantidad;
-
-                    VM.StockCriticoView.Refresh();
-                    VM.ProductosViewFiltered.Refresh();
-                    VM.GlobosViewFiltered.Refresh();
-                }
-            }
-        }
         #endregion
     }
 }
