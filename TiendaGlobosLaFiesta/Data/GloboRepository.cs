@@ -17,11 +17,13 @@ namespace TiendaGlobosLaFiesta.Data
                 SELECT g.globoId, g.material, g.unidad, g.color, g.costo, g.stock, g.proveedorId, g.Activo,
                        ISNULL(Tam.Tamanos, '') AS Tamano,
                        ISNULL(Form.Formas, '') AS Forma,
-                       ISNULL(Temp.Tematicas, '') AS Tematica
+                       ISNULL(Temp.Tematicas, '') AS Tematica,
+                       ISNULL(pr.razonSocial, 'Sin proveedor') AS ProveedorNombre
                 FROM Globo g
                 LEFT JOIN (SELECT globoId, STRING_AGG(tamanio, ', ') AS Tamanos FROM Globo_Tamanio GROUP BY globoId) Tam ON g.globoId = Tam.globoId
                 LEFT JOIN (SELECT globoId, STRING_AGG(forma, ', ') AS Formas FROM Globo_Forma GROUP BY globoId) Form ON g.globoId = Form.globoId
-                LEFT JOIN (SELECT globoId, STRING_AGG(nombre, ', ') AS Tematicas FROM Tematica GROUP BY globoId) Temp ON g.globoId = Temp.globoId";
+                LEFT JOIN (SELECT globoId, STRING_AGG(nombre, ', ') AS Tematicas FROM Tematica GROUP BY globoId) Temp ON g.globoId = Temp.globoId
+                LEFT JOIN Proveedor pr ON g.proveedorId = pr.proveedorId";
 
             if (soloActivos) query += " WHERE g.Activo = 1";
             query += " ORDER BY g.globoId";
@@ -39,11 +41,13 @@ namespace TiendaGlobosLaFiesta.Data
                 SELECT g.globoId, g.material, g.unidad, g.color, g.costo, g.stock, g.proveedorId, g.Activo,
                        ISNULL(Tam.Tamanos, '') AS Tamano,
                        ISNULL(Form.Formas, '') AS Forma,
-                       ISNULL(Temp.Tematicas, '') AS Tematica
+                       ISNULL(Temp.Tematicas, '') AS Tematica,
+                       ISNULL(pr.razonSocial, 'Sin proveedor') AS ProveedorNombre
                 FROM Globo g
                 LEFT JOIN (SELECT globoId, STRING_AGG(tamanio, ', ') AS Tamanos FROM Globo_Tamanio GROUP BY globoId) Tam ON g.globoId = Tam.globoId
                 LEFT JOIN (SELECT globoId, STRING_AGG(forma, ', ') AS Formas FROM Globo_Forma GROUP BY globoId) Form ON g.globoId = Form.globoId
                 LEFT JOIN (SELECT globoId, STRING_AGG(nombre, ', ') AS Tematicas FROM Tematica GROUP BY globoId) Temp ON g.globoId = Temp.globoId
+                LEFT JOIN Proveedor pr ON g.proveedorId = pr.proveedorId
                 WHERE g.globoId = @id";
 
             var parametros = new[] { new SqlParameter("@id", globoId) };
@@ -57,11 +61,12 @@ namespace TiendaGlobosLaFiesta.Data
             {
                 GloboId = row["globoId"]?.ToString() ?? string.Empty,
                 Material = row["material"]?.ToString() ?? string.Empty,
-                Unidad = row["unidad"]?.ToString() ?? string.Empty,
+                Unidad = row["unidad"]?.ToString() ?? "pieza",
                 Color = row["color"]?.ToString() ?? string.Empty,
                 Costo = row["costo"] != DBNull.Value ? Convert.ToDecimal(row["costo"]) : 0,
                 Stock = row["stock"] != DBNull.Value ? Convert.ToInt32(row["stock"]) : 0,
                 ProveedorId = row["proveedorId"] != DBNull.Value ? row["proveedorId"].ToString() : null,
+                ProveedorNombre = row["ProveedorNombre"]?.ToString() ?? "Sin proveedor",
                 Activo = row["Activo"] != DBNull.Value && Convert.ToBoolean(row["Activo"]),
                 Tamanos = row["Tamano"].ToString().Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).Distinct().ToList(),
                 Formas = row["Forma"].ToString().Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).Distinct().ToList(),
@@ -136,7 +141,6 @@ namespace TiendaGlobosLaFiesta.Data
             return DbHelper.ExecuteNonQuery(query, parametros, conn) > 0;
         }
 
-        // 🟢 Sobrecarga con conexión y transacción
         public bool ActualizarGlobo(Globo globo, SqlConnection conn, SqlTransaction tran)
         {
             string query = @"
@@ -183,7 +187,6 @@ namespace TiendaGlobosLaFiesta.Data
             int stockAnterior = globo.Stock;
             globo.Stock = nuevaCantidad;
 
-            // Usa la sobrecarga con conexión y transacción
             ActualizarGlobo(globo, conn, tran);
 
             string queryHist = @"
@@ -215,35 +218,22 @@ namespace TiendaGlobosLaFiesta.Data
             cmd.ExecuteNonQuery();
         }
 
-        private void InsertarCaracteristicasUnicas(string globoId, string tabla, string columna, IEnumerable<string> valores, SqlConnection conn, SqlTransaction tran, bool usarGuidComoPK = false)
+        private void InsertarCaracteristicasUnicas(string globoId, string tabla, string columna, List<string> items, SqlConnection conn, SqlTransaction tran, bool isTematica = false)
         {
-            foreach (var valor in valores.Where(v => !string.IsNullOrWhiteSpace(v)).Distinct())
+            if (items == null || items.Count == 0) return;
+            BorrarCaracteristicas(globoId, tabla, conn, tran);
+
+            foreach (var item in items.Distinct())
             {
-                using var cmd = new SqlCommand();
-                cmd.Connection = conn;
-                cmd.Transaction = tran;
+                string query = isTematica
+                    ? $"INSERT INTO Tematica (globoId, nombre) VALUES (@globoId, @item)"
+                    : $"INSERT INTO {tabla} (globoId, {columna}) VALUES (@globoId, @item)";
 
-                if (usarGuidComoPK)
-                {
-                    string pkValue = Guid.NewGuid().ToString("N");
-                    cmd.CommandText = $"INSERT INTO {tabla} (claveTematica, globoId, {columna}) VALUES (@pk, @globoId, @valor)";
-                    cmd.Parameters.AddWithValue("@pk", pkValue);
-                }
-                else
-                {
-                    cmd.CommandText = $"INSERT INTO {tabla} (globoId, {columna}) VALUES (@globoId, @valor)";
-                }
-
+                using var cmd = new SqlCommand(query, conn, tran);
                 cmd.Parameters.AddWithValue("@globoId", globoId);
-                cmd.Parameters.AddWithValue("@valor", valor.Trim());
+                cmd.Parameters.AddWithValue("@item", item);
                 cmd.ExecuteNonQuery();
             }
-        }
-
-        private void ReemplazarCaracteristicas(string globoId, string tabla, string columna, IEnumerable<string> valores, SqlConnection conn, SqlTransaction tran, bool usarGuidComoPK = false)
-        {
-            BorrarCaracteristicas(globoId, tabla, conn, tran);
-            InsertarCaracteristicasUnicas(globoId, tabla, columna, valores, conn, tran, usarGuidComoPK);
         }
 
         #endregion

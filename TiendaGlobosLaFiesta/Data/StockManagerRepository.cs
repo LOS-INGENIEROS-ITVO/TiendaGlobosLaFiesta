@@ -53,15 +53,19 @@ namespace TiendaGlobosLaFiesta.Data
             if (lista == null) return new List<StockCriticoItem>();
 
             return lista
-                .Where(p => p.Stock <= stockMinimo)
-                .Select(p => new StockCriticoItem
-                {
-                    Id = p.ProductoId,
-                    Nombre = p.Nombre,
-                    StockActual = p.Stock,
-                    Tipo = "Producto"
-                })
-                .ToList();
+    .Where(p => p.Stock <= stockMinimo)
+    .Select(p => new StockCriticoItem
+    {
+        Id = p.ProductoId,
+        Nombre = p.Nombre,
+        StockActual = p.Stock,
+        Precio = p.Costo,
+        Tipo = "Producto",
+        Unidad = p.Unidad ?? "pieza",
+        Color = "-", // productos no tienen color
+        Producto = p
+    })
+    .ToList();
         }
 
         /// <summary>
@@ -73,15 +77,20 @@ namespace TiendaGlobosLaFiesta.Data
             if (lista == null) return new List<StockCriticoItem>();
 
             return lista
-                .Where(g => g.Stock <= stockMinimo)
-                .Select(g => new StockCriticoItem
-                {
-                    Id = g.GloboId,
-                    Nombre = $"{g.Material} {g.Color}",
-                    StockActual = g.Stock,
-                    Tipo = "Globo"
-                })
-                .ToList();
+    .Where(g => g.Stock <= stockMinimo)
+    .Select(g => new StockCriticoItem
+    {
+        Id = g.GloboId,
+        Nombre = $"{g.Material} {g.Tamano} {g.Forma}".Trim(),
+        StockActual = g.Stock,
+        Precio = g.Costo,
+        Tipo = "Globo",
+        Unidad = g.Unidad ?? "pieza",
+        Color = g.Color ?? "---",
+        Globo = g
+    })
+    .ToList();
+
         }
 
         // ---------------------------

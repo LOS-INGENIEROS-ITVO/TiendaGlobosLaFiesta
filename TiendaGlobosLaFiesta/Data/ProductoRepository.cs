@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
 using TiendaGlobosLaFiesta.Models;
 
 namespace TiendaGlobosLaFiesta.Data
@@ -13,10 +14,13 @@ namespace TiendaGlobosLaFiesta.Data
         public List<Producto> ObtenerProductos(bool soloActivos = true)
         {
             var lista = new List<Producto>();
-            string query = @"SELECT productoId, nombre, unidad, costo, stock, proveedorId, categoriaId, Activo FROM Producto";
+            string query = @"SELECT p.productoId, p.nombre, p.unidad, p.costo, p.stock, p.proveedorId, p.categoriaId, p.Activo,
+                                    ISNULL(pr.razonSocial, 'Sin proveedor') AS ProveedorNombre
+                             FROM Producto p
+                             LEFT JOIN Proveedor pr ON p.proveedorId = pr.proveedorId";
 
             if (soloActivos)
-                query += " WHERE Activo = 1";
+                query += " WHERE p.Activo = 1";
 
             try
             {
@@ -40,9 +44,11 @@ namespace TiendaGlobosLaFiesta.Data
                 throw new ArgumentException("El ID del producto no puede ser vacío.", nameof(productoId));
 
             string query = @"
-                SELECT productoId, nombre, unidad, costo, stock, proveedorId, categoriaId, Activo
-                FROM Producto
-                WHERE productoId = @id";
+                SELECT p.productoId, p.nombre, p.unidad, p.costo, p.stock, p.proveedorId, p.categoriaId, p.Activo,
+                       ISNULL(pr.razonSocial, 'Sin proveedor') AS ProveedorNombre
+                FROM Producto p
+                LEFT JOIN Proveedor pr ON p.proveedorId = pr.proveedorId
+                WHERE p.productoId = @id";
 
             var parametros = new[] { new SqlParameter("@id", productoId) };
 
@@ -66,10 +72,11 @@ namespace TiendaGlobosLaFiesta.Data
             {
                 ProductoId = row["productoId"]?.ToString() ?? string.Empty,
                 Nombre = row["nombre"]?.ToString() ?? string.Empty,
-                Unidad = row["unidad"] != DBNull.Value ? row["unidad"].ToString() : "1",
+                Unidad = row["unidad"] != DBNull.Value ? row["unidad"].ToString() : "pieza",
                 Costo = row["costo"] != DBNull.Value ? Convert.ToDecimal(row["costo"]) : 0,
                 Stock = row["stock"] != DBNull.Value ? Convert.ToInt32(row["stock"]) : 0,
                 ProveedorId = row["proveedorId"] != DBNull.Value ? row["proveedorId"].ToString() : null,
+                ProveedorNombre = row["ProveedorNombre"]?.ToString() ?? "Sin proveedor",
                 CategoriaId = row["categoriaId"] != DBNull.Value ? Convert.ToInt32(row["categoriaId"]) : (int?)null,
                 Activo = row["Activo"] != DBNull.Value && Convert.ToBoolean(row["Activo"]),
                 VentasHoy = 0
@@ -83,6 +90,14 @@ namespace TiendaGlobosLaFiesta.Data
         public bool AgregarProducto(Producto producto)
         {
             if (producto == null) throw new ArgumentNullException(nameof(producto));
+
+            // Si no tiene ID, generamos uno único
+            if (string.IsNullOrWhiteSpace(producto.ProductoId))
+                producto.ProductoId = GenerarIdUnico();
+
+            // Validar duplicado de ID
+            if (ObtenerProductoPorId(producto.ProductoId) != null)
+                throw new Exception($"Ya existe un producto con el ID {producto.ProductoId}. Genera uno diferente.");
 
             string query = @"
                 INSERT INTO Producto (productoId, nombre, unidad, costo, stock, proveedorId, categoriaId, Activo)
@@ -107,12 +122,26 @@ namespace TiendaGlobosLaFiesta.Data
             }
             catch (SqlException ex) when (ex.Number == 2627)
             {
-                throw new Exception("Ya existe un producto con ese ID. Verifica el código antes de registrar.", ex);
+                throw new Exception("Ya existe un producto con ese ID en la base de datos.", ex);
             }
             catch (Exception ex)
             {
                 throw new Exception("Error al agregar producto: " + ex.Message, ex);
             }
+        }
+
+        private string GenerarIdUnico()
+        {
+            string id;
+            int intentos = 0;
+            do
+            {
+                id = $"PRD{DateTime.Now:yyMMddHHmmss}{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}";
+                intentos++;
+                if (intentos > 5) throw new Exception("No se pudo generar un ID único para el producto.");
+            } while (ObtenerProductoPorId(id) != null);
+
+            return id;
         }
 
         public bool ActualizarProducto(Producto producto)
@@ -136,14 +165,9 @@ namespace TiendaGlobosLaFiesta.Data
         {
             string query = @"
                 UPDATE Producto
-                SET nombre = @nombre,
-                    unidad = @unidad,
-                    costo = @costo,
-                    stock = @stock,
-                    proveedorId = @proveedorId,
-                    categoriaId = @categoriaId,
-                    Activo = @activo
-                WHERE productoId = @id";
+                SET nombre=@nombre, unidad=@unidad, costo=@costo, stock=@stock,
+                    proveedorId=@proveedorId, categoriaId=@categoriaId, Activo=@activo
+                WHERE productoId=@id";
 
             var parametros = new[]
             {

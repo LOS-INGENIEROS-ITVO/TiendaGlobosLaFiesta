@@ -8,6 +8,8 @@
         public decimal Costo { get; set; }
         public int Stock { get; set; }
         public string? ProveedorId { get; set; }
+        public string ProveedorNombre { get; set; } = "Sin proveedor";
+
         public int? CategoriaId { get; set; }
         public bool Activo { get; set; } = true;
         public int VentasHoy { get; set; }

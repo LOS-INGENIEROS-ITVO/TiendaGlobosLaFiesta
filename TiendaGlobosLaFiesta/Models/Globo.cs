@@ -11,6 +11,8 @@ namespace TiendaGlobosLaFiesta.Models
         public int Stock { get; set; }
         public decimal Costo { get; set; }
         public string ProveedorId { get; set; } = string.Empty;
+        public string ProveedorNombre { get; set; } = "Sin proveedor";
+
         public bool Activo { get; set; } = true;
 
         public List<string> Tamanos { get; set; } = new();
