@@ -10,7 +10,6 @@
     <Border CornerRadius="10" BorderBrush="#0078D7" BorderThickness="2" Margin="10" Padding="10">
         <StackPanel Margin="10">
 
-            <!-- Título -->
             <TextBlock Text="🛒 Agregar/Editar Producto" FontSize="24" FontWeight="Bold"
                        Foreground="#0078D7" HorizontalAlignment="Center" Margin="0,0,0,20"/>
 
@@ -20,52 +19,37 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Información general -->
                 <GroupBox Header="General" Grid.Column="0" Margin="5">
                     <StackPanel>
                         <TextBlock Text="ID Producto:" FontWeight="Bold"/>
                         <TextBox x:Name="txtProductoId" Height="30" IsReadOnly="True" Margin="0,0,0,10"/>
-
                         <TextBlock Text="Nombre:" FontWeight="Bold"/>
-                        <TextBox x:Name="txtNombre" Height="30" Margin="0,0,0,10"
-                                 ToolTipService.IsEnabled="True"/>
-
+                        <TextBox x:Name="txtNombre" Height="30" Margin="0,0,0,10" ToolTipService.IsEnabled="True"/>
                         <TextBlock Text="Unidad:" FontWeight="Bold"/>
                         <TextBox x:Name="txtUnidad" Height="30" Margin="0,0,0,10"
-                                 PreviewTextInput="TxtNumero_PreviewTextInput"
-                                 ToolTipService.IsEnabled="True"/>
-
+                                 PreviewTextInput="TxtNumero_PreviewTextInput" ToolTipService.IsEnabled="True"/>
                         <TextBlock Text="Costo:" FontWeight="Bold"/>
                         <TextBox x:Name="txtCosto" Height="30" Margin="0,0,0,10"
-                                 PreviewTextInput="TxtDecimal_PreviewTextInput"
-                                 ToolTipService.IsEnabled="True"/>
-
+                                 PreviewTextInput="TxtDecimal_PreviewTextInput" ToolTipService.IsEnabled="True"/>
                         <TextBlock Text="Stock:" FontWeight="Bold"/>
                         <TextBox x:Name="txtStock" Height="30" Margin="0,0,0,10"
-                                 PreviewTextInput="TxtNumero_PreviewTextInput"
-                                 ToolTipService.IsEnabled="True"/>
+                                 PreviewTextInput="TxtNumero_PreviewTextInput" ToolTipService.IsEnabled="True"/>
                     </StackPanel>
                 </GroupBox>
 
-                <!-- Proveedor y categoría -->
                 <GroupBox Header="Proveedor / Categoría" Grid.Column="1" Margin="5">
                     <StackPanel>
                         <TextBlock Text="Proveedor:" FontWeight="Bold"/>
-                        <ComboBox x:Name="cmbProveedor" Height="30" Margin="0,0,0,10" 
-                                  IsEditable="True" StaysOpenOnEdit="True"/>
-
+                        <ComboBox x:Name="cmbProveedor" Height="30" Margin="0,0,0,10" IsEditable="True" StaysOpenOnEdit="True"/>
                         <TextBlock Text="Categoría:" FontWeight="Bold"/>
-                        <ComboBox x:Name="cmbCategoria" Height="30" Margin="0,0,0,10"
-                                  IsEditable="True" StaysOpenOnEdit="True"/>
+                        <ComboBox x:Name="cmbCategoria" Height="30" Margin="0,0,0,10" IsEditable="True" StaysOpenOnEdit="True"/>
                     </StackPanel>
                 </GroupBox>
             </Grid>
 
-            <!-- Mensaje de confirmación -->
             <TextBlock x:Name="lblMensaje" Foreground="Green" FontWeight="Bold"
                        HorizontalAlignment="Center" Margin="0,10,0,0" Visibility="Collapsed"/>
 
-            <!-- Botones -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
                 <Button Content="💾 Guardar" Width="140" Height="35" Background="#0078D7" Foreground="White"
                         FontWeight="Bold" Margin="10,0" Click="Guardar_Click"/>
@@ -74,7 +58,6 @@
                 <Button Content="❌ Cancelar" Width="140" Height="35" Background="#D9534F" Foreground="White"
                         FontWeight="Bold" Margin="10,0" Click="Cancelar_Click"/>
             </StackPanel>
-
         </StackPanel>
     </Border>
 </Window>

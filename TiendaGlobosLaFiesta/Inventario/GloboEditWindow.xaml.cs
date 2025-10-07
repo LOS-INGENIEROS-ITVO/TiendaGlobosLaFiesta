@@ -15,7 +15,6 @@ namespace TiendaGlobosLaFiesta.Views
     {
         public Globo Globo { get; private set; }
         private bool esEdicion;
-
         private readonly GloboRepository repo = new();
 
         public GloboEditWindow(Globo globo = null)
@@ -43,16 +42,20 @@ namespace TiendaGlobosLaFiesta.Views
         {
             cmbMaterial.ItemsSource = new List<string> { "Metalicos", "Latex", "Burbuja" };
 
-            // Tamaños, Formas, Temáticas existentes en BD
-            var globos = repo.ObtenerGlobos(false);
-            lstTamano.ItemsSource = globos.SelectMany(g => g.Tamanos).Distinct().OrderBy(x => x).ToList();
-            lstForma.ItemsSource = globos.SelectMany(g => g.Formas).Distinct().OrderBy(x => x).ToList();
-            lstTematica.ItemsSource = globos.SelectMany(g => g.Tematicas).Distinct().OrderBy(x => x).ToList();
+            // Cargar tamaños, formas y temáticas desde BD para evitar duplicados
+            lstTamano.ItemsSource = DbHelper.ExecuteQuery("SELECT DISTINCT nombre FROM Globo_Tamanio ORDER BY nombre")
+                                            .AsEnumerable().Select(r => r["nombre"].ToString()).ToList();
+
+            lstForma.ItemsSource = DbHelper.ExecuteQuery("SELECT DISTINCT nombre FROM Globo_Forma ORDER BY nombre")
+                                           .AsEnumerable().Select(r => r["nombre"].ToString()).ToList();
+
+            lstTematica.ItemsSource = DbHelper.ExecuteQuery("SELECT DISTINCT nombre FROM Tematica ORDER BY nombre")
+                                              .AsEnumerable().Select(r => r["nombre"].ToString()).ToList();
 
             // Proveedores activos
             var dt = DbHelper.ExecuteQuery("SELECT proveedorId, razonSocial FROM Proveedor WHERE Activo = 1 ORDER BY razonSocial");
             cmbProveedor.ItemsSource = dt.AsEnumerable()
-                                         .Select(r => new { Id = r["proveedorId"], Nombre = r["razonSocial"] })
+                                         .Select(r => new { Id = Convert.ToInt32(r["proveedorId"]), Nombre = r["razonSocial"] })
                                          .ToList();
             cmbProveedor.DisplayMemberPath = "Nombre";
             cmbProveedor.SelectedValuePath = "Id";
@@ -66,7 +69,6 @@ namespace TiendaGlobosLaFiesta.Views
             txtCosto.Text = Globo.Costo.ToString(CultureInfo.InvariantCulture);
             txtStock.Text = Globo.Stock.ToString();
 
-            // Validar que los items existan antes de seleccionar
             foreach (var item in Globo.Tamanos)
                 if (lstTamano.Items.Contains(item))
                     lstTamano.SelectedItems.Add(item);
@@ -79,12 +81,15 @@ namespace TiendaGlobosLaFiesta.Views
                 if (lstTematica.Items.Contains(item))
                     lstTematica.SelectedItems.Add(item);
 
-            cmbProveedor.SelectedValue = Globo.ProveedorId;
+            cmbProveedor.SelectedValue = int.TryParse(Globo.ProveedorId, out int provId) ? provId : (int?)null;
         }
 
         private string GenerarId() => $"GLB{DateTime.Now:yyMMddHHmmss}";
 
-        private void Guardar_Click(object sender, RoutedEventArgs e)
+        private void Guardar_Click(object sender, RoutedEventArgs e) => Guardar(false);
+        private void GuardarYAgregar_Click(object sender, RoutedEventArgs e) => Guardar(true);
+
+        private void Guardar(bool agregarOtro)
         {
             if (!ValidarCampos()) return;
             AsignarCamposAObjeto();
@@ -96,49 +101,32 @@ namespace TiendaGlobosLaFiesta.Views
                 else
                     repo.AgregarGlobo(Globo);
 
-                DialogResult = true;
+                if (agregarOtro)
+                    LimpiarParaAgregarOtro();
+                else
+                    DialogResult = true;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ocurrió un error al guardar el globo:\n{ex.Message}",
-                                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Ocurrió un error al guardar el globo:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void GuardarYAgregar_Click(object sender, RoutedEventArgs e)
+        private void LimpiarParaAgregarOtro()
         {
-            if (!ValidarCampos()) return;
-            AsignarCamposAObjeto();
-
-            try
-            {
-                if (esEdicion)
-                    repo.ActualizarGlobo(Globo);
-                else
-                    repo.AgregarGlobo(Globo);
-
-                MessageBox.Show("Globo guardado exitosamente.", "Confirmación", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                // Limpiar para agregar otro
-                esEdicion = false;
-                Globo = new Globo { GloboId = GenerarId() };
-                txtGloboId.Text = Globo.GloboId;
-                cmbMaterial.SelectedIndex = -1;
-                txtColor.Clear();
-                txtUnidad.Clear();
-                txtCosto.Clear();
-                txtStock.Clear();
-                cmbProveedor.SelectedIndex = -1;
-                lstTamano.UnselectAll();
-                lstForma.UnselectAll();
-                lstTematica.UnselectAll();
-                cmbMaterial.Focus();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ocurrió un error al guardar el globo:\n{ex.Message}",
-                                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            esEdicion = false;
+            Globo = new Globo { GloboId = GenerarId() };
+            txtGloboId.Text = Globo.GloboId;
+            cmbMaterial.SelectedIndex = -1;
+            txtColor.Clear();
+            txtUnidad.Clear();
+            txtCosto.Clear();
+            txtStock.Clear();
+            cmbProveedor.SelectedIndex = -1;
+            lstTamano.UnselectAll();
+            lstForma.UnselectAll();
+            lstTematica.UnselectAll();
+            cmbMaterial.Focus();
         }
 
         private void AsignarCamposAObjeto()
@@ -146,14 +134,12 @@ namespace TiendaGlobosLaFiesta.Views
             Globo.Material = cmbMaterial.SelectedItem?.ToString();
             Globo.Color = txtColor.Text.Trim();
             Globo.Unidad = txtUnidad.Text.Trim();
-            Globo.ProveedorId = cmbProveedor.SelectedValue?.ToString();
-
             Globo.Costo = decimal.Parse(txtCosto.Text, CultureInfo.InvariantCulture);
             Globo.Stock = int.Parse(txtStock.Text);
-
             Globo.Tamanos = lstTamano.SelectedItems.Cast<string>().ToList();
             Globo.Formas = lstForma.SelectedItems.Cast<string>().ToList();
             Globo.Tematicas = lstTematica.SelectedItems.Cast<string>().ToList();
+            Globo.ProveedorId = cmbProveedor.SelectedValue?.ToString();
         }
 
         private bool ValidarCampos()
@@ -192,21 +178,10 @@ namespace TiendaGlobosLaFiesta.Views
 
         private void Cancelar_Click(object sender, RoutedEventArgs e) => DialogResult = false;
 
-        private void TextBox_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter)
-            {
-                e.Handled = true;
-                (sender as UIElement)?.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
-            }
-        }
-
         private void Window_Loaded(object sender, RoutedEventArgs e) => cmbMaterial.Focus();
-
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Escape)
-                DialogResult = false;
+            if (e.Key == Key.Escape) DialogResult = false;
         }
     }
 }

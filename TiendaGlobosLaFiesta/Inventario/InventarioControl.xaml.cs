@@ -1,16 +1,12 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using TiendaGlobosLaFiesta.Models;
-using TiendaGlobosLaFiesta.Data;
-using TiendaGlobosLaFiesta.Views;
 using TiendaGlobosLaFiesta.ViewModels;
 
 namespace TiendaGlobosLaFiesta.Views
 {
     public partial class InventarioControl : UserControl
     {
-        private readonly ProductoRepository _productoRepo = new();
-        private readonly GloboRepository _globoRepo = new();
         public InventarioViewModel VM { get; private set; }
 
         public InventarioControl()
@@ -24,11 +20,10 @@ namespace TiendaGlobosLaFiesta.Views
 
         private void AgregarProducto_Click(object sender, RoutedEventArgs e)
         {
-            var ventana = new ProductoEditWindow(); // Ventana para agregar
+            var ventana = new ProductoEditWindow();
             if (ventana.ShowDialog() == true && ventana.Producto != null)
             {
-                _productoRepo.AgregarProducto(ventana.Producto);
-                VM.ProductosView.Add(ventana.Producto);
+                VM.AgregarProducto(ventana.Producto);
                 VM.ProductosViewFiltered.Refresh();
             }
         }
@@ -37,10 +32,10 @@ namespace TiendaGlobosLaFiesta.Views
         {
             if (ProductosDataGrid.SelectedItem is Producto p)
             {
-                var ventana = new ProductoEditWindow(p); // Ventana para editar
+                var ventana = new ProductoEditWindow(p);
                 if (ventana.ShowDialog() == true && ventana.Producto != null)
                 {
-                    _productoRepo.ActualizarProducto(ventana.Producto);
+                    VM.EditarProducto(ventana.Producto);
                     VM.ProductosViewFiltered.Refresh();
                 }
             }
@@ -53,8 +48,7 @@ namespace TiendaGlobosLaFiesta.Views
                 if (MessageBox.Show($"¿Eliminar el producto {p.Nombre}?", "Confirmar",
                     MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                 {
-                    _productoRepo.EliminarProducto(p.ProductoId);
-                    VM.ProductosView.Remove(p);
+                    VM.EliminarProducto(p);
                     VM.ProductosViewFiltered.Refresh();
                 }
             }
@@ -66,11 +60,10 @@ namespace TiendaGlobosLaFiesta.Views
 
         private void AgregarGlobo_Click(object sender, RoutedEventArgs e)
         {
-            var ventana = new GloboEditWindow(); // Ventana para agregar
+            var ventana = new GloboEditWindow();
             if (ventana.ShowDialog() == true && ventana.Globo != null)
             {
-                _globoRepo.AgregarGlobo(ventana.Globo);
-                VM.GlobosView.Add(ventana.Globo);
+                VM.AgregarGlobo(ventana.Globo);
                 VM.GlobosViewFiltered.Refresh();
             }
         }
@@ -79,10 +72,10 @@ namespace TiendaGlobosLaFiesta.Views
         {
             if (GlobosDataGrid.SelectedItem is Globo g)
             {
-                var ventana = new GloboEditWindow(g); // Ventana para editar
+                var ventana = new GloboEditWindow(g);
                 if (ventana.ShowDialog() == true && ventana.Globo != null)
                 {
-                    _globoRepo.ActualizarGlobo(ventana.Globo);
+                    VM.EditarGlobo(ventana.Globo);
                     VM.GlobosViewFiltered.Refresh();
                 }
             }
@@ -95,8 +88,7 @@ namespace TiendaGlobosLaFiesta.Views
                 if (MessageBox.Show($"¿Eliminar el globo {g.Color}?", "Confirmar",
                     MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                 {
-                    _globoRepo.EliminarGlobo(g.GloboId);
-                    VM.GlobosView.Remove(g);
+                    VM.EliminarGlobo(g);
                     VM.GlobosViewFiltered.Refresh();
                 }
             }

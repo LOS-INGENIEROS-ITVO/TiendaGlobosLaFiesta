@@ -131,8 +131,8 @@
                             <DataGridTextColumn Header="📝 Nombre" Binding="{Binding Nombre}" ElementStyle="{StaticResource CenterTextStyle}" Width="*" HeaderStyle="{StaticResource HeaderStyle}"/>
                             <DataGridTextColumn Header="📏 Unidad" Binding="{Binding Unidad, Converter={StaticResource NullToDash}}" ElementStyle="{StaticResource CenterTextStyle}" Width="120" HeaderStyle="{StaticResource HeaderStyle}"/>
                             <DataGridTextColumn Header="📦 Stock" Binding="{Binding Stock}" ElementStyle="{StaticResource CenterTextStyle}" Width="120" HeaderStyle="{StaticResource HeaderStyle}"/>
-                            <DataGridTextColumn Header="💰 Costo" Binding="{Binding Costo, Converter={StaticResource NullToDash}, StringFormat=C}" ElementStyle="{StaticResource CenterTextStyle}" Width="120" HeaderStyle="{StaticResource HeaderStyle}"/>
-                            <DataGridTextColumn Header="🏭 Proveedor" Binding="{Binding ProveedorId}" ElementStyle="{StaticResource CenterTextStyle}" Width="170" HeaderStyle="{StaticResource HeaderStyle}"/>
+                            <DataGridTextColumn Header="💰 Costo" Binding="{Binding Costo, StringFormat=C}" ElementStyle="{StaticResource CenterTextStyle}" Width="120" HeaderStyle="{StaticResource HeaderStyle}"/>
+                            <DataGridTextColumn Header="🏭 Proveedor" Binding="{Binding ProveedorNombre}" ElementStyle="{StaticResource CenterTextStyle}" Width="170" HeaderStyle="{StaticResource HeaderStyle}"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
@@ -187,9 +187,9 @@
                             <DataGridTextColumn Header="🔷 Forma" Binding="{Binding Forma, Converter={StaticResource NullToDash}}" ElementStyle="{StaticResource CenterTextStyle}" Width="100" HeaderStyle="{StaticResource HeaderStyle}"/>
                             <DataGridTextColumn Header="🌟 Temática" Binding="{Binding Tematica, Converter={StaticResource NullToDash}}" ElementStyle="{StaticResource CenterTextStyle}" Width="120" HeaderStyle="{StaticResource HeaderStyle}"/>
                             <DataGridTextColumn Header="📏 Unidad" Binding="{Binding UnidadDisplay, Converter={StaticResource NullToDash}}" ElementStyle="{StaticResource CenterTextStyle}" Width="*" HeaderStyle="{StaticResource HeaderStyle}"/>
-                            <DataGridTextColumn Header="💰 Costo" Binding="{Binding Costo, Converter={StaticResource NullToDash}, StringFormat=C}" ElementStyle="{StaticResource CenterTextStyle}" Width="100" HeaderStyle="{StaticResource HeaderStyle}"/>
+                            <DataGridTextColumn Header="💰 Costo" Binding="{Binding Costo, StringFormat=C}" ElementStyle="{StaticResource CenterTextStyle}" Width="100" HeaderStyle="{StaticResource HeaderStyle}"/>
                             <DataGridTextColumn Header="📦 Stock" Binding="{Binding Stock}" ElementStyle="{StaticResource CenterTextStyle}" Width="80" HeaderStyle="{StaticResource HeaderStyle}"/>
-                            <DataGridTextColumn Header="🏭 Proveedor" Binding="{Binding ProveedorId, Converter={StaticResource NullToDash}}" ElementStyle="{StaticResource CenterTextStyle}" Width="170" HeaderStyle="{StaticResource HeaderStyle}"/>
+                            <DataGridTextColumn Header="🏭 Proveedor" Binding="{Binding ProveedorNombre, Converter={StaticResource NullToDash}}" ElementStyle="{StaticResource CenterTextStyle}" Width="170" HeaderStyle="{StaticResource HeaderStyle}"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>

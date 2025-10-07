@@ -4,7 +4,6 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using TiendaGlobosLaFiesta.Models;
-using TiendaGlobosLaFiesta.Modelos;
 
 namespace TiendaGlobosLaFiesta.Data
 {
@@ -20,18 +19,9 @@ namespace TiendaGlobosLaFiesta.Data
                        ISNULL(Form.Formas, '') AS Forma,
                        ISNULL(Temp.Tematicas, '') AS Tematica
                 FROM Globo g
-                LEFT JOIN (
-                    SELECT globoId, STRING_AGG(tamanio, ', ') AS Tamanos
-                    FROM Globo_Tamanio GROUP BY globoId
-                ) Tam ON g.globoId = Tam.globoId
-                LEFT JOIN (
-                    SELECT globoId, STRING_AGG(forma, ', ') AS Formas
-                    FROM Globo_Forma GROUP BY globoId
-                ) Form ON g.globoId = Form.globoId
-                LEFT JOIN (
-                    SELECT globoId, STRING_AGG(nombre, ', ') AS Tematicas
-                    FROM Tematica GROUP BY globoId
-                ) Temp ON g.globoId = Temp.globoId";
+                LEFT JOIN (SELECT globoId, STRING_AGG(tamanio, ', ') AS Tamanos FROM Globo_Tamanio GROUP BY globoId) Tam ON g.globoId = Tam.globoId
+                LEFT JOIN (SELECT globoId, STRING_AGG(forma, ', ') AS Formas FROM Globo_Forma GROUP BY globoId) Form ON g.globoId = Form.globoId
+                LEFT JOIN (SELECT globoId, STRING_AGG(nombre, ', ') AS Tematicas FROM Tematica GROUP BY globoId) Temp ON g.globoId = Temp.globoId";
 
             if (soloActivos) query += " WHERE g.Activo = 1";
             query += " ORDER BY g.globoId";
@@ -51,18 +41,9 @@ namespace TiendaGlobosLaFiesta.Data
                        ISNULL(Form.Formas, '') AS Forma,
                        ISNULL(Temp.Tematicas, '') AS Tematica
                 FROM Globo g
-                LEFT JOIN (
-                    SELECT globoId, STRING_AGG(tamanio, ', ') AS Tamanos
-                    FROM Globo_Tamanio GROUP BY globoId
-                ) Tam ON g.globoId = Tam.globoId
-                LEFT JOIN (
-                    SELECT globoId, STRING_AGG(forma, ', ') AS Formas
-                    FROM Globo_Forma GROUP BY globoId
-                ) Form ON g.globoId = Form.globoId
-                LEFT JOIN (
-                    SELECT globoId, STRING_AGG(nombre, ', ') AS Tematicas
-                    FROM Tematica GROUP BY globoId
-                ) Temp ON g.globoId = Temp.globoId
+                LEFT JOIN (SELECT globoId, STRING_AGG(tamanio, ', ') AS Tamanos FROM Globo_Tamanio GROUP BY globoId) Tam ON g.globoId = Tam.globoId
+                LEFT JOIN (SELECT globoId, STRING_AGG(forma, ', ') AS Formas FROM Globo_Forma GROUP BY globoId) Form ON g.globoId = Form.globoId
+                LEFT JOIN (SELECT globoId, STRING_AGG(nombre, ', ') AS Tematicas FROM Tematica GROUP BY globoId) Temp ON g.globoId = Temp.globoId
                 WHERE g.globoId = @id";
 
             var parametros = new[] { new SqlParameter("@id", globoId) };
@@ -105,15 +86,18 @@ namespace TiendaGlobosLaFiesta.Data
                     INSERT INTO Globo (globoId, material, unidad, color, costo, stock, proveedorId, Activo)
                     VALUES (@id, @material, @unidad, @color, @costo, @stock, @proveedorId, 1)";
 
-                using var cmd = new SqlCommand(queryGlobo, conn, tran);
-                cmd.Parameters.AddWithValue("@id", globo.GloboId);
-                cmd.Parameters.AddWithValue("@material", globo.Material);
-                cmd.Parameters.AddWithValue("@unidad", globo.Unidad);
-                cmd.Parameters.AddWithValue("@color", globo.Color);
-                cmd.Parameters.AddWithValue("@costo", globo.Costo);
-                cmd.Parameters.AddWithValue("@stock", globo.Stock);
-                cmd.Parameters.AddWithValue("@proveedorId", (object)globo.ProveedorId ?? DBNull.Value);
-                cmd.ExecuteNonQuery();
+                var parametros = new[]
+                {
+                    new SqlParameter("@id", globo.GloboId),
+                    new SqlParameter("@material", globo.Material),
+                    new SqlParameter("@unidad", globo.Unidad),
+                    new SqlParameter("@color", globo.Color),
+                    new SqlParameter("@costo", globo.Costo),
+                    new SqlParameter("@stock", globo.Stock),
+                    new SqlParameter("@proveedorId", (object)globo.ProveedorId ?? DBNull.Value)
+                };
+
+                DbHelper.ExecuteNonQuery(queryGlobo, parametros, conn, tran);
 
                 InsertarCaracteristicasUnicas(globo.GloboId, "Globo_Tamanio", "tamanio", globo.Tamanos, conn, tran);
                 InsertarCaracteristicasUnicas(globo.GloboId, "Globo_Forma", "forma", globo.Formas, conn, tran);
@@ -131,39 +115,49 @@ namespace TiendaGlobosLaFiesta.Data
 
         public bool ActualizarGlobo(Globo globo)
         {
-            if (globo == null) throw new ArgumentNullException(nameof(globo));
-
             using var conn = DbHelper.ObtenerConexion();
-            using var tran = conn.BeginTransaction();
-            try
+            string query = @"
+                UPDATE Globo
+                SET material=@material, unidad=@unidad, color=@color, costo=@costo, stock=@stock, proveedorId=@proveedorId, Activo=@activo
+                WHERE globoId=@id";
+
+            var parametros = new[]
             {
-                string queryGlobo = @"
-                    UPDATE Globo
-                    SET material=@material, unidad=@unidad, color=@color, costo=@costo, stock=@stock, proveedorId=@proveedorId
-                    WHERE globoId=@id";
+                new SqlParameter("@id", globo.GloboId),
+                new SqlParameter("@material", globo.Material),
+                new SqlParameter("@unidad", globo.Unidad),
+                new SqlParameter("@color", globo.Color),
+                new SqlParameter("@costo", globo.Costo),
+                new SqlParameter("@stock", globo.Stock),
+                new SqlParameter("@proveedorId", (object)globo.ProveedorId ?? DBNull.Value),
+                new SqlParameter("@activo", globo.Activo)
+            };
 
-                using var cmd = new SqlCommand(queryGlobo, conn, tran);
-                cmd.Parameters.AddWithValue("@id", globo.GloboId);
-                cmd.Parameters.AddWithValue("@material", globo.Material);
-                cmd.Parameters.AddWithValue("@unidad", globo.Unidad);
-                cmd.Parameters.AddWithValue("@color", globo.Color);
-                cmd.Parameters.AddWithValue("@costo", globo.Costo);
-                cmd.Parameters.AddWithValue("@stock", globo.Stock);
-                cmd.Parameters.AddWithValue("@proveedorId", (object)globo.ProveedorId ?? DBNull.Value);
-                cmd.ExecuteNonQuery();
+            return DbHelper.ExecuteNonQuery(query, parametros, conn) > 0;
+        }
 
-                ReemplazarCaracteristicas(globo.GloboId, "Globo_Tamanio", "tamanio", globo.Tamanos, conn, tran);
-                ReemplazarCaracteristicas(globo.GloboId, "Globo_Forma", "forma", globo.Formas, conn, tran);
-                ReemplazarCaracteristicas(globo.GloboId, "Tematica", "nombre", globo.Tematicas, conn, tran, true);
+        // 🟢 Sobrecarga con conexión y transacción
+        public bool ActualizarGlobo(Globo globo, SqlConnection conn, SqlTransaction tran)
+        {
+            string query = @"
+                UPDATE Globo
+                SET material=@material, unidad=@unidad, color=@color, costo=@costo, stock=@stock, proveedorId=@proveedorId, Activo=@activo
+                WHERE globoId=@id";
 
-                tran.Commit();
-                return true;
-            }
-            catch
+            var parametros = new[]
             {
-                tran.Rollback();
-                return false;
-            }
+                new SqlParameter("@id", globo.GloboId),
+                new SqlParameter("@material", globo.Material),
+                new SqlParameter("@unidad", globo.Unidad),
+                new SqlParameter("@color", globo.Color),
+                new SqlParameter("@costo", globo.Costo),
+                new SqlParameter("@stock", globo.Stock),
+                new SqlParameter("@proveedorId", (object)globo.ProveedorId ?? DBNull.Value),
+                new SqlParameter("@activo", globo.Activo)
+            };
+
+            DbHelper.ExecuteNonQuery(query, parametros, conn, tran);
+            return true;
         }
 
         public bool EliminarGlobo(string globoId)
@@ -173,7 +167,40 @@ namespace TiendaGlobosLaFiesta.Data
 
             string query = "UPDATE Globo SET Activo = 0 WHERE globoId=@id";
             var parametros = new[] { new SqlParameter("@id", globoId) };
-            return DbHelper.ExecuteNonQuery(query, parametros) > 0;
+            using var conn = DbHelper.ObtenerConexion();
+            return DbHelper.ExecuteNonQuery(query, parametros, conn) > 0;
+        }
+
+        #endregion
+
+        #region Ajuste Stock con Historial
+
+        public bool AjustarStockConHistorial(string globoId, int nuevaCantidad, int empleadoId, string motivo, SqlConnection conn, SqlTransaction tran)
+        {
+            var globo = ObtenerGloboPorId(globoId);
+            if (globo == null) throw new Exception("Globo no encontrado");
+
+            int stockAnterior = globo.Stock;
+            globo.Stock = nuevaCantidad;
+
+            // Usa la sobrecarga con conexión y transacción
+            ActualizarGlobo(globo, conn, tran);
+
+            string queryHist = @"
+                INSERT INTO HistorialAjusteStockGlobo (GloboId, CantidadAnterior, CantidadNueva, Motivo, EmpleadoId)
+                VALUES (@GloboId, @CantidadAnterior, @CantidadNueva, @Motivo, @EmpleadoId)";
+
+            var parametros = new[]
+            {
+                new SqlParameter("@GloboId", globoId),
+                new SqlParameter("@CantidadAnterior", stockAnterior),
+                new SqlParameter("@CantidadNueva", nuevaCantidad),
+                new SqlParameter("@Motivo", motivo),
+                new SqlParameter("@EmpleadoId", empleadoId)
+            };
+
+            DbHelper.ExecuteNonQuery(queryHist, parametros, conn, tran);
+            return true;
         }
 
         #endregion

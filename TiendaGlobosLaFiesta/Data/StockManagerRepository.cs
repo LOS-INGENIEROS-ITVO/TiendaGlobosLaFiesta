@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Data.SqlClient;
 using TiendaGlobosLaFiesta.Models;
 
@@ -7,155 +8,95 @@ namespace TiendaGlobosLaFiesta.Data
 {
     public class StockManagerRepository
     {
-        private readonly string _connectionString;
+        private readonly ProductoRepository _productoRepo;
+        private readonly GloboRepository _globoRepo;
 
-        public StockManagerRepository(string connectionString)
+        public StockManagerRepository(ProductoRepository productoRepo, GloboRepository globoRepo)
         {
-            _connectionString = connectionString;
+            _productoRepo = productoRepo ?? throw new ArgumentNullException(nameof(productoRepo));
+            _globoRepo = globoRepo ?? throw new ArgumentNullException(nameof(globoRepo));
         }
 
-        #region Ajuste de Stock
-
-        // Versión sin conexión externa
-        public bool AjustarStockProducto(string productoId, int nuevaCantidad, int empleadoId, string motivo)
+        // ---------------------------
+        // AJUSTE DE STOCK COMBINADO
+        // ---------------------------
+        public void AjustarStockCombinado(List<(string id, int cantidad, bool esGlobo)> items, int empleadoId, string motivo, SqlConnection conn, SqlTransaction tran)
         {
-            using var conn = new SqlConnection(_connectionString);
-            conn.Open();
-            using var tran = conn.BeginTransaction();
-            return AjustarStockProducto(productoId, nuevaCantidad, empleadoId, motivo, conn, tran);
-        }
+            if (items == null || items.Count == 0)
+                throw new ArgumentException("No se proporcionaron items para ajustar.", nameof(items));
 
-        public bool AjustarStockGlobo(string globoId, int nuevaCantidad, int empleadoId, string motivo)
-        {
-            using var conn = new SqlConnection(_connectionString);
-            conn.Open();
-            using var tran = conn.BeginTransaction();
-            return AjustarStockGlobo(globoId, nuevaCantidad, empleadoId, motivo, conn, tran);
-        }
-
-        // Versión con conexión y transacción externa
-        public bool AjustarStockProducto(string productoId, int nuevaCantidad, int empleadoId, string motivo, SqlConnection conn, SqlTransaction tran)
-        {
-            try
+            foreach (var item in items)
             {
-                var cmdSelect = new SqlCommand("SELECT stock FROM Producto WHERE productoId = @ProductoId", conn, tran);
-                cmdSelect.Parameters.AddWithValue("@ProductoId", productoId);
-                int stockActual = Convert.ToInt32(cmdSelect.ExecuteScalar());
-
-                var cmdUpdate = new SqlCommand(
-                    "UPDATE Producto SET stock = @NuevaCantidad WHERE productoId = @ProductoId", conn, tran);
-                cmdUpdate.Parameters.AddWithValue("@NuevaCantidad", nuevaCantidad);
-                cmdUpdate.Parameters.AddWithValue("@ProductoId", productoId);
-                cmdUpdate.ExecuteNonQuery();
-
-                var cmdHist = new SqlCommand(
-                    "INSERT INTO HistorialAjusteStock (ProductoId, CantidadAnterior, CantidadNueva, Motivo, EmpleadoId) " +
-                    "VALUES (@ProductoId, @CantidadAnterior, @CantidadNueva, @Motivo, @EmpleadoId)", conn, tran);
-                cmdHist.Parameters.AddWithValue("@ProductoId", productoId);
-                cmdHist.Parameters.AddWithValue("@CantidadAnterior", stockActual);
-                cmdHist.Parameters.AddWithValue("@CantidadNueva", nuevaCantidad);
-                cmdHist.Parameters.AddWithValue("@Motivo", motivo);
-                cmdHist.Parameters.AddWithValue("@EmpleadoId", empleadoId);
-                cmdHist.ExecuteNonQuery();
-
-                return true;
-            }
-            catch
-            {
-                tran.Rollback();
-                return false;
+                if (item.esGlobo)
+                {
+                    if (!_globoRepo.AjustarStockConHistorial(item.id, item.cantidad, empleadoId, motivo, conn, tran))
+                        throw new Exception($"Error ajustando stock del globo {item.id}");
+                }
+                else
+                {
+                    if (!_productoRepo.AjustarStockConHistorial(item.id, item.cantidad, empleadoId, motivo, conn, tran))
+                        throw new Exception($"Error ajustando stock del producto {item.id}");
+                }
             }
         }
 
-        public bool AjustarStockGlobo(string globoId, int nuevaCantidad, int empleadoId, string motivo, SqlConnection conn, SqlTransaction tran)
+        // ---------------------------
+        // STOCK CRÍTICO
+        // ---------------------------
+
+        /// <summary>
+        /// Obtiene productos cuyo stock está por debajo o igual al mínimo indicado.
+        /// </summary>
+        public List<StockCriticoItem> ObtenerProductosStockCritico(int stockMinimo = 5)
         {
-            try
-            {
-                var cmdSelect = new SqlCommand("SELECT stock FROM Globo WHERE globoId = @GloboId", conn, tran);
-                cmdSelect.Parameters.AddWithValue("@GloboId", globoId);
-                int stockActual = Convert.ToInt32(cmdSelect.ExecuteScalar());
+            var lista = _productoRepo.ObtenerProductos();
+            if (lista == null) return new List<StockCriticoItem>();
 
-                var cmdUpdate = new SqlCommand(
-                    "UPDATE Globo SET stock = @NuevaCantidad WHERE globoId = @GloboId", conn, tran);
-                cmdUpdate.Parameters.AddWithValue("@NuevaCantidad", nuevaCantidad);
-                cmdUpdate.Parameters.AddWithValue("@GloboId", globoId);
-                cmdUpdate.ExecuteNonQuery();
-
-                var cmdHist = new SqlCommand(
-                    "INSERT INTO HistorialAjusteStockGlobo (GloboId, CantidadAnterior, CantidadNueva, Motivo, EmpleadoId) " +
-                    "VALUES (@GloboId, @CantidadAnterior, @CantidadNueva, @Motivo, @EmpleadoId)", conn, tran);
-                cmdHist.Parameters.AddWithValue("@GloboId", globoId);
-                cmdHist.Parameters.AddWithValue("@CantidadAnterior", stockActual);
-                cmdHist.Parameters.AddWithValue("@CantidadNueva", nuevaCantidad);
-                cmdHist.Parameters.AddWithValue("@Motivo", motivo);
-                cmdHist.Parameters.AddWithValue("@EmpleadoId", empleadoId);
-                cmdHist.ExecuteNonQuery();
-
-                return true;
-            }
-            catch
-            {
-                tran.Rollback();
-                return false;
-            }
+            return lista
+                .Where(p => p.Stock <= stockMinimo)
+                .Select(p => new StockCriticoItem
+                {
+                    Id = p.ProductoId,
+                    Nombre = p.Nombre,
+                    StockActual = p.Stock,
+                    Tipo = "Producto"
+                })
+                .ToList();
         }
 
-        #endregion
+        /// <summary>
+        /// Obtiene globos cuyo stock está por debajo o igual al mínimo indicado.
+        /// </summary>
+        public List<StockCriticoItem> ObtenerGlobosStockCritico(int stockMinimo = 5)
+        {
+            var lista = _globoRepo.ObtenerGlobos();
+            if (lista == null) return new List<StockCriticoItem>();
 
-        #region Consultas de Stock Crítico
+            return lista
+                .Where(g => g.Stock <= stockMinimo)
+                .Select(g => new StockCriticoItem
+                {
+                    Id = g.GloboId,
+                    Nombre = $"{g.Material} {g.Color}",
+                    StockActual = g.Stock,
+                    Tipo = "Globo"
+                })
+                .ToList();
+        }
 
-        public List<StockCriticoItem> ObtenerProductosStockCritico(int limite = 10)
+        // ---------------------------
+        // MÉTODOS AUXILIARES
+        // ---------------------------
+
+        /// <summary>
+        /// Devuelve todos los items de stock crítico combinados (productos + globos)
+        /// </summary>
+        public List<StockCriticoItem> ObtenerStockCriticoCombinado(int stockMinimo = 5)
         {
             var lista = new List<StockCriticoItem>();
-            using var conn = new SqlConnection(_connectionString);
-            conn.Open();
-
-            var cmd = new SqlCommand("SELECT productoId, nombre, stock, costo, unidad FROM Producto WHERE stock <= @Limite AND Activo = 1", conn);
-            cmd.Parameters.AddWithValue("@Limite", limite);
-
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                lista.Add(new StockCriticoItem
-                {
-                    Id = reader.GetString(0),
-                    Nombre = reader.GetString(1),
-                    StockActual = reader.GetInt32(2),
-                    Precio = reader.GetDecimal(3),
-                    Tipo = "Producto",
-                    Unidad = reader.GetString(4)
-                });
-            }
-
+            lista.AddRange(ObtenerProductosStockCritico(stockMinimo));
+            lista.AddRange(ObtenerGlobosStockCritico(stockMinimo));
             return lista;
         }
-
-        public List<StockCriticoItem> ObtenerGlobosStockCritico(int limite = 10)
-        {
-            var lista = new List<StockCriticoItem>();
-            using var conn = new SqlConnection(_connectionString);
-            conn.Open();
-
-            var cmd = new SqlCommand("SELECT globoId, material, color, stock, costo, unidad FROM Globo WHERE stock <= @Limite AND Activo = 1", conn);
-            cmd.Parameters.AddWithValue("@Limite", limite);
-
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                lista.Add(new StockCriticoItem
-                {
-                    Id = reader.GetString(0),
-                    Nombre = $"{reader.GetString(1)} {reader.GetString(2)}",
-                    StockActual = reader.GetInt32(3),
-                    Precio = reader.GetDecimal(4),
-                    Tipo = "Globo",
-                    Unidad = reader.GetString(5)
-                });
-            }
-
-            return lista;
-        }
-
-        #endregion
     }
 }

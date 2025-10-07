@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using TiendaGlobosLaFiesta.Modelos;
 using TiendaGlobosLaFiesta.Models;
 
 namespace TiendaGlobosLaFiesta.Data
@@ -118,8 +117,23 @@ namespace TiendaGlobosLaFiesta.Data
 
         public bool ActualizarProducto(Producto producto)
         {
-            if (producto == null) throw new ArgumentNullException(nameof(producto));
+            using var conn = DbHelper.ObtenerConexion();
+            using var tran = conn.BeginTransaction();
+            try
+            {
+                ActualizarProducto(producto, conn, tran);
+                tran.Commit();
+                return true;
+            }
+            catch
+            {
+                tran.Rollback();
+                return false;
+            }
+        }
 
+        public bool ActualizarProducto(Producto producto, SqlConnection conn, SqlTransaction tran)
+        {
             string query = @"
                 UPDATE Producto
                 SET nombre = @nombre,
@@ -143,15 +157,8 @@ namespace TiendaGlobosLaFiesta.Data
                 new SqlParameter("@activo", producto.Activo)
             };
 
-            try
-            {
-                using SqlConnection conn = DbHelper.ObtenerConexion();
-                return DbHelper.ExecuteNonQuery(query, parametros, conn) > 0;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Error al actualizar el producto {producto.ProductoId}: {ex.Message}", ex);
-            }
+            DbHelper.ExecuteNonQuery(query, parametros, conn, tran);
+            return true;
         }
 
         public bool EliminarProducto(string productoId)
@@ -171,6 +178,37 @@ namespace TiendaGlobosLaFiesta.Data
             {
                 throw new Exception($"Error al desactivar el producto {productoId}: {ex.Message}", ex);
             }
+        }
+
+        #endregion
+
+        #region Ajuste Stock con Historial
+
+        public bool AjustarStockConHistorial(string productoId, int nuevaCantidad, int empleadoId, string motivo, SqlConnection conn, SqlTransaction tran)
+        {
+            var producto = ObtenerProductoPorId(productoId);
+            if (producto == null) throw new Exception("Producto no encontrado");
+
+            int stockAnterior = producto.Stock;
+            producto.Stock = nuevaCantidad;
+
+            ActualizarProducto(producto, conn, tran);
+
+            string queryHist = @"
+                INSERT INTO HistorialAjusteStock (ProductoId, CantidadAnterior, CantidadNueva, Motivo, EmpleadoId)
+                VALUES (@ProductoId, @CantidadAnterior, @CantidadNueva, @Motivo, @EmpleadoId)";
+
+            var parametros = new[]
+            {
+                new SqlParameter("@ProductoId", productoId),
+                new SqlParameter("@CantidadAnterior", stockAnterior),
+                new SqlParameter("@CantidadNueva", nuevaCantidad),
+                new SqlParameter("@Motivo", motivo),
+                new SqlParameter("@EmpleadoId", empleadoId)
+            };
+
+            DbHelper.ExecuteNonQuery(queryHist, parametros, conn, tran);
+            return true;
         }
 
         #endregion

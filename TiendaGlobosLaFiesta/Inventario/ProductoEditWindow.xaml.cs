@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using System.Linq;
@@ -42,17 +41,17 @@ namespace TiendaGlobosLaFiesta.Views
 
         private void CargarOpciones()
         {
-            // Proveedores
+            // Proveedores activos
             var dtProv = DbHelper.ExecuteQuery("SELECT proveedorId, razonSocial FROM Proveedor WHERE Activo = 1 ORDER BY razonSocial");
             cmbProveedor.ItemsSource = dtProv.AsEnumerable()
-                .Select(r => new { Id = r["proveedorId"], Nombre = r["razonSocial"] }).ToList();
+                .Select(r => new { Id = Convert.ToInt32(r["proveedorId"]), Nombre = r["razonSocial"] }).ToList();
             cmbProveedor.DisplayMemberPath = "Nombre";
             cmbProveedor.SelectedValuePath = "Id";
 
             // Categorías
             var dtCat = DbHelper.ExecuteQuery("SELECT categoriaId, nombre FROM Categoria ORDER BY nombre");
             cmbCategoria.ItemsSource = dtCat.AsEnumerable()
-                .Select(r => new { Id = r["categoriaId"], Nombre = r["nombre"] }).ToList();
+                .Select(r => new { Id = Convert.ToInt32(r["categoriaId"]), Nombre = r["nombre"] }).ToList();
             cmbCategoria.DisplayMemberPath = "Nombre";
             cmbCategoria.SelectedValuePath = "Id";
 
@@ -63,16 +62,16 @@ namespace TiendaGlobosLaFiesta.Views
         private void CargarDatos()
         {
             txtNombre.Text = Producto.Nombre;
-            txtUnidad.Text = Producto.Unidad.ToString();
+            txtUnidad.Text = Producto.Unidad;
             txtCosto.Text = Producto.Costo.ToString(CultureInfo.InvariantCulture);
             txtStock.Text = Producto.Stock.ToString();
-            cmbProveedor.SelectedValue = Producto.ProveedorId;
+            cmbProveedor.SelectedValue = Producto.ProveedorId != null ? Convert.ToInt32(Producto.ProveedorId) : (int?)null;
             cmbCategoria.SelectedValue = Producto.CategoriaId;
         }
 
         private string GenerarId() => $"PRD{DateTime.Now:yyMMddHHmmss}";
 
-        #region Validaciones en tiempo real
+        #region Validaciones
 
         private void TxtNumero_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
@@ -97,6 +96,7 @@ namespace TiendaGlobosLaFiesta.Views
                 ctrl.ClearValue(Border.BorderBrushProperty);
                 ctrl.ClearValue(ToolTipProperty);
             }
+            lblMensaje.Visibility = Visibility.Collapsed;
         }
 
         #endregion
@@ -104,13 +104,11 @@ namespace TiendaGlobosLaFiesta.Views
         #region Guardar
 
         private void Guardar_Click(object sender, RoutedEventArgs e) => Guardar(false);
-
         private void GuardarYAgregar_Click(object sender, RoutedEventArgs e) => Guardar(true);
 
         private void Guardar(bool agregarOtro)
         {
             LimpiarErrores();
-
             if (!ValidarCampos()) return;
             AsignarCamposAObjeto();
 
@@ -132,44 +130,34 @@ namespace TiendaGlobosLaFiesta.Views
                 lblMensaje.Visibility = Visibility.Visible;
 
                 if (agregarOtro)
-                {
-                    esEdicion = false;
-                    Producto = new Producto { ProductoId = GenerarId() };
-                    txtProductoId.Text = Producto.ProductoId;
-                    txtNombre.Clear();
-                    txtUnidad.Clear();
-                    txtCosto.Clear();
-                    txtStock.Clear();
-                    cmbProveedor.SelectedIndex = -1;
-                    cmbCategoria.SelectedIndex = -1;
-                    txtNombre.Focus();
-                }
+                    LimpiarParaAgregarOtro();
                 else
-                {
                     DialogResult = true;
-                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ocurrió un error al guardar el producto:\n{ex.Message}",
-                                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Ocurrió un error al guardar el producto:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void LimpiarParaAgregarOtro()
+        {
+            esEdicion = false;
+            Producto = new Producto { ProductoId = GenerarId() };
+            txtProductoId.Text = Producto.ProductoId;
+            txtNombre.Clear();
+            txtUnidad.Clear();
+            txtCosto.Clear();
+            txtStock.Clear();
+            cmbProveedor.SelectedIndex = -1;
+            cmbCategoria.SelectedIndex = -1;
+            txtNombre.Focus();
         }
 
         private void AsignarCamposAObjeto()
         {
             Producto.Nombre = txtNombre.Text.Trim();
-
-
-            if (int.TryParse(txtUnidad.Text, out int unidad) && unidad > 0)
-            {
-                Producto.Unidad = unidad.ToString(); // Convertimos a string
-            }
-            else
-            {
-                MarcarError(txtUnidad, "Unidad inválida.");
-            }
-
+            Producto.Unidad = txtUnidad.Text.Trim();
             Producto.Costo = decimal.Parse(txtCosto.Text, CultureInfo.InvariantCulture);
             Producto.Stock = int.Parse(txtStock.Text);
             Producto.ProveedorId = cmbProveedor.SelectedValue?.ToString();
@@ -185,31 +173,26 @@ namespace TiendaGlobosLaFiesta.Views
                 MarcarError(txtNombre, "Ingrese el nombre.");
                 esValido = false;
             }
-
             if (!int.TryParse(txtUnidad.Text, out int unidad) || unidad <= 0)
             {
                 MarcarError(txtUnidad, "Unidad inválida.");
                 esValido = false;
             }
-
             if (!decimal.TryParse(txtCosto.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal costo) || costo < 0)
             {
                 MarcarError(txtCosto, "Costo inválido.");
                 esValido = false;
             }
-
             if (!int.TryParse(txtStock.Text, out int stock) || stock < 0)
             {
                 MarcarError(txtStock, "Stock inválido.");
                 esValido = false;
             }
-
             if (cmbProveedor.SelectedItem == null)
             {
                 MarcarError(cmbProveedor, "Seleccione un proveedor.");
                 esValido = false;
             }
-
             if (cmbCategoria.SelectedItem == null)
             {
                 MarcarError(cmbCategoria, "Seleccione una categoría.");
@@ -242,7 +225,6 @@ namespace TiendaGlobosLaFiesta.Views
         #endregion
 
         private void Window_Loaded(object sender, RoutedEventArgs e) => txtNombre.Focus();
-
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Escape)
