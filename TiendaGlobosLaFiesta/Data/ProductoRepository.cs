@@ -14,10 +14,11 @@ namespace TiendaGlobosLaFiesta.Data
         public List<Producto> ObtenerProductos(bool soloActivos = true)
         {
             var lista = new List<Producto>();
-            string query = @"SELECT p.productoId, p.nombre, p.unidad, p.costo, p.stock, p.proveedorId, p.categoriaId, p.Activo,
-                                    ISNULL(pr.razonSocial, 'Sin proveedor') AS ProveedorNombre
-                             FROM Producto p
-                             LEFT JOIN Proveedor pr ON p.proveedorId = pr.proveedorId";
+            string query = @"
+                SELECT p.productoId, p.nombre, p.unidad, p.costo, p.stock, p.proveedorId, p.categoriaId, p.Activo,
+                       ISNULL(pr.razonSocial, 'Sin proveedor') AS ProveedorNombre
+                FROM Producto p
+                LEFT JOIN Proveedor pr ON p.proveedorId = pr.proveedorId";
 
             if (soloActivos)
                 query += " WHERE p.Activo = 1";
@@ -91,54 +92,68 @@ namespace TiendaGlobosLaFiesta.Data
         {
             if (producto == null) throw new ArgumentNullException(nameof(producto));
 
-            // Si no tiene ID, generamos uno único
+            // Validar duplicado por nombre
+            if (ObtenerProductos(false)
+                    .Any(p => p.Nombre.Equals(producto.Nombre, StringComparison.OrdinalIgnoreCase)))
+                throw new Exception("Ya existe un producto con este nombre.");
+
+            // Generar ID único si no tiene
             if (string.IsNullOrWhiteSpace(producto.ProductoId))
                 producto.ProductoId = GenerarIdUnico();
 
-            // Validar duplicado de ID
-            if (ObtenerProductoPorId(producto.ProductoId) != null)
-                throw new Exception($"Ya existe un producto con el ID {producto.ProductoId}. Genera uno diferente.");
+            int intentos = 0;
+            bool insertado = false;
 
-            string query = @"
-                INSERT INTO Producto (productoId, nombre, unidad, costo, stock, proveedorId, categoriaId, Activo)
-                VALUES (@id, @nombre, @unidad, @costo, @stock, @proveedorId, @categoriaId, @activo)";
+            while (!insertado && intentos < 5)
+            {
+                try
+                {
+                    string query = @"
+                        INSERT INTO Producto (productoId, nombre, unidad, costo, stock, proveedorId, categoriaId, Activo)
+                        VALUES (@id, @nombre, @unidad, @costo, @stock, @proveedorId, @categoriaId, @activo)";
 
-            var parametros = new[]
-            {
-                new SqlParameter("@id", producto.ProductoId),
-                new SqlParameter("@nombre", producto.Nombre),
-                new SqlParameter("@unidad", producto.Unidad),
-                new SqlParameter("@costo", producto.Costo),
-                new SqlParameter("@stock", producto.Stock),
-                new SqlParameter("@proveedorId", (object)producto.ProveedorId ?? DBNull.Value),
-                new SqlParameter("@categoriaId", (object)producto.CategoriaId ?? DBNull.Value),
-                new SqlParameter("@activo", producto.Activo)
-            };
+                    var parametros = new[]
+                    {
+                        new SqlParameter("@id", producto.ProductoId),
+                        new SqlParameter("@nombre", producto.Nombre),
+                        new SqlParameter("@unidad", producto.Unidad),
+                        new SqlParameter("@costo", producto.Costo),
+                        new SqlParameter("@stock", producto.Stock),
+                        new SqlParameter("@proveedorId", (object)producto.ProveedorId ?? DBNull.Value),
+                        new SqlParameter("@categoriaId", (object)producto.CategoriaId ?? DBNull.Value),
+                        new SqlParameter("@activo", producto.Activo)
+                    };
 
-            try
-            {
-                using SqlConnection conn = DbHelper.ObtenerConexion();
-                return DbHelper.ExecuteNonQuery(query, parametros, conn) > 0;
+                    using SqlConnection conn = DbHelper.ObtenerConexion();
+                    int rows = DbHelper.ExecuteNonQuery(query, parametros, conn);
+                    insertado = rows > 0;
+                }
+                catch (SqlException ex) when (ex.Number == 2627)
+                {
+                    // Conflicto de ID, generar uno nuevo y reintentar
+                    producto.ProductoId = GenerarIdUnico();
+                    intentos++;
+                }
             }
-            catch (SqlException ex) when (ex.Number == 2627)
-            {
-                throw new Exception("Ya existe un producto con ese ID en la base de datos.", ex);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error al agregar producto: " + ex.Message, ex);
-            }
+
+            if (!insertado)
+                throw new Exception("No se pudo insertar el producto después de varios intentos. Último ID: " + producto.ProductoId);
+
+            return true;
         }
 
-        private string GenerarIdUnico()
+        public string GenerarIdUnico()
         {
             string id;
             int intentos = 0;
+
             do
             {
                 id = $"PRD{DateTime.Now:yyMMddHHmmss}{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}";
                 intentos++;
-                if (intentos > 5) throw new Exception("No se pudo generar un ID único para el producto.");
+                if (intentos > 20)
+                    throw new Exception("No se pudo generar un ID único para el producto después de varios intentos.");
+
             } while (ObtenerProductoPorId(id) != null);
 
             return id;

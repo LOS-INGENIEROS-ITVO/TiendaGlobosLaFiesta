@@ -14,14 +14,17 @@ namespace TiendaGlobosLaFiesta.ViewModels
         private readonly ProductoRepository _productoRepo;
         private readonly GloboRepository _globoRepo;
 
+        // Colecciones en memoria
         public ObservableCollection<Producto> ProductosView { get; set; }
         public ObservableCollection<Globo> GlobosView { get; set; }
         public ObservableCollection<StockCriticoItem> StockCritico { get; set; }
 
+        // Vistas filtradas
         public ICollectionView ProductosViewFiltered { get; set; }
         public ICollectionView GlobosViewFiltered { get; set; }
         public ICollectionView StockCriticoView { get; set; }
 
+        // Selecciones
         private Producto _productoSeleccionado;
         public Producto ProductoSeleccionado
         {
@@ -36,6 +39,7 @@ namespace TiendaGlobosLaFiesta.ViewModels
             set { _globoSeleccionado = value; OnPropertyChanged(); }
         }
 
+        // Filtros
         private string _productosFilter;
         public string ProductosFilter
         {
@@ -57,13 +61,11 @@ namespace TiendaGlobosLaFiesta.ViewModels
             set { _stockCriticoFilter = value; OnPropertyChanged(); StockCriticoView?.Refresh(); }
         }
 
+        // Constructor
         public InventarioViewModel()
         {
-            // Instancia los repositorios individuales
             _productoRepo = new ProductoRepository();
             _globoRepo = new GloboRepository();
-
-            // Inyecta los repositorios en StockManagerRepository
             _stockManager = new StockManagerRepository(_productoRepo, _globoRepo);
 
             ProductosView = new ObservableCollection<Producto>();
@@ -74,7 +76,7 @@ namespace TiendaGlobosLaFiesta.ViewModels
             GlobosViewFiltered = CollectionViewSource.GetDefaultView(GlobosView);
             StockCriticoView = CollectionViewSource.GetDefaultView(StockCritico);
 
-            // Filtros
+            // Definir filtros
             ProductosViewFiltered.Filter = o =>
                 string.IsNullOrEmpty(ProductosFilter) || (o is Producto p && p.Nombre.Contains(ProductosFilter, StringComparison.OrdinalIgnoreCase));
 
@@ -87,69 +89,152 @@ namespace TiendaGlobosLaFiesta.ViewModels
             CargarDatos();
         }
 
+        // --- Carga inicial ---
         private void CargarDatos()
         {
-            ProductosView.Clear();
-            foreach (var p in _productoRepo.ObtenerProductos())
-                ProductosView.Add(p);
+            try
+            {
+                ProductosView.Clear();
+                foreach (var p in _productoRepo.ObtenerProductos())
+                    ProductosView.Add(p);
 
-            GlobosView.Clear();
-            foreach (var g in _globoRepo.ObtenerGlobos())
-                GlobosView.Add(g);
+                GlobosView.Clear();
+                foreach (var g in _globoRepo.ObtenerGlobos())
+                    GlobosView.Add(g);
 
-            RefrescarStockCritico();
+                RefrescarStockCritico();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al cargar datos: {ex.Message}");
+            }
         }
 
         private void RefrescarStockCritico()
         {
             StockCritico.Clear();
-            foreach (var s in _stockManager.ObtenerProductosStockCritico())
-                StockCritico.Add(s);
+            try
+            {
+                foreach (var s in _stockManager.ObtenerProductosStockCritico())
+                    StockCritico.Add(s);
 
-            foreach (var s in _stockManager.ObtenerGlobosStockCritico())
-                StockCritico.Add(s);
+                foreach (var s in _stockManager.ObtenerGlobosStockCritico())
+                    StockCritico.Add(s);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al refrescar stock crítico: {ex.Message}");
+            }
         }
 
-        // --- Métodos CRUD Productos ---
+        // --- CRUD Productos ---
         public void AgregarProducto(Producto p)
         {
-            _productoRepo.AgregarProducto(p);
-            ProductosView.Add(p);
-            RefrescarStockCritico();
+            try
+            {
+                _productoRepo.AgregarProducto(p);
+                ProductosView.Add(p);
+                ProductosViewFiltered.Refresh();
+                RefrescarStockCritico();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al agregar producto: {ex.Message}");
+            }
         }
 
         public void EditarProducto(Producto p)
         {
-            _productoRepo.ActualizarProducto(p);
-            RefrescarStockCritico();
+            try
+            {
+                if (_productoRepo.ActualizarProducto(p))
+                {
+                    var original = ProductosView.FirstOrDefault(x => x.ProductoId == p.ProductoId);
+                    if (original != null)
+                    {
+                        int idx = ProductosView.IndexOf(original);
+                        ProductosView[idx] = p;
+                        ProductosViewFiltered.Refresh();
+                    }
+                    RefrescarStockCritico();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al editar producto: {ex.Message}");
+            }
         }
 
         public void EliminarProducto(Producto p)
         {
-            _productoRepo.EliminarProducto(p.ProductoId);
-            ProductosView.Remove(p);
-            RefrescarStockCritico();
+            try
+            {
+                if (_productoRepo.EliminarProducto(p.ProductoId))
+                {
+                    ProductosView.Remove(p);
+                    ProductosViewFiltered.Refresh();
+                    RefrescarStockCritico();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al eliminar producto: {ex.Message}");
+            }
         }
 
-        // --- Métodos CRUD Globos ---
+        // --- CRUD Globos ---
         public void AgregarGlobo(Globo g)
         {
-            _globoRepo.AgregarGlobo(g);
-            GlobosView.Add(g);
-            RefrescarStockCritico();
+            try
+            {
+                _globoRepo.AgregarGlobo(g);
+                GlobosView.Add(g);
+                GlobosViewFiltered.Refresh();
+                RefrescarStockCritico();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al agregar globo: {ex.Message}");
+            }
         }
 
         public void EditarGlobo(Globo g)
         {
-            _globoRepo.ActualizarGlobo(g);
-            RefrescarStockCritico();
+            try
+            {
+                if (_globoRepo.ActualizarGlobo(g))
+                {
+                    var original = GlobosView.FirstOrDefault(x => x.GloboId == g.GloboId);
+                    if (original != null)
+                    {
+                        int idx = GlobosView.IndexOf(original);
+                        GlobosView[idx] = g;
+                        GlobosViewFiltered.Refresh();
+                    }
+                    RefrescarStockCritico();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al editar globo: {ex.Message}");
+            }
         }
 
         public void EliminarGlobo(Globo g)
         {
-            _globoRepo.EliminarGlobo(g.GloboId);
-            GlobosView.Remove(g);
-            RefrescarStockCritico();
+            try
+            {
+                if (_globoRepo.EliminarGlobo(g.GloboId))
+                {
+                    GlobosView.Remove(g);
+                    GlobosViewFiltered.Refresh();
+                    RefrescarStockCritico();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al eliminar globo: {ex.Message}");
+            }
         }
     }
 }

@@ -28,7 +28,7 @@ namespace TiendaGlobosLaFiesta.Views
             if (producto == null)
             {
                 esEdicion = false;
-                Producto = new Producto(); // Solo en memoria
+                Producto = new Producto();
             }
             else
             {
@@ -74,23 +74,7 @@ namespace TiendaGlobosLaFiesta.Views
         }
         #endregion
 
-        #region Generar ID seguro con validación en BD
-        private string GenerarIdUnico()
-        {
-            string id;
-            int intentos = 0;
-            do
-            {
-                id = $"PRD{DateTime.Now:yyMMddHHmmss}{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}";
-                intentos++;
-                if (intentos > 5) throw new Exception("No se pudo generar un ID único para el producto.");
-            } while (repo.ObtenerProductoPorId(id) != null);
-
-            return id;
-        }
-        #endregion
-
-        #region Validaciones
+        #region Validaciones de campos
         private void TxtNumero_PreviewTextInput(object sender, TextCompositionEventArgs e)
             => e.Handled = !Regex.IsMatch(e.Text, @"^[0-9]+$");
 
@@ -116,31 +100,37 @@ namespace TiendaGlobosLaFiesta.Views
         private bool ValidarCampos()
         {
             bool esValido = true;
+
             if (string.IsNullOrWhiteSpace(txtNombre.Text) || txtNombre.Text.StartsWith("Ej."))
             {
                 MarcarError(txtNombre, "Ingrese el nombre del producto.");
                 esValido = false;
             }
+
             if (!int.TryParse(txtUnidad.Text, out int unidad) || unidad <= 0)
             {
                 MarcarError(txtUnidad, "Unidad inválida.");
                 esValido = false;
             }
+
             if (!decimal.TryParse(txtCosto.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal costo) || costo < 0)
             {
                 MarcarError(txtCosto, "Costo inválido.");
                 esValido = false;
             }
+
             if (!int.TryParse(txtStock.Text, out int stock) || stock < 0)
             {
                 MarcarError(txtStock, "Stock inválido.");
                 esValido = false;
             }
+
             if (cmbProveedor.SelectedItem == null)
             {
                 MarcarError(cmbProveedor, "Seleccione un proveedor.");
                 esValido = false;
             }
+
             if (cmbCategoria.SelectedItem == null)
             {
                 MarcarError(cmbCategoria, "Seleccione una categoría.");
@@ -170,17 +160,17 @@ namespace TiendaGlobosLaFiesta.Views
                 }
                 else
                 {
-                    // Generar ID seguro y único
-                    Producto.ProductoId = GenerarIdUnico();
-
-                    // Validar duplicado por nombre
-                    if (repo.ObtenerProductos(false).Any(p => p.Nombre.Equals(Producto.Nombre, StringComparison.OrdinalIgnoreCase)))
+                    // Verificar duplicado por nombre antes de insertar
+                    if (repo.ObtenerProductos(false)
+                            .Any(p => p.Nombre.Equals(Producto.Nombre, StringComparison.OrdinalIgnoreCase)))
                     {
                         MarcarError(txtNombre, "Ya existe un producto con este nombre.");
                         return;
                     }
 
+                    // Insertar con lógica de generación de ID segura
                     repo.AgregarProducto(Producto);
+                    txtProductoId.Text = Producto.ProductoId; // ID generado se refleja en pantalla
                 }
 
                 lblMensaje.Text = "✅ Producto guardado exitosamente";
@@ -197,6 +187,7 @@ namespace TiendaGlobosLaFiesta.Views
             catch (Exception ex)
             {
                 MessageBox.Show($"Ocurrió un error al guardar el producto:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Console.WriteLine($"[ERROR] {ex}");
             }
         }
 
