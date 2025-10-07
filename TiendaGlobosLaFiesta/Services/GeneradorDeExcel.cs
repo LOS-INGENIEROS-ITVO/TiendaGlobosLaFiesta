@@ -1,5 +1,6 @@
 ﻿using ClosedXML.Excel;
 using TiendaGlobosLaFiesta.Models;
+using System.Globalization;
 
 namespace TiendaGlobosLaFiesta.Services
 {
@@ -7,7 +8,7 @@ namespace TiendaGlobosLaFiesta.Services
     {
         public static void CrearHojas(XLWorkbook workbook, IEnumerable<VentaHistorial> historial)
         {
-            // ===== Hoja Resumen =====
+            // Hoja Resumen
             CrearHoja(workbook, "Resumen", historial,
                 new[] { "ID Venta", "Cliente", "Empleado", "Fecha", "Total" },
                 v => new object[] { v.VentaId, v.ClienteNombre, v.NombreEmpleado, v.FechaVenta, v.Total },
@@ -18,7 +19,7 @@ namespace TiendaGlobosLaFiesta.Services
                 },
                 totalValue: historial.Sum(v => v.Total));
 
-            // ===== Hoja Productos =====
+            // Hoja Productos
             var todosProductos = historial.SelectMany(v => v.Productos.Select(p => new { Venta = v, Producto = p }));
             CrearHoja(workbook, "Productos", todosProductos,
                 new[] { "ID Venta", "Producto", "Unidad", "Cantidad", "Costo", "Importe" },
@@ -37,7 +38,7 @@ namespace TiendaGlobosLaFiesta.Services
                 },
                 totalValue: todosProductos.Sum(p => p.Producto.Importe));
 
-            // ===== Hoja Globos =====
+            // Hoja Globos
             var todosGlobos = historial.SelectMany(v => v.Globos.Select(g => new { Venta = v, Globo = g }));
             CrearHoja(workbook, "Globos", todosGlobos,
                 new[] { "ID Venta", "Material", "Color", "Tamaño", "Forma", "Temática", "Unidad", "Cantidad", "Costo", "Importe" },
@@ -46,9 +47,9 @@ namespace TiendaGlobosLaFiesta.Services
                     item.Venta.VentaId,
                     item.Globo.Material,
                     item.Globo.Color,
-                    FormatearVacio(item.Globo.Tamano),   // <--- CORRECCIÓN
-                    FormatearVacio(item.Globo.Forma),    // <--- CORRECCIÓN
-                    FormatearVacio(item.Globo.Tematica), // <--- CORRECCIÓN
+                    FormatearVacio(item.Globo.Tamano),
+                    FormatearVacio(item.Globo.Forma),
+                    FormatearVacio(item.Globo.Tematica),
                     item.Globo.Unidad,
                     item.Globo.Cantidad,
                     item.Globo.Costo,
@@ -61,11 +62,7 @@ namespace TiendaGlobosLaFiesta.Services
                 totalValue: todosGlobos.Sum(g => g.Globo.Importe));
         }
 
-
-        private static string FormatearVacio(string texto)
-        {
-            return string.IsNullOrWhiteSpace(texto) ? "---" : texto;
-        }
+        private static string FormatearVacio(string texto) => string.IsNullOrWhiteSpace(texto) ? "---" : texto;
 
         private static void CrearHoja<T>(XLWorkbook workbook, string nombreHoja, IEnumerable<T> items, string[] headers,
                                   Func<T, object[]> mapFila, Action<IXLCell, int> styleCell = null,
@@ -73,7 +70,7 @@ namespace TiendaGlobosLaFiesta.Services
         {
             var ws = workbook.Worksheets.Add(nombreHoja);
 
-            // ===== Cabecera =====
+            // Cabecera
             for (int i = 0; i < headers.Length; i++)
             {
                 var cell = ws.Cell(1, i + 1);
@@ -85,7 +82,7 @@ namespace TiendaGlobosLaFiesta.Services
                 cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
             }
 
-            // ===== Filas =====
+            // Filas
             int row = 2;
             bool alternate = false;
             foreach (var item in items)
@@ -95,7 +92,6 @@ namespace TiendaGlobosLaFiesta.Services
                 {
                     var cell = ws.Cell(row, col + 1);
 
-                    // Conversión segura a string o número
                     if (valores[col] is decimal d)
                         cell.SetValue(d);
                     else if (valores[col] is int iVal)
@@ -114,7 +110,7 @@ namespace TiendaGlobosLaFiesta.Services
                 alternate = !alternate;
             }
 
-            // ===== Fila Total =====
+            // Fila Total
             if (totalValue.HasValue)
             {
                 var totalRow = row;
@@ -134,7 +130,6 @@ namespace TiendaGlobosLaFiesta.Services
                 ws.Range(totalRow, 1, totalRow, headers.Length).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
             }
 
-            // Ajustar ancho columnas
             ws.Columns().AdjustToContents();
         }
     }

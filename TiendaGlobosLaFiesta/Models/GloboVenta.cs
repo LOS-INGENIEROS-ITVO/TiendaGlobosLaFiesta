@@ -1,14 +1,18 @@
-﻿using TiendaGlobosLaFiesta.Models;
+﻿using System;
+using TiendaGlobosLaFiesta.Models;
 
-public class GloboVenta : ItemVenta
+namespace TiendaGlobosLaFiesta.Models
 {
-    public string GloboId { get; set; }
-    public string Material { get; set; }
-    public string Color { get; set; }
-    public string Tamano { get; set; }
-    public string Forma { get; set; }
-    public string Tematica { get; set; }
-    public string Unidad { get; set; }
+    public class GloboVenta : ItemVenta
+    {
+        public string GloboId { get; set; } = string.Empty;
+        public string Material { get; set; } = string.Empty;
+        public string Color { get; set; } = string.Empty;
+        public string Tamano { get; set; } = string.Empty;
+        public string Forma { get; set; } = string.Empty;
+        public string Tematica { get; set; } = string.Empty;
+        public string Unidad { get; set; } = string.Empty;
 
-    public string Nombre => $"{Material} {Color} {Tamano} {Forma} {Tematica}";
+        public string Nombre => $"{Material} {Color} {Tamano} {Forma} {Tematica}".Trim();
+    }
 }

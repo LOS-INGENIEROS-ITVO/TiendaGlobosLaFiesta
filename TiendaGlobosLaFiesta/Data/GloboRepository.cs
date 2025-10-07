@@ -178,44 +178,6 @@ namespace TiendaGlobosLaFiesta.Data
 
         #endregion
 
-        #region Stock y Auditoría
-
-        public void ActualizarStock(string globoId, int cantidad, int? empleadoId, SqlConnection conn, SqlTransaction tran)
-        {
-            if (string.IsNullOrWhiteSpace(globoId))
-                throw new ArgumentException("El ID del globo no puede ser vacío.", nameof(globoId));
-
-            int stockActual;
-            using (var cmdSelect = new SqlCommand("SELECT stock FROM Globo WHERE globoId=@globoId", conn, tran))
-            {
-                cmdSelect.Parameters.AddWithValue("@globoId", globoId);
-                object result = cmdSelect.ExecuteScalar();
-                if (result == null) throw new Exception($"Globo {globoId} no encontrado.");
-                stockActual = Convert.ToInt32(result);
-            }
-
-            int stockNuevo = Math.Max(stockActual - cantidad, 0);
-
-            using (var cmdUpdate = new SqlCommand("UPDATE Globo SET stock=@nuevoStock WHERE globoId=@globoId", conn, tran))
-            {
-                cmdUpdate.Parameters.AddWithValue("@nuevoStock", stockNuevo);
-                cmdUpdate.Parameters.AddWithValue("@globoId", globoId);
-                cmdUpdate.ExecuteNonQuery();
-            }
-
-            using var cmdHist = new SqlCommand(@"
-                INSERT INTO HistorialAjusteStockGlobo (GloboId, CantidadAnterior, CantidadNueva, EmpleadoId)
-                VALUES (@globoId, @anterior, @nuevo, @empleado)", conn, tran);
-
-            cmdHist.Parameters.AddWithValue("@globoId", globoId);
-            cmdHist.Parameters.AddWithValue("@anterior", stockActual);
-            cmdHist.Parameters.AddWithValue("@nuevo", stockNuevo);
-            cmdHist.Parameters.AddWithValue("@empleado", (object)empleadoId ?? DBNull.Value);
-            cmdHist.ExecuteNonQuery();
-        }
-
-        #endregion
-
         #region Métodos auxiliares
 
         private void BorrarCaracteristicas(string globoId, string tabla, SqlConnection conn, SqlTransaction tran)

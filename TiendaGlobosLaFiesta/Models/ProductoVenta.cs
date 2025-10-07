@@ -1,9 +1,12 @@
-﻿namespace TiendaGlobosLaFiesta.Models
+﻿using System;
+using System.Collections.ObjectModel;
+
+namespace TiendaGlobosLaFiesta.Models
 {
     public class ProductoVenta : ItemVenta
     {
-        public string ProductoId { get; set; }
-        public string Nombre { get; set; }
-        public int Unidad { get; set; }
+        public string ProductoId { get; set; } = string.Empty;
+        public string Nombre { get; set; } = string.Empty;
+        public string Unidad { get; set; } = string.Empty; // string consistente
     }
 }

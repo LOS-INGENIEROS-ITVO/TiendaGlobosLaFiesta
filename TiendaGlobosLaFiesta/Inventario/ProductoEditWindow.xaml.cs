@@ -159,7 +159,17 @@ namespace TiendaGlobosLaFiesta.Views
         private void AsignarCamposAObjeto()
         {
             Producto.Nombre = txtNombre.Text.Trim();
-            Producto.Unidad = int.Parse(txtUnidad.Text);
+
+
+            if (int.TryParse(txtUnidad.Text, out int unidad) && unidad > 0)
+            {
+                Producto.Unidad = unidad.ToString(); // Convertimos a string
+            }
+            else
+            {
+                MarcarError(txtUnidad, "Unidad inválida.");
+            }
+
             Producto.Costo = decimal.Parse(txtCosto.Text, CultureInfo.InvariantCulture);
             Producto.Stock = int.Parse(txtStock.Text);
             Producto.ProveedorId = cmbProveedor.SelectedValue?.ToString();

@@ -196,7 +196,7 @@ namespace TiendaGlobosLaFiesta.Data
                 {
                     ProductoId = row["productoId"].ToString(),
                     Nombre = row["nombre"].ToString(),
-                    Unidad = row["unidad"] != DBNull.Value ? Convert.ToInt32(row["unidad"]) : 1,
+                    Unidad = row["unidad"] != DBNull.Value ? row["unidad"].ToString() : "1",
                     Costo = row["costo"] != DBNull.Value ? Convert.ToDecimal(row["costo"]) : 0,
                     Cantidad = row["cantidad"] != DBNull.Value ? Convert.ToInt32(row["cantidad"]) : 0
                 });

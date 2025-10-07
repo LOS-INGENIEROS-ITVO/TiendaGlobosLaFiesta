@@ -10,15 +10,12 @@ namespace TiendaGlobosLaFiesta.ViewModels
 {
     public class InventarioViewModel : BaseViewModel
     {
-        // Repositorio
         private readonly StockManagerRepository _stockManager;
 
-        // Colecciones
         public ObservableCollection<Producto> ProductosView { get; set; }
         public ObservableCollection<Globo> GlobosView { get; set; }
         public ObservableCollection<StockCriticoItem> StockCritico { get; set; }
 
-        // Selecciones
         private Producto _productoSeleccionado;
         public Producto ProductoSeleccionado
         {
@@ -33,7 +30,6 @@ namespace TiendaGlobosLaFiesta.ViewModels
             set { _globoSeleccionado = value; OnPropertyChanged(); }
         }
 
-        // Comandos
         public ICommand AgregarProductoCommand { get; set; }
         public ICommand EditarProductoCommand { get; set; }
         public ICommand EliminarProductoCommand { get; set; }
@@ -41,7 +37,6 @@ namespace TiendaGlobosLaFiesta.ViewModels
         public ICommand EditarGloboCommand { get; set; }
         public ICommand EliminarGloboCommand { get; set; }
 
-        // Filtros
         private string _stockCriticoFilter;
         public string StockCriticoFilter
         {
@@ -63,20 +58,19 @@ namespace TiendaGlobosLaFiesta.ViewModels
             set { _globosFilter = value; OnPropertyChanged(); GlobosViewFiltered?.Refresh(); }
         }
 
-        // Vistas filtradas
         public ICollectionView StockCriticoView { get; set; }
         public ICollectionView ProductosViewFiltered { get; set; }
         public ICollectionView GlobosViewFiltered { get; set; }
 
         public InventarioViewModel()
         {
-            _stockManager = new StockManagerRepository();
+            // Pasamos connection string a StockManagerRepository
+            _stockManager = new StockManagerRepository(DbHelper.ConnectionString);
 
             ProductosView = new ObservableCollection<Producto>();
             GlobosView = new ObservableCollection<Globo>();
             StockCritico = new ObservableCollection<StockCriticoItem>();
 
-            // Comandos
             AgregarProductoCommand = new RelayCommand(_ => AgregarProducto());
             EditarProductoCommand = new RelayCommand(_ => EditarProducto(), _ => ProductoSeleccionado != null);
             EliminarProductoCommand = new RelayCommand(_ => EliminarProducto(), _ => ProductoSeleccionado != null);
@@ -85,10 +79,8 @@ namespace TiendaGlobosLaFiesta.ViewModels
             EditarGloboCommand = new RelayCommand(_ => EditarGlobo(), _ => GloboSeleccionado != null);
             EliminarGloboCommand = new RelayCommand(_ => EliminarGlobo(), _ => GloboSeleccionado != null);
 
-            // Cargar datos
             CargarDatos();
 
-            // Inicializar vistas filtradas
             StockCriticoView = CollectionViewSource.GetDefaultView(StockCritico);
             ProductosViewFiltered = CollectionViewSource.GetDefaultView(ProductosView);
             GlobosViewFiltered = CollectionViewSource.GetDefaultView(GlobosView);
@@ -114,12 +106,11 @@ namespace TiendaGlobosLaFiesta.ViewModels
             {
                 if (string.IsNullOrEmpty(GlobosFilter)) return true;
                 if (o is Globo g)
-                    return !string.IsNullOrEmpty(g.Nombre) && g.Nombre.Contains(GlobosFilter, StringComparison.OrdinalIgnoreCase);
+                    return !string.IsNullOrEmpty(g.Material) && g.Material.Contains(GlobosFilter, StringComparison.OrdinalIgnoreCase);
                 return false;
             };
         }
 
-        #region Carga de Datos
         private void CargarDatos()
         {
             CargarProductos();
@@ -146,20 +137,27 @@ namespace TiendaGlobosLaFiesta.ViewModels
         private void CargarStockCritico()
         {
             StockCritico.Clear();
-            foreach (var p in _stockManager.ObtenerProductosStockCritico())
-                StockCritico.Add(p);
-            foreach (var g in _stockManager.ObtenerGlobosStockCritico())
-                StockCritico.Add(g);
-        }
-        #endregion
 
-        #region CRUD Placeholder
+            // Productos críticos
+            foreach (var p in _stockManager.ObtenerProductosStockCritico())
+            {
+                StockCritico.Add(p);
+            }
+
+            // Globos críticos
+            foreach (var g in _stockManager.ObtenerGlobosStockCritico())
+            {
+                StockCritico.Add(g);
+            }
+        }
+
+
+        // CRUD placeholders
         private void AgregarProducto() { }
         private void EditarProducto() { }
         private void EliminarProducto() { }
         private void AgregarGlobo() { }
         private void EditarGlobo() { }
         private void EliminarGlobo() { }
-        #endregion
     }
 }

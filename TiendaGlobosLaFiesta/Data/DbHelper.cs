@@ -20,6 +20,10 @@ namespace TiendaGlobosLaFiesta.Data
             return conn;
         }
 
+        public static string ConnectionString => ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
+
+
+
         // Ejecutar consulta que devuelve DataTable
         public static DataTable ExecuteQuery(string query, SqlParameter[] parameters = null, SqlConnection conn = null, SqlTransaction tran = null)
         {

@@ -29,14 +29,21 @@ namespace TiendaGlobosLaFiesta
             txtPasswordVisible.GotFocus += PasswordBox_FocusChanged;
             txtPasswordVisible.LostFocus += PasswordBox_FocusChanged;
             txtPasswordVisible.KeyDown += PasswordBox_KeyDown_CapsLock;
+            txtUsername.Dispatcher.BeginInvoke(new Action(() => txtUsername.Focus()));
+
         }
+
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // Animación de fade al cargar
             var fade = (Storyboard)FindResource("FormFadeInAnimation");
             fade.Begin();
+
+            // Colocar el foco en el primer campo (Usuario)
+            txtUsername.Focus();
         }
+
 
         private void BtnCerrar_Click(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
 

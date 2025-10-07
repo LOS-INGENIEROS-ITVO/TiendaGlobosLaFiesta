@@ -75,9 +75,9 @@
                                           ColumnHeaderStyle="{StaticResource CenteredHeader}" SelectionMode="Single"
                                           SelectionUnit="FullRow" HorizontalAlignment="Stretch" ColumnWidth="*">
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="ID" Binding="{Binding ProductoId}" Width="170" ElementStyle="{StaticResource CenteredCell}"/>
+                                        <DataGridTextColumn Header="ID" Binding="{Binding ProductoId}" Width="180" ElementStyle="{StaticResource CenteredCell}"/>
                                         <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
-                                        <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad}" Width="120" ElementStyle="{StaticResource CenteredCell}"/>
+                                        <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad}" Width="130" ElementStyle="{StaticResource CenteredCell}"/>
                                         <DataGridTextColumn Header="Stock" Binding="{Binding Stock}" Width="100" ElementStyle="{StaticResource CenteredCell}"/>
                                         <DataGridTextColumn Header="Costo 💵" Binding="{Binding Costo, StringFormat=C}" Width="100" ElementStyle="{StaticResource CenteredCell}"/>
                                         <DataGridTemplateColumn Header="Cantidad" Width="140">
@@ -117,13 +117,13 @@
                                           ColumnHeaderStyle="{StaticResource CenteredHeader}" SelectionMode="Single"
                                           SelectionUnit="FullRow" HorizontalAlignment="Stretch" ColumnWidth="*">
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="ID" Binding="{Binding GloboId}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
+                                        <DataGridTextColumn Header="ID" Binding="{Binding GloboId}" Width="140" ElementStyle="{StaticResource CenteredCell}"/>
                                         <DataGridTextColumn Header="Material 🎈" Binding="{Binding Material}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
                                         <DataGridTextColumn Header="Color 🎨" Binding="{Binding Color}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
                                         <DataGridTextColumn Header="Tamaño 📏" Binding="{Binding Tamano, Converter={StaticResource EmptyToDashConverter}}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
                                         <DataGridTextColumn Header="Forma 🔷" Binding="{Binding Forma, Converter={StaticResource EmptyToDashConverter}}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
                                         <DataGridTextColumn Header="Temática 🎉" Binding="{Binding Tematica, Converter={StaticResource EmptyToDashConverter}}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
-                                        <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad}" Width="120" ElementStyle="{StaticResource CenteredCell}"/>
+                                        <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad}" Width="100" ElementStyle="{StaticResource CenteredCell}"/>
                                         <DataGridTextColumn Header="Stock" Binding="{Binding Stock}" Width="70" ElementStyle="{StaticResource CenteredCell}"/>
                                         <DataGridTemplateColumn Header="Cantidad" Width="140">
                                             <DataGridTemplateColumn.CellTemplate>
@@ -218,7 +218,7 @@
                     <DataGrid x:Name="dgHistorial" ItemsSource="{Binding HistorialView}" Grid.Row="1" AutoGenerateColumns="False"
                               CanUserAddRows="False" IsReadOnly="True" ColumnHeaderStyle="{StaticResource CenteredHeader}" RowHeight="35">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="ID Venta" Binding="{Binding VentaId}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
+                            <DataGridTextColumn Header="ID Venta" Binding="{Binding VentaId}" Width="180" ElementStyle="{StaticResource CenteredCell}"/>
                             <DataGridTextColumn Header="Cliente 🎁" Binding="{Binding ClienteNombre}" Width="2*" ElementStyle="{StaticResource CenteredCell}"/>
                             <DataGridTextColumn Header="Empleado 👤" Binding="{Binding NombreEmpleado}" Width="2*" ElementStyle="{StaticResource CenteredCell}"/>
                             <DataGridTextColumn Header="Fecha 📅" Binding="{Binding FechaVenta, StringFormat=dd/MM/yyyy}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
