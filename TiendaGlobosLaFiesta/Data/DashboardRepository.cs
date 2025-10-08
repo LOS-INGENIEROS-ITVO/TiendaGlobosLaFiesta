@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using TiendaGlobosLaFiesta.Models;
+using TiendaGlobosLaFiesta.Models.Dashboard;
 
 namespace TiendaGlobosLaFiesta.Data
 {
@@ -107,6 +107,57 @@ namespace TiendaGlobosLaFiesta.Data
 
             return data;
         }
+
+
+
+        // --- AÑADE ESTE MÉTODO DENTRO DE LA CLASE DashboardRepository ---
+
+        public DashboardEmpleadoData ObtenerDatosDashboardEmpleado(int idEmpleado)
+        {
+            var data = new DashboardEmpleadoData();
+
+            try
+            {
+                using var conn = DbHelper.ObtenerConexion();
+                // Llamamos al nuevo Stored Procedure específico para el empleado
+                using var cmd = new SqlCommand("sp_ObtenerKPIsDashboardEmpleado", conn)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+                cmd.Parameters.AddWithValue("@IdEmpleado", idEmpleado);
+
+                using var reader = cmd.ExecuteReader();
+
+                // ======= RESULTADO 1: KPIs Numéricos del Empleado =======
+                if (reader.Read())
+                {
+                    data.MisVentasHoy = SafeDecimal(reader["MisVentasHoy"]);
+                    data.TicketsHoy = SafeInt(reader["TicketsHoy"]);
+                    data.TicketPromedioHoy = SafeDecimal(reader["TicketPromedioHoy"]);
+                    data.ClientesAtendidosHoy = SafeInt(reader["ClientesAtendidosHoy"]);
+                }
+
+                // ======= RESULTADO 2: Ventas Diarias del Empleado (Últimos 7 Días) =======
+                if (reader.NextResult())
+                {
+                    while (reader.Read())
+                    {
+                        if (DateTime.TryParse(reader["Fecha"]?.ToString(), out DateTime fecha))
+                        {
+                            decimal total = SafeDecimal(reader["Total"]);
+                            data.VentasDiarias7Dias[fecha.Date] = total;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error al obtener datos del dashboard de empleado: {ex.Message}");
+            }
+
+            return data;
+        }
+
 
         // ======= MÉTODOS AUXILIARES =======
         private decimal SafeDecimal(object value)

@@ -1,5 +1,5 @@
 ﻿using System.Collections.ObjectModel;
-using TiendaGlobosLaFiesta.Models;
+using TiendaGlobosLaFiesta.Models.Ventas;
 
 // Este modelo puede estar en la raíz o en la carpeta Models.
 // Si está en Models, su namespace debería ser TiendaGlobosLaFiesta.Models

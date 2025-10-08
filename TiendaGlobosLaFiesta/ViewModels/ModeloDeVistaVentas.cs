@@ -3,8 +3,8 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Data;
 using TiendaGlobosLaFiesta.Data;
-using TiendaGlobosLaFiesta.Modelos;
-using TiendaGlobosLaFiesta.Models;
+using TiendaGlobosLaFiesta.Models.Clientes;
+using TiendaGlobosLaFiesta.Models.Ventas;
 
 namespace TiendaGlobosLaFiesta.ViewModels
 {

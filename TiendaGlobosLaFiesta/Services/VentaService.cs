@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Linq;
 using TiendaGlobosLaFiesta.Data;
-using TiendaGlobosLaFiesta.Modelos;
-using TiendaGlobosLaFiesta.Models;
+using TiendaGlobosLaFiesta.Models.Utilities;
+using TiendaGlobosLaFiesta.Models.Ventas;
 
 namespace TiendaGlobosLaFiesta.Services
 {

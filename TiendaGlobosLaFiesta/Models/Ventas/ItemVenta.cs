@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace TiendaGlobosLaFiesta.Models
+namespace TiendaGlobosLaFiesta.Models.Ventas
 {
     public abstract class ItemVenta : INotifyPropertyChanged
     {
@@ -31,8 +31,8 @@ namespace TiendaGlobosLaFiesta.Models
         public decimal Costo { get; set; }
         public decimal Importe => Cantidad * Costo;
 
-        public void Incrementar() => Cantidad = (Cantidad < Stock) ? Cantidad + 1 : Stock;
-        public void Decrementar() => Cantidad = (Cantidad > 0) ? Cantidad - 1 : 0;
+        public void Incrementar() => Cantidad = Cantidad < Stock ? Cantidad + 1 : Stock;
+        public void Decrementar() => Cantidad = Cantidad > 0 ? Cantidad - 1 : 0;
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)

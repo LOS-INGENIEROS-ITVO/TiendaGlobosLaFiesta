@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace TiendaGlobosLaFiesta.Models
+namespace TiendaGlobosLaFiesta.Models.Empleados
 {
     public class Empleado : INotifyPropertyChanged
     {

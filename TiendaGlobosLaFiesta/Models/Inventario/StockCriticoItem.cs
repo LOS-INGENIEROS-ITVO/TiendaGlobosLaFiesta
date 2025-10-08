@@ -1,5 +1,5 @@
 ﻿// TiendaGlobosLaFiesta\Models\StockCriticoItem.cs
-namespace TiendaGlobosLaFiesta.Models
+namespace TiendaGlobosLaFiesta.Models.Inventario
 {
     public class StockCriticoItem
     {

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace TiendaGlobosLaFiesta.Models
+namespace TiendaGlobosLaFiesta.Models.Inventario
 {
     public class Globo
     {
@@ -28,7 +28,7 @@ namespace TiendaGlobosLaFiesta.Models
 
         public Globo Clone()
         {
-            var clon = (Globo)this.MemberwiseClone();
+            var clon = (Globo)MemberwiseClone();
             clon.Tamanos = new List<string>(Tamanos);
             clon.Formas = new List<string>(Formas);
             clon.Tematicas = new List<string>(Tematicas);

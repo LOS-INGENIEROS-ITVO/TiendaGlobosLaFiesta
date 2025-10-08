@@ -4,7 +4,7 @@ using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using System.Diagnostics;
 using System.Globalization;
-using TiendaGlobosLaFiesta.Models;
+using TiendaGlobosLaFiesta.Models.Ventas;
 
 namespace TiendaGlobosLaFiesta.Services
 {

@@ -1,7 +1,6 @@
 ﻿using System;
-using TiendaGlobosLaFiesta.Models;
 
-namespace TiendaGlobosLaFiesta.Models
+namespace TiendaGlobosLaFiesta.Models.Ventas
 {
     public class GloboVenta : ItemVenta
     {

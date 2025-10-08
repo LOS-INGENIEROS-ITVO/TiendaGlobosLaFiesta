@@ -4,7 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Windows.Data;
 using TiendaGlobosLaFiesta.Data;
-using TiendaGlobosLaFiesta.Models;
+using TiendaGlobosLaFiesta.Models.Inventario;
 
 namespace TiendaGlobosLaFiesta.ViewModels
 {

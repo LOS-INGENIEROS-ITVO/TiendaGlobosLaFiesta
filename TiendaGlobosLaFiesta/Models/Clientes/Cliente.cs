@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace TiendaGlobosLaFiesta.Modelos
+namespace TiendaGlobosLaFiesta.Models.Clientes
 {
     public class Cliente : INotifyPropertyChanged
     {

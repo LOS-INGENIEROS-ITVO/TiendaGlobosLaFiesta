@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
-using TiendaGlobosLaFiesta.Modelos;
+using TiendaGlobosLaFiesta.Models.Utilities;
 using TiendaGlobosLaFiesta.Views;
 
 namespace TiendaGlobosLaFiesta

@@ -7,7 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using TiendaGlobosLaFiesta.Data;
-using TiendaGlobosLaFiesta.Models;
+using TiendaGlobosLaFiesta.Models.Inventario;
 
 namespace TiendaGlobosLaFiesta.Views
 {

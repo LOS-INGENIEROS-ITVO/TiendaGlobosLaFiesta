@@ -1,6 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 
-namespace TiendaGlobosLaFiesta.Models
+namespace TiendaGlobosLaFiesta.Models.Pedidos
 {
     public class Pedido
     {

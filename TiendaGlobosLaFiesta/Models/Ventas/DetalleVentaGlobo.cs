@@ -1,4 +1,4 @@
-﻿namespace TiendaGlobosLaFiesta.Models
+﻿namespace TiendaGlobosLaFiesta.Models.Ventas
 {
     public class DetalleVentaGlobo
     {

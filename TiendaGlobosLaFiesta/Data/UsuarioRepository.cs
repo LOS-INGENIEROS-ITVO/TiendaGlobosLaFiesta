@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.Data.SqlClient;
-using TiendaGlobosLaFiesta.Models;
+using TiendaGlobosLaFiesta.Models.Usuarios;
 
 namespace TiendaGlobosLaFiesta.Data
 {

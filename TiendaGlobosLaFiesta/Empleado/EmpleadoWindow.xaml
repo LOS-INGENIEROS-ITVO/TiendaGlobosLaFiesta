@@ -1,22 +1,88 @@
 ﻿<Window x:Class="TiendaGlobosLaFiesta.EmpleadoWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Empleado - La Fiesta"
-        Height="700" Width="1200"
-        WindowStartupLocation="CenterScreen" Background="#FFF8F8F8">
+        Title="La Fiesta - Menú Empleado"
+        WindowStartupLocation="CenterScreen" 
+        WindowState="Maximized"
+        MinHeight="700" MinWidth="1200"
+        Background="#FFFAF0">
+
+    <Window.Resources>
+        <Style x:Key="MenuButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="55"/>
+            <Setter Property="Margin" Value="8,6,8,0"/>
+            <Setter Property="Foreground" Value="#4B3B2C"/>
+            <Setter Property="Background" Value="#D4B483"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#C49C70"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#B57C50"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
 
     <Grid>
-        <!-- PANEL LATERAL -->
-        <StackPanel Background="#2C3E50" Width="220" HorizontalAlignment="Left">
-            <TextBlock Text="Empleado" Foreground="White" FontSize="26" FontWeight="Bold" 
-                       Margin="10,20,0,30" Width="160"/>
-            <Button x:Name="btnVentas" Content="Ventas" Height="50" Margin="10,0,10,10" Click="btnVentas_Click"/>
-            <Button x:Name="btnRegresar" Content="Cerrar sesión" Height="50" Margin="10,0,10,10" Click="btnRegresar_Click"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0" Background="#EDE0C8" MinWidth="250">
+            <TextBlock x:Name="txtBienvenida" 
+                       Text="Bienvenido, Nombre Empleado" 
+                       Foreground="#4B3B2C" 
+                       FontWeight="Bold"
+                       HorizontalAlignment="Center" 
+                       Margin="10,25,10,25" 
+                       TextWrapping="Wrap" 
+                       TextAlignment="Center"
+                       FontSize="28"/>
+
+            <Button x:Name="btnDashboard" Click="BtnDashboard_Click" Style="{StaticResource MenuButtonStyle}">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock Text="🏠" Margin="0,0,12,0" FontSize="20"/>
+                    <TextBlock Text="Dashboard" FontSize="18"/>
+                </StackPanel>
+            </Button>
+
+            <Button x:Name="btnVentas" Click="BtnVentas_Click" Style="{StaticResource MenuButtonStyle}">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock Text="💰" Margin="0,0,12,0" FontSize="20"/>
+                    <TextBlock Text="Ventas" FontSize="18"/>
+                </StackPanel>
+            </Button>
+
+            <Button x:Name="btnClientes" Click="BtnClientes_Click" Style="{StaticResource MenuButtonStyle}">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock Text="👥" Margin="0,0,12,0" FontSize="20"/>
+                    <TextBlock Text="Clientes" FontSize="18"/>
+                </StackPanel>
+            </Button>
+
+            <Button x:Name="btnCerrarSesion" Content="Cerrar Sesión" Height="55" Margin="8,35,8,10" 
+                    Click="BtnCerrarSesion_Click" Background="#B5651D" Foreground="White" FontSize="18" FontWeight="Bold"/>
         </StackPanel>
 
-        <!-- PANEL DINÁMICO -->
-        <Grid x:Name="PanelDinamico" Margin="220,0,0,0">
-            <Image x:Name="imgFondo" Stretch="UniformToFill"/>
+        <Grid Grid.Column="1" Margin="20">
+            <ContentControl x:Name="MainContent" Margin="0" Background="Transparent"/>
         </Grid>
     </Grid>
 </Window>

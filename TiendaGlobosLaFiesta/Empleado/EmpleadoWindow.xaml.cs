@@ -1,57 +1,66 @@
-﻿using System.Windows;
-using System.Windows.Media.Imaging;
+﻿using System.Collections.Generic;
+using System.Windows;
+using System.Windows.Controls;
+using TiendaGlobosLaFiesta.Models.Utilities;
 using TiendaGlobosLaFiesta.Views;
-
 
 namespace TiendaGlobosLaFiesta
 {
     public partial class EmpleadoWindow : Window
     {
-        private string RolUsuario;
+        // Usamos el mismo patrón de diccionario para cargar y reutilizar los módulos
+        private Dictionary<string, UserControl> Modulos = new Dictionary<string, UserControl>();
 
         public EmpleadoWindow(string rol)
         {
             InitializeComponent();
-            RolUsuario = rol;
-            CargarImagenPorDefecto();
+
+            // Personalizamos la bienvenida con el nombre del empleado logueado
+            txtBienvenida.Text = $"Bienvenido, {SesionActual.NombreEmpleadoCompleto}";
+
+            // Cargamos el dashboard del empleado por defecto al iniciar
+            CargarDashboard();
         }
 
-        // Cargar imagen de fondo predeterminada
-        private void CargarImagenPorDefecto()
+        // Método reutilizado para mostrar el módulo seleccionado en el ContentControl
+        private void MostrarModulo(UserControl control)
         {
-            try
-            {
-                // Crea el BitmapImage de manera segura
-                BitmapImage imagen = new BitmapImage();
-                imagen.BeginInit();
-
-                // Ruta relativa al recurso dentro del proyecto
-                imagen.UriSource = new Uri("pack://application:,,,/TiendaGlobosLaFiesta;component/Recursos/Fondo3.png", UriKind.Absolute);
-
-                imagen.CacheOption = BitmapCacheOption.OnLoad; // Mejora el rendimiento
-                imagen.EndInit();
-                imagen.Freeze(); // Para que sea seguro usar desde otros hilos
-
-                imgFondo.Source = imagen;
-            }
-            catch (Exception ex)
-            {
-                // Opcional: log o mensaje de error sin romper la app
-                Console.WriteLine("No se pudo cargar la imagen de fondo: " + ex.Message);
-
-            }
+            MainContent.Content = control;
         }
 
-        // Cargar módulo de Ventas en el panel dinámico
-        private void btnVentas_Click(object sender, RoutedEventArgs e)
+        // Carga inicial del Dashboard
+        private void CargarDashboard()
         {
-            VentasControl ventas = new VentasControl();
-            PanelDinamico.Children.Clear();
-            PanelDinamico.Children.Add(ventas);
+            // Asumimos que crearás un UserControl "DashboardEmpleadoControl"
+            if (!Modulos.ContainsKey("Dashboard"))
+                Modulos["Dashboard"] = new DashboardEmpleadoControl();
+            MostrarModulo(Modulos["Dashboard"]);
         }
 
-        // Regresar a login
-        private void btnRegresar_Click(object sender, RoutedEventArgs e)
+        // --- MANEJADORES DE CLIC PARA LOS BOTONES ---
+
+        private void BtnDashboard_Click(object sender, RoutedEventArgs e)
+        {
+            if (!Modulos.ContainsKey("Dashboard"))
+                Modulos["Dashboard"] = new DashboardEmpleadoControl();
+            MostrarModulo(Modulos["Dashboard"]);
+        }
+
+        private void BtnVentas_Click(object sender, RoutedEventArgs e)
+        {
+            if (!Modulos.ContainsKey("Ventas"))
+                Modulos["Ventas"] = new VentasControl();
+            MostrarModulo(Modulos["Ventas"]);
+        }
+
+        private void BtnClientes_Click(object sender, RoutedEventArgs e)
+        {
+            if (!Modulos.ContainsKey("Clientes"))
+                Modulos["Clientes"] = new ClientesControl();
+            MostrarModulo(Modulos["Clientes"]);
+        }
+
+        private void BtnCerrarSesion_Click(object sender, RoutedEventArgs e)
         {
             LoginWindow login = new LoginWindow();
             login.Show();

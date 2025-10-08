@@ -1,4 +1,4 @@
-﻿namespace TiendaGlobosLaFiesta.Models
+﻿namespace TiendaGlobosLaFiesta.Models.Dashboard
 {
     public class DashboardData
     {

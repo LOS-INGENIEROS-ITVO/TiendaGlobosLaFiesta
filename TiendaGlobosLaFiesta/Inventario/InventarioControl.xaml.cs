@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
-using TiendaGlobosLaFiesta.Models;
+using TiendaGlobosLaFiesta.Models.Inventario;
 using TiendaGlobosLaFiesta.ViewModels;
 
 namespace TiendaGlobosLaFiesta.Views

@@ -1,132 +1,241 @@
-﻿using ClosedXML.Excel;
-using Microsoft.Win32;
+﻿using System;
 using System.Collections.ObjectModel;
-using System.Text.RegularExpressions;
+using System.ComponentModel;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
-using TiendaGlobosLaFiesta.Modelos;
-using TiendaGlobosLaFiesta.Models;
-using TiendaGlobosLaFiesta.Services;
-using TiendaGlobosLaFiesta.ViewModels;
-using System.Linq;
+using TiendaGlobosLaFiesta.Data;
+using TiendaGlobosLaFiesta.Core;
+using TiendaGlobosLaFiesta.Models.Ventas;
+using TiendaGlobosLaFiesta.Models.Clientes;
 
 namespace TiendaGlobosLaFiesta.Views
 {
-    public partial class VentasControl : UserControl
+    public partial class VentasControl : UserControl, INotifyPropertyChanged
     {
-        private readonly VentaService _ventaService = new();
-        public event Action VentaRealizada;
+        private readonly VentasRepository _ventasRepo = new VentasRepository();
+        private readonly ProductoRepository _productoRepo = new ProductoRepository();
+        private readonly GloboRepository _globoRepo = new GloboRepository();
 
-        private ModeloDeVistaVentas VM => DataContext as ModeloDeVistaVentas;
-        private IEnumerable<VentaHistorial> HistorialFiltrado => VM?.HistorialView?.Cast<VentaHistorial>() ?? Enumerable.Empty<VentaHistorial>();
+        // --- Colecciones ---
+        public ObservableCollection<Cliente> Clientes { get; set; } = new();
+        public ObservableCollection<ProductoVenta> Productos { get; set; } = new();
+        public ObservableCollection<GloboVenta> Globos { get; set; } = new();
+        public ObservableCollection<VentaView> HistorialView { get; set; } = new();
+
+        // --- Totales ---
+        private int _totalProductos;
+        public int TotalProductos { get => _totalProductos; set { _totalProductos = value; OnPropertyChanged(); } }
+
+        private int _totalGlobos;
+        public int TotalGlobos { get => _totalGlobos; set { _totalGlobos = value; OnPropertyChanged(); } }
+
+        private decimal _importeTotal;
+        public decimal ImporteTotal { get => _importeTotal; set { _importeTotal = value; OnPropertyChanged(); } }
 
         public VentasControl()
         {
             InitializeComponent();
-            this.DataContext = new ModeloDeVistaVentas();
-            this.Loaded += VentasControl_Loaded;
-        }
+            DataContext = this;
 
+            Loaded += VentasControl_Loaded;
+        }
 
         private void VentasControl_Loaded(object sender, RoutedEventArgs e)
         {
-            if (VM != null)
+            try
             {
-                cmbClientes.ItemsSource = VM.Clientes;
-                cmbFiltroCliente.ItemsSource = VM.Clientes;
-                dgProductos.ItemsSource = VM.Productos;
-                dgGlobos.ItemsSource = VM.Globos;
-                dgHistorial.ItemsSource = VM.HistorialView;
+                CargarClientes();
+                CargarProductos();
+                CargarGlobos();
+                CargarHistorial();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar datos: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        #region Cantidad
-        private void Cantidad_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        #region Carga de Datos
+
+        private void CargarClientes()
         {
-            var regex = new Regex("[^0-9]+"); // Solo permite números
-            e.Handled = regex.IsMatch(e.Text);
+            Clientes.Clear();
+            var lista = _ventasRepo.ObtenerClientes();
+            foreach (var c in lista) Clientes.Add(c);
         }
+
+        private void CargarProductos()
+        {
+            Productos.Clear();
+            var lista = _productoRepo.ObtenerProductosEnStock();
+            foreach (var p in lista)
+            {
+                p.Cantidad = 0;
+                Productos.Add(p);
+            }
+        }
+
+        private void CargarGlobos()
+        {
+            Globos.Clear();
+            var lista = _globoRepo.ObtenerGlobosEnStock();
+            foreach (var g in lista)
+            {
+                g.Cantidad = 0;
+                Globos.Add(g);
+            }
+        }
+
+        private void CargarHistorial()
+        {
+            HistorialView.Clear();
+            var ventas = _ventasRepo.ObtenerHistorialVentas();
+            foreach (var v in ventas) HistorialView.Add(v);
+        }
+
+        #endregion
+
+        #region Botones Cantidad
 
         private void BtnAumentarCantidad_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn && btn.Tag is ItemVenta item)
-                item.Incrementar();
+            if (sender is Button btn && btn.Tag != null)
+            {
+                dynamic item = btn.Tag;
+                if (item.Cantidad < item.Stock)
+                {
+                    item.Cantidad++;
+                    ActualizarTotales();
+                }
+                else
+                {
+                    MessageBox.Show("No hay suficiente stock", "Advertencia", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
         }
 
         private void BtnDisminuirCantidad_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn && btn.Tag is ItemVenta item)
-                item.Decrementar();
+            if (sender is Button btn && btn.Tag != null)
+            {
+                dynamic item = btn.Tag;
+                if (item.Cantidad > 0)
+                {
+                    item.Cantidad--;
+                    ActualizarTotales();
+                }
+            }
         }
+
+        private void Cantidad_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            e.Handled = !int.TryParse(e.Text, out _);
+        }
+
+        private void ActualizarTotales()
+        {
+            TotalProductos = Productos.Sum(p => p.Cantidad);
+            TotalGlobos = Globos.Sum(g => g.Cantidad);
+            ImporteTotal = Productos.Sum(p => p.Importe) + Globos.Sum(g => g.Importe);
+        }
+
         #endregion
 
-        #region Registrar Venta
+        #region Registro de Venta
+
         private void BtnRegistrarVenta_Click(object sender, RoutedEventArgs e)
         {
-            if (cmbClientes.SelectedItem is not Cliente cliente)
-            {
-                MessageBox.Show("Selecciona un cliente.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            var productosSeleccionados = new ObservableCollection<ProductoVenta>(VM.Productos.Where(p => p.Cantidad > 0));
-            var globosSeleccionados = new ObservableCollection<GloboVenta>(VM.Globos.Where(g => g.Cantidad > 0));
-
-            if (!productosSeleccionados.Any() && !globosSeleccionados.Any())
-            {
-                MessageBox.Show("Debes seleccionar al menos un producto o globo.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            var venta = new Venta
-            {
-                VentaId = $"VEN{DateTime.Now:yyMMddHHmmss}",
-                ClienteId = cliente.ClienteId,
-                EmpleadoId = SesionActual.EmpleadoId ?? 0,
-                FechaVenta = DateTime.Now,
-                ImporteTotal = VM.ImporteTotal,
-                Productos = productosSeleccionados,
-                Globos = globosSeleccionados,
-                Estatus = "Completada"
-            };
-
-            if (_ventaService.RegistrarVentaCompleta(venta, out string mensajeError))
-            {
-                VentaRealizada?.Invoke();
-                LimpiarFormulario();
-                MessageBox.Show("Venta registrada correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            else
-            {
-                MessageBox.Show($"No se pudo registrar la venta:\n{mensajeError}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            RegistrarVenta();
         }
 
-        private void LimpiarFormulario()
+        public void RegistrarVenta()
         {
-            VM.CargarDatosIniciales();
-            dgProductos.ItemsSource = VM.Productos;
-            dgGlobos.ItemsSource = VM.Globos;
-            dgHistorial.ItemsSource = VM.HistorialView;
-            cmbClientes.SelectedIndex = -1;
+            try
+            {
+                if (cmbClientes.SelectedItem == null)
+                {
+                    MessageBox.Show("Seleccione un cliente antes de registrar la venta.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
 
-            // Limpiar barras de búsqueda
-            txtBuscarProducto.Text = "Buscar producto...";
-            txtBuscarProducto.Foreground = Brushes.Gray;
-            txtBuscarProducto.FontStyle = FontStyles.Italic;
+                var cliente = (Cliente)cmbClientes.SelectedItem;
+                var productosSeleccionados = Productos.Where(p => p.Cantidad > 0).ToList();
+                var globosSeleccionados = Globos.Where(g => g.Cantidad > 0).ToList();
 
-            txtBuscarGlobo.Text = "Buscar globo...";
-            txtBuscarGlobo.Foreground = Brushes.Gray;
-            txtBuscarGlobo.FontStyle = FontStyles.Italic;
+                if (!productosSeleccionados.Any() && !globosSeleccionados.Any())
+                {
+                    MessageBox.Show("Debe seleccionar al menos un producto o globo para registrar la venta.", "Validación", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Verificación de stock
+                foreach (var p in productosSeleccionados)
+                    if (p.Cantidad > p.Stock)
+                        throw new InvalidOperationException($"No hay suficiente stock del producto '{p.Nombre}'.");
+
+                foreach (var g in globosSeleccionados)
+                    if (g.Cantidad > g.Stock)
+                        throw new InvalidOperationException($"No hay suficiente stock del globo '{g.Material} {g.Color}'.");
+
+                // Registro de venta
+                _ventasRepo.RegistrarVenta(cliente, productosSeleccionados, globosSeleccionados);
+
+                MessageBox.Show("Venta registrada correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                // Actualizar UI
+                CargarProductos();
+                CargarGlobos();
+                CargarHistorial();
+                ActualizarTotales();
+
+                // Notificar al ModuloManager
+                ModuloManager.Instancia.NotificarVentaRegistrada();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al registrar la venta: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
+
         #endregion
 
-        #region Historial
+        #region Refrescar Cliente
+
+        public void RefrescarListaClientes()
+        {
+            try
+            {
+                CargarClientes();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al refrescar lista de clientes: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        #endregion
+
+        #region Filtros Historial (Opcional)
+
         private void BtnFiltrarHistorial_Click(object sender, RoutedEventArgs e)
         {
-            VM.FiltrarHistorial(cmbFiltroCliente.SelectedItem as Cliente, dpFechaDesde.SelectedDate, dpFechaHasta.SelectedDate);
+            try
+            {
+                var cliente = cmbFiltroCliente.SelectedItem as Cliente;
+                var desde = dpFechaDesde.SelectedDate;
+                var hasta = dpFechaHasta.SelectedDate;
+
+                var historial = _ventasRepo.FiltrarHistorial(cliente?.ClienteId, desde, hasta);
+                HistorialView.Clear();
+                foreach (var v in historial) HistorialView.Add(v);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al filtrar historial: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void BtnLimpiarFiltros_Click(object sender, RoutedEventArgs e)
@@ -134,96 +243,19 @@ namespace TiendaGlobosLaFiesta.Views
             cmbFiltroCliente.SelectedIndex = -1;
             dpFechaDesde.SelectedDate = null;
             dpFechaHasta.SelectedDate = null;
-            VM.LimpiarFiltros();
+            CargarHistorial();
         }
 
-        private void BtnExportarExcel_Click(object sender, RoutedEventArgs e)
-        {
-            if (!HistorialFiltrado.Any())
-            {
-                MessageBox.Show("No hay datos para exportar.", "Atención", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            var sfd = new SaveFileDialog { Filter = "Archivos Excel (*.xlsx)|*.xlsx", FileName = $"Ventas_{DateTime.Now:yyyyMMdd}.xlsx" };
-            if (sfd.ShowDialog() == true)
-            {
-                try
-                {
-                    using var workbook = new XLWorkbook();
-                    GeneradorDeExcel.CrearHojas(workbook, HistorialFiltrado);
-                    workbook.SaveAs(sfd.FileName);
-                    MessageBox.Show("Exportación a Excel completada.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Error al exportar a Excel: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-        }
-
-        private void BtnExportarPDF_Click(object sender, RoutedEventArgs e)
-        {
-            if (!HistorialFiltrado.Any())
-            {
-                MessageBox.Show("No hay datos para exportar.", "Atención", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-            GeneradorDePDF.GenerarPDF(HistorialFiltrado);
-        }
-
-        private void BtnMostrarGrafica_Click(object sender, RoutedEventArgs e)
-        {
-            if (!HistorialFiltrado.Any())
-            {
-                MessageBox.Show("No hay datos para mostrar en la gráfica.", "Atención", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-            var ventana = new VentasGraficaWindow(HistorialFiltrado);
-            ventana.ShowDialog();
-        }
         #endregion
 
-        #region Placeholders y Búsqueda
-        private void TextBox_GotFocus(object sender, RoutedEventArgs e)
+        #region INotifyPropertyChanged
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string name = null)
         {
-            if (sender is TextBox tb && (tb.Text == "Buscar producto..." || tb.Text == "Buscar globo..."))
-            {
-                tb.Text = "";
-                tb.Foreground = Brushes.Black;
-                tb.FontStyle = FontStyles.Normal;
-            }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
-        private void TextBox_LostFocus(object sender, RoutedEventArgs e)
-        {
-            if (sender is TextBox tb && string.IsNullOrWhiteSpace(tb.Text))
-            {
-                if (tb.Name == "txtBuscarProducto") tb.Text = "Buscar producto...";
-                else if (tb.Name == "txtBuscarGlobo") tb.Text = "Buscar globo...";
-
-                tb.Foreground = Brushes.Gray;
-                tb.FontStyle = FontStyles.Italic;
-            }
-        }
-
-        private void TxtBuscarProducto_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (VM == null) return;
-            var filtro = txtBuscarProducto.Text.ToLower();
-            if (filtro == "buscar producto...") filtro = "";
-            dgProductos.ItemsSource = VM.Productos
-                .Where(p => string.IsNullOrEmpty(filtro) || p.Nombre.ToLower().Contains(filtro));
-        }
-
-        private void TxtBuscarGlobo_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (VM == null) return;
-            var filtro = txtBuscarGlobo.Text.ToLower();
-            if (filtro == "buscar globo...") filtro = "";
-            dgGlobos.ItemsSource = VM.Globos
-                .Where(g => string.IsNullOrEmpty(filtro) || g.Material.ToLower().Contains(filtro) || g.Color.ToLower().Contains(filtro));
-        }
         #endregion
     }
 }

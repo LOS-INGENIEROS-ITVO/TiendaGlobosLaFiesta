@@ -1,4 +1,4 @@
-﻿namespace TiendaGlobosLaFiesta.Models
+﻿namespace TiendaGlobosLaFiesta.Models.Inventario
 {
     public class Producto
     {
@@ -14,6 +14,6 @@
         public bool Activo { get; set; } = true;
         public int VentasHoy { get; set; }
 
-        public Producto Clone() => (Producto)this.MemberwiseClone();
+        public Producto Clone() => (Producto)MemberwiseClone();
     }
 }

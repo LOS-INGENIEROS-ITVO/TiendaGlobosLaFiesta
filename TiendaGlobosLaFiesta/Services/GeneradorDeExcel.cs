@@ -1,6 +1,6 @@
 ﻿using ClosedXML.Excel;
-using TiendaGlobosLaFiesta.Models;
 using System.Globalization;
+using TiendaGlobosLaFiesta.Models.Ventas;
 
 namespace TiendaGlobosLaFiesta.Services
 {
