@@ -1,315 +1,108 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
-using System.Windows.Data;
 using System.Windows.Input;
-using TiendaGlobosLaFiesta.Core;
-using TiendaGlobosLaFiesta.Data;
-using TiendaGlobosLaFiesta.Models.Clientes;
+using TiendaGlobosLaFiesta.Managers;
+using TiendaGlobosLaFiesta.Models.Utilities;
 using TiendaGlobosLaFiesta.Models.Ventas;
-using TiendaGlobosLaFiesta.Models.Inventario;
-using TiendaGlobosLaFiesta.Services;
-using System.Diagnostics;
 
 namespace TiendaGlobosLaFiesta.ViewModels
 {
     public class VentasViewModel : INotifyPropertyChanged
     {
-        private readonly VentaService _ventaService;
-        private readonly ProductoRepository _productoRepo;
-        private readonly GloboRepository _globoRepo;
+        private readonly ModuloManager _moduloManager;
 
-        public VentasViewModel()
+        public ObservableCollection<ProductoVenta> Productos { get; set; }
+        public ObservableCollection<GloboVenta> Globos { get; set; }
+        public ObservableCollection<ItemVenta> Carrito { get; set; }
+
+        public ICommand AgregarProductoCommand { get; set; }
+        public ICommand AgregarGloboCommand { get; set; }
+        public ICommand RegistrarVentaCommand { get; set; }
+
+        public VentasViewModel(ModuloManager moduloManager)
         {
-            _ventaService = new VentaService();
-            _productoRepo = new ProductoRepository();
-            _globoRepo = new GloboRepository();
+            _moduloManager = moduloManager;
 
-            Clientes = new ObservableCollection<Cliente>();
-            Productos = new ObservableCollection<ProductoVenta>();
-            Globos = new ObservableCollection<GloboVenta>();
-            Historial = new ObservableCollection<VentaHistorial>();
+            // Cargar inventario desde BD
+            Productos = new ObservableCollection<ProductoVenta>(_moduloManager.ObtenerProductos());
+            Globos = new ObservableCollection<GloboVenta>(_moduloManager.ObtenerGlobos());
+            Carrito = new ObservableCollection<ItemVenta>();
 
             // Comandos
-            RegistrarVentaCommand = new RelayCommand(async _ => await RegistrarVentaAsync(), _ => CanRegistrarVenta());
-            AumentarCantidadProductoCommand = new RelayCommand(AumentarCantidadProducto);
-            DisminuirCantidadProductoCommand = new RelayCommand(DisminuirCantidadProducto);
-            AumentarCantidadGloboCommand = new RelayCommand(AumentarCantidadGlobo);
-            DisminuirCantidadGloboCommand = new RelayCommand(DisminuirCantidadGlobo);
-
-            ModuloManager.Instancia.StockActualizado += OnStockActualizado;
-
-            Task.Run(() => CargarDatosInicialesAsync());
+            AgregarProductoCommand = new RelayCommand<object>(p => AgregarProducto((ProductoVenta)p));
+            AgregarGloboCommand = new RelayCommand<object>(g => AgregarGlobo((GloboVenta)g));
+            RegistrarVentaCommand = new RelayCommand(_ => RegistrarVenta()); 
         }
 
-        #region Propiedades
-
-        private Cliente _clienteSeleccionado;
-        public Cliente ClienteSeleccionado
+        private void AgregarProducto(ProductoVenta producto)
         {
-            get => _clienteSeleccionado;
-            set
+            if (producto == null) return;
+
+            // Validar stock
+            if (producto.Cantidad + 1 > producto.Stock) return;
+
+            producto.Cantidad += 1;
+            if (!Carrito.Contains(producto))
+                Carrito.Add(producto);
+
+            OnPropertyChanged(nameof(Carrito));
+        }
+
+        private void AgregarGlobo(GloboVenta globo)
+        {
+            if (globo == null) return;
+
+            // Validar stock
+            if (globo.Cantidad + 1 > globo.Stock) return;
+
+            globo.Cantidad += 1;
+            if (!Carrito.Contains(globo))
+                Carrito.Add(globo);
+
+            OnPropertyChanged(nameof(Carrito));
+        }
+
+        private void RegistrarVenta()
+        {
+            if (Carrito.Count == 0) return;
+
+            if (!SesionActual.EmpleadoId.HasValue) return; // No hay empleado logueado
+            int empleadoId = SesionActual.EmpleadoId.Value;
+
+            string ventaId = Guid.NewGuid().ToString();
+            string clienteId = "C0001"; // TODO: reemplazar con selección dinámica de cliente
+
+            // Separar productos y globos del carrito
+            var productos = new List<ProductoVenta>();
+            var globos = new List<GloboVenta>();
+
+            foreach (var item in Carrito)
             {
-                _clienteSeleccionado = value;
-                OnPropertyChanged();
-                ((RelayCommand)RegistrarVentaCommand).RaiseCanExecuteChanged();
-            }
-        }
-
-        public ObservableCollection<ProductoVenta> Productos { get; }
-        public ObservableCollection<GloboVenta> Globos { get; }
-        public ObservableCollection<Cliente> Clientes { get; }
-        public ObservableCollection<VentaHistorial> Historial { get; private set; }
-        public ICollectionView HistorialView { get; private set; }
-
-        public int TotalProductos => Productos.Sum(p => p.Cantidad);
-        public int TotalGlobos => Globos.Sum(g => g.Cantidad);
-        public decimal ImporteTotal => Productos.Sum(p => p.Importe) + Globos.Sum(g => g.Importe);
-
-        #endregion
-
-        #region Comandos
-
-        public ICommand RegistrarVentaCommand { get; }
-        public ICommand AumentarCantidadProductoCommand { get; }
-        public ICommand DisminuirCantidadProductoCommand { get; }
-        public ICommand AumentarCantidadGloboCommand { get; }
-        public ICommand DisminuirCantidadGloboCommand { get; }
-
-        private bool CanRegistrarVenta() =>
-            ClienteSeleccionado != null &&
-            (Productos.Any(p => p.Cantidad > 0) || Globos.Any(g => g.Cantidad > 0));
-
-        #endregion
-
-        #region Métodos Async
-
-        public async Task CargarDatosInicialesAsync()
-        {
-            await Task.Delay(10); // Simular async DB call
-
-            // Cargar clientes
-            Clientes.Clear();
-            foreach (var c in _ventaService.ObtenerClientes())
-                Clientes.Add(c);
-
-            // Cargar productos y globos
-            await ActualizarStockAsync();
-
-            // Cargar historial
-            Historial = new ObservableCollection<VentaHistorial>(_ventaService.ObtenerHistorialVentas());
-            HistorialView = CollectionViewSource.GetDefaultView(Historial);
-
-            OnPropertyChanged(nameof(Historial));
-            OnPropertyChanged(nameof(HistorialView));
-        }
-
-        public async Task RegistrarVentaAsync()
-        {
-            try
-            {
-                var venta = new Venta
-                {
-                    ClienteId = ClienteSeleccionado?.ClienteId,
-                    Productos = new ObservableCollection<ProductoVenta>(Productos.Where(p => p.Cantidad > 0)),
-                    Globos = new ObservableCollection<GloboVenta>(Globos.Where(g => g.Cantidad > 0)),
-                    VentaId = Guid.NewGuid().ToString()
-                };
-
-                string error = null;
-
-                bool resultado = await Task.Run(() => _ventaService.RegistrarVentaCompleta(venta, out error));
-
-                if (resultado)
-                {
-                    await ActualizarStockAsync();
-
-                    Historial.Insert(0, _ventaService.ObtenerUltimaVenta());
-                    ModuloManager.Instancia.NotificarVentaRegistrada();
-
-                    OnPropertyChanged(nameof(TotalProductos));
-                    OnPropertyChanged(nameof(TotalGlobos));
-                    OnPropertyChanged(nameof(ImporteTotal));
-                }
-                else
-                {
-                    Debug.WriteLine($"❌ Error al registrar venta: {error}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"❌ Error en RegistrarVentaAsync: {ex.Message}");
-            }
-        }
-
-        #endregion
-
-        #region Métodos de Cantidad (ICommand)
-
-        private void AumentarCantidadProducto(object parameter)
-        {
-            if (parameter is ProductoVenta p && p.Cantidad < p.Stock)
-                p.Cantidad++;
-        }
-
-        private void DisminuirCantidadProducto(object parameter)
-        {
-            if (parameter is ProductoVenta p && p.Cantidad > 0)
-                p.Cantidad--;
-        }
-
-        private void AumentarCantidadGlobo(object parameter)
-        {
-            if (parameter is GloboVenta g && g.Cantidad < g.Stock)
-                g.Cantidad++;
-        }
-
-        private void DisminuirCantidadGlobo(object parameter)
-        {
-            if (parameter is GloboVenta g && g.Cantidad > 0)
-                g.Cantidad--;
-        }
-
-        #endregion
-
-        #region Manejo de Stock
-
-        private async void OnStockActualizado()
-        {
-            await ActualizarStockAsync();
-        }
-
-        private async Task ActualizarStockAsync()
-        {
-            var productosActuales = _productoRepo.ObtenerProductos().Where(p => p.Stock > 0).ToList();
-            var globosActuales = _globoRepo.ObtenerGlobos().Where(g => g.Stock > 0).ToList();
-
-            ActualizarColeccion(
-                Productos,
-                productosActuales,
-                (pv, p) => pv.ProductoId == p.ProductoId,
-                (pv, p) =>
-                {
-                    pv.NombreProducto = p.Nombre; // ✅ usar propiedad subyacente
-                    pv.Costo = p.Costo;
-                    pv.Stock = p.Stock;
-                    pv.Cantidad = Math.Min(pv.Cantidad, p.Stock);
-                },
-                p => new ProductoVenta
-                {
-                    ProductoId = p.ProductoId,
-                    NombreProducto = p.Nombre, // ✅ usar propiedad subyacente
-                    Costo = p.Costo,
-                    Stock = p.Stock,
-                    Cantidad = 0
-                }
-            );
-
-            ActualizarColeccion(
-                Globos,
-                globosActuales,
-                (gv, g) => gv.GloboId == g.GloboId,
-                (gv, g) =>
-                {
-                    gv.Material = g.Material;
-                    gv.Color = g.Color;
-                    gv.Tamano = g.Tamano;
-                    gv.Forma = g.Forma;
-                    gv.Tematica = g.Tematica;
-                    gv.Costo = g.Costo;
-                    gv.Stock = g.Stock;
-                    gv.Cantidad = Math.Min(gv.Cantidad, g.Stock);
-                },
-                g => new GloboVenta
-                {
-                    GloboId = g.GloboId,
-                    Material = g.Material,
-                    Color = g.Color,
-                    Tamano = g.Tamano,
-                    Forma = g.Forma,
-                    Tematica = g.Tematica,
-                    Costo = g.Costo,
-                    Stock = g.Stock,
-                    Cantidad = 0
-                }
-            );
-
-            OnPropertyChanged(nameof(TotalProductos));
-            OnPropertyChanged(nameof(TotalGlobos));
-            OnPropertyChanged(nameof(ImporteTotal));
-        }
-
-        private void ActualizarColeccion<T, U>(
-            ObservableCollection<T> coleccion,
-            List<U> nuevosItems,
-            Func<T, U, bool> comparar,
-            Action<T, U> actualizar,
-            Func<U, T> crearNuevo)
-            where T : INotifyPropertyChanged
-        {
-            foreach (var item in nuevosItems)
-            {
-                var existing = coleccion.FirstOrDefault(c => comparar(c, item));
-                if (existing != null)
-                    actualizar(existing, item);
-                else
-                    coleccion.Add(crearNuevo(item));
+                if (item is ProductoVenta p) productos.Add(p);
+                else if (item is GloboVenta g) globos.Add(g);
             }
 
-            for (int i = coleccion.Count - 1; i >= 0; i--)
+            // Registrar venta usando ModuloManager
+            bool exito = _moduloManager.RegistrarVenta(ventaId, empleadoId, clienteId, productos, globos);
+
+            if (exito)
             {
-                if (!nuevosItems.Any(x => comparar(coleccion[i], x)))
-                    coleccion.RemoveAt(i);
+                Carrito.Clear();
+                Productos.Clear();
+                Globos.Clear();
+
+                // Recargar inventario desde BD
+                foreach (var p in _moduloManager.ObtenerProductos()) Productos.Add(p);
+                foreach (var g in _moduloManager.ObtenerGlobos()) Globos.Add(g);
+
+                OnPropertyChanged(nameof(Carrito));
             }
         }
-
-        #endregion
-
-        #region Filtrado Historial
-
-        public void FiltrarHistorial(Cliente cliente, DateTime? desde, DateTime? hasta)
-        {
-            if (HistorialView == null) return;
-
-            HistorialView.Filter = obj =>
-            {
-                if (obj is VentaHistorial vh)
-                {
-                    bool clienteOk = cliente == null || vh.ClienteId == cliente.ClienteId;
-                    bool desdeOk = !desde.HasValue || vh.FechaVenta.Date >= desde.Value.Date;
-                    bool hastaOk = !hasta.HasValue || vh.FechaVenta.Date <= hasta.Value.Date;
-                    return clienteOk && desdeOk && hastaOk;
-                }
-                return false;
-            };
-            HistorialView.Refresh();
-        }
-
-        public void LimpiarFiltros()
-        {
-            if (HistorialView == null) return;
-            HistorialView.Filter = null;
-            HistorialView.Refresh();
-        }
-
-        public void AgregarCliente(Cliente cliente)
-        {
-            if (cliente == null) return;
-            Clientes.Add(cliente);
-            ModuloManager.Instancia.NotificarClienteAgregado();
-        }
-
-        #endregion
-
-        #region INotifyPropertyChanged
 
         public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string name = null) =>
+        protected void OnPropertyChanged(string name) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-
-        #endregion
     }
 }

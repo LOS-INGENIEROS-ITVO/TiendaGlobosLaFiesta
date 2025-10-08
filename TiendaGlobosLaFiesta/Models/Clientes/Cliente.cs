@@ -48,6 +48,19 @@ namespace TiendaGlobosLaFiesta.Models.Clientes
             set { telefono = value; OnPropertyChanged(nameof(Telefono)); OnPropertyChanged(nameof(TelefonoTexto)); }
         }
 
+
+        public Cliente() { }
+
+        public Cliente(string clienteId, string primerNombre, long? telefono)
+        {
+            ClienteId = clienteId;
+            PrimerNombre = primerNombre;
+            Telefono = telefono;
+        }
+
+
+
+
         // Nombre simplificado
         public string Nombre => $"{PrimerNombre} {SegundoNombre} {ApellidoP} {ApellidoM}".Replace("  ", " ").Trim();
 

@@ -1,19 +1,26 @@
-﻿using System;
-using System.Collections.ObjectModel;
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using TiendaGlobosLaFiesta.Models.Ventas;
 
-namespace TiendaGlobosLaFiesta.Models.Ventas
+public class VentaHistorial
 {
-    public class VentaHistorial
-    {
-        public string VentaId { get; set; } = string.Empty;
-        public string ClienteId { get; set; } = string.Empty;
-        public string ClienteNombre { get; set; } = string.Empty;
-        public string NombreEmpleado { get; set; } = string.Empty;
-        public DateTime FechaVenta { get; set; } = DateTime.Now;
-        public decimal Total { get; set; }
-        public string Estatus { get; set; } = "Completada";
+    public string VentaId { get; set; }
+    public string ClienteNombre { get; set; }
+    public string ClienteId { get; set; } // <-- agregado
+    public string NombreEmpleado { get; set; }
+    public DateTime FechaVenta { get; set; }
+    public string Estatus { get; set; }
+    public decimal Total { get; set; }
 
-        public ObservableCollection<ProductoVenta> Productos { get; set; } = new();
-        public ObservableCollection<GloboVenta> Globos { get; set; } = new();
+    public VentaHistorial() { }
+
+    public VentaHistorial(Venta venta, string clienteNombre, string empleadoNombre)
+    {
+        VentaId = venta.VentaId;
+        ClienteNombre = clienteNombre;
+        NombreEmpleado = empleadoNombre;
+        FechaVenta = venta.FechaVenta;
+        Estatus = venta.Estatus;
+        Total = venta.ImporteTotal;
     }
 }
