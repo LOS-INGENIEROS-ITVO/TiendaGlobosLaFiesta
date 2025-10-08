@@ -4,25 +4,26 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:vm="clr-namespace:TiendaGlobosLaFiesta.ViewModels"
-             xmlns:conv="clr-namespace:TiendaGlobosLaFiesta.Converters"
+             xmlns:converters="clr-namespace:TiendaGlobosLaFiesta.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="1200"
              Background="White">
 
-
-
     <UserControl.Resources>
-        <conv:NullOrEmptyToDashConverter x:Key="EmptyToDashConverter"/>
+        <converters:NullOrEmptyToDashConverter x:Key="NullOrEmptyToDashConverter"/>
+
         <Style x:Key="CenteredCell" TargetType="TextBlock">
             <Setter Property="HorizontalAlignment" Value="Center"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
+
         <Style x:Key="CenteredHeader" TargetType="DataGridColumnHeader">
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="FontSize" Value="14"/>
         </Style>
+
         <Style x:Key="CantidadButton" TargetType="Button">
             <Setter Property="Width" Value="40"/>
             <Setter Property="Height" Value="40"/>
@@ -38,11 +39,13 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
+        <!-- Título -->
         <TextBlock Text="🎉 Módulo de Ventas 🎉" FontSize="32" FontWeight="Bold"
                    HorizontalAlignment="Center" Margin="0,0,0,25"/>
 
         <TabControl Grid.Row="1" FontSize="14">
-            <!-- Registrar Venta -->
+
+            <!-- Pestaña Registrar Venta -->
             <TabItem Header="Registrar Venta">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
@@ -52,14 +55,15 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Selección de Cliente -->
+                    <!-- Selección Cliente -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,15">
                         <TextBlock Text="Cliente:" VerticalAlignment="Center" Margin="0,0,5,0" FontSize="16"/>
-                        <ComboBox x:Name="cmbClientes" ItemsSource="{Binding Clientes}" Width="350" DisplayMemberPath="NombreCompleto"/>
+                        <ComboBox x:Name="cmbClientes" ItemsSource="{Binding Clientes, Mode=OneWay}" Width="350" DisplayMemberPath="NombreCompleto"/>
                     </StackPanel>
 
-                    <!-- Pestañas Productos y Globos -->
+                    <!-- TabControl Productos y Globos -->
                     <TabControl Grid.Row="1" Margin="0,0,0,15" FontSize="14">
+
                         <!-- Productos -->
                         <TabItem Header="Productos 🎁">
                             <DockPanel LastChildFill="True">
@@ -67,10 +71,11 @@
                                 <TextBox x:Name="txtBuscarProducto" Width="250" Height="30" Margin="0,0,0,5" DockPanel.Dock="Top"
                                          HorizontalAlignment="Right" VerticalAlignment="Top"
                                          FontStyle="Italic" Foreground="Gray"
-                                         Text="Buscar producto..." GotFocus="TextBox_GotFocus" LostFocus="TextBox_LostFocus"
+                                         Text="Buscar producto..."
+                                         GotFocus="TextBox_GotFocus" LostFocus="TextBox_LostFocus"
                                          TextChanged="TxtBuscarProducto_TextChanged"/>
-                                <!-- DataGrid de productos -->
-                                <DataGrid x:Name="dgProductos" ItemsSource="{Binding Productos}" AutoGenerateColumns="False"
+                                <!-- DataGrid Productos -->
+                                <DataGrid x:Name="dgProductos" ItemsSource="{Binding Productos, Mode=OneWay}" AutoGenerateColumns="False"
                                           CanUserAddRows="False" MinHeight="350" RowHeight="40" IsReadOnly="True"
                                           ColumnHeaderStyle="{StaticResource CenteredHeader}" SelectionMode="Single"
                                           SelectionUnit="FullRow" HorizontalAlignment="Stretch" ColumnWidth="*">
@@ -109,10 +114,11 @@
                                 <TextBox x:Name="txtBuscarGlobo" Width="250" Height="30" Margin="0,0,0,5" DockPanel.Dock="Top"
                                          HorizontalAlignment="Right" VerticalAlignment="Top"
                                          FontStyle="Italic" Foreground="Gray"
-                                         Text="Buscar globo..." GotFocus="TextBox_GotFocus" LostFocus="TextBox_LostFocus"
+                                         Text="Buscar globo..."
+                                         GotFocus="TextBox_GotFocus" LostFocus="TextBox_LostFocus"
                                          TextChanged="TxtBuscarGlobo_TextChanged"/>
-                                <!-- DataGrid de globos -->
-                                <DataGrid x:Name="dgGlobos" ItemsSource="{Binding Globos}" AutoGenerateColumns="False"
+                                <!-- DataGrid Globos -->
+                                <DataGrid x:Name="dgGlobos" ItemsSource="{Binding Globos, Mode=OneWay}" AutoGenerateColumns="False"
                                           CanUserAddRows="False" MinHeight="350" RowHeight="40" IsReadOnly="True"
                                           ColumnHeaderStyle="{StaticResource CenteredHeader}" SelectionMode="Single"
                                           SelectionUnit="FullRow" HorizontalAlignment="Stretch" ColumnWidth="*">
@@ -120,9 +126,9 @@
                                         <DataGridTextColumn Header="ID" Binding="{Binding GloboId}" Width="140" ElementStyle="{StaticResource CenteredCell}"/>
                                         <DataGridTextColumn Header="Material 🎈" Binding="{Binding Material}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
                                         <DataGridTextColumn Header="Color 🎨" Binding="{Binding Color}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
-                                        <DataGridTextColumn Header="Tamaño 📏" Binding="{Binding Tamano, Converter={StaticResource EmptyToDashConverter}}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
-                                        <DataGridTextColumn Header="Forma 🔷" Binding="{Binding Forma, Converter={StaticResource EmptyToDashConverter}}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
-                                        <DataGridTextColumn Header="Temática 🎉" Binding="{Binding Tematica, Converter={StaticResource EmptyToDashConverter}}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
+                                        <DataGridTextColumn Header="Tamaño 📏" Binding="{Binding Tamano, Converter={StaticResource NullOrEmptyToDashConverter}}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
+                                        <DataGridTextColumn Header="Forma 🔷" Binding="{Binding Forma, Converter={StaticResource NullOrEmptyToDashConverter}}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
+                                        <DataGridTextColumn Header="Temática 🎉" Binding="{Binding Tematica, Converter={StaticResource NullOrEmptyToDashConverter}}" Width="*" ElementStyle="{StaticResource CenteredCell}"/>
                                         <DataGridTextColumn Header="Unidad" Binding="{Binding Unidad}" Width="100" ElementStyle="{StaticResource CenteredCell}"/>
                                         <DataGridTextColumn Header="Stock" Binding="{Binding Stock}" Width="70" ElementStyle="{StaticResource CenteredCell}"/>
                                         <DataGridTemplateColumn Header="Cantidad" Width="140">
@@ -196,7 +202,11 @@
                             <!-- Filtros -->
                             <StackPanel Orientation="Horizontal" Grid.Column="0">
                                 <TextBlock Text="Cliente:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                <ComboBox x:Name="cmbFiltroCliente" ItemsSource="{Binding Clientes}" DisplayMemberPath="NombreCompleto" Width="220"/>
+                                <ComboBox x:Name="cmbFiltroCliente"
+                                          ItemsSource="{Binding Clientes}"
+                                          DisplayMemberPath="NombreCompleto"
+                                          SelectedValuePath="ClienteId" 
+                                          Width="220"/>
                                 <TextBlock Text="Desde:" VerticalAlignment="Center" Margin="15,0,5,0"/>
                                 <DatePicker x:Name="dpFechaDesde" Width="120"/>
                                 <TextBlock Text="Hasta:" VerticalAlignment="Center" Margin="10,0,5,0"/>

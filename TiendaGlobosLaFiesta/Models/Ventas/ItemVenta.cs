@@ -1,13 +1,14 @@
 ﻿using System.ComponentModel;
-using System.Runtime.CompilerServices;
+using System.Linq;
 
 namespace TiendaGlobosLaFiesta.Models.Ventas
 {
     public abstract class ItemVenta : INotifyPropertyChanged
     {
-        public string Id { get; set; } = string.Empty;
-        public string Unidad { get; set; } = string.Empty;
-        public string Nombre { get; set; } = string.Empty;
+        public abstract string Id { get; }
+        public abstract string Nombre { get; }
+
+        public string Unidad { get; set; } = "pieza";
 
         private int cantidad;
         public int Cantidad
@@ -17,11 +18,10 @@ namespace TiendaGlobosLaFiesta.Models.Ventas
             {
                 if (value > Stock) value = Stock;
                 if (value < 0) value = 0;
-
                 if (cantidad != value)
                 {
                     cantidad = value;
-                    OnPropertyChanged(nameof(Cantidad));
+                    OnPropertyChanged();
                     OnPropertyChanged(nameof(Importe));
                 }
             }
@@ -35,9 +35,7 @@ namespace TiendaGlobosLaFiesta.Models.Ventas
         public void Decrementar() => Cantidad = Cantidad > 0 ? Cantidad - 1 : 0;
 
         public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+        protected void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = null)
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

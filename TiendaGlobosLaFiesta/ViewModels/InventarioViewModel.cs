@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows.Data;
 using TiendaGlobosLaFiesta.Data;
 using TiendaGlobosLaFiesta.Models.Inventario;
+using TiendaGlobosLaFiesta.Models.Ventas; 
 
 namespace TiendaGlobosLaFiesta.ViewModels
 {
@@ -25,36 +26,36 @@ namespace TiendaGlobosLaFiesta.ViewModels
         public ICollectionView StockCriticoView { get; set; }
 
         // Selecciones
-        private Producto _productoSeleccionado;
-        public Producto ProductoSeleccionado
+        private Producto? _productoSeleccionado;
+        public Producto? ProductoSeleccionado
         {
             get => _productoSeleccionado;
             set { _productoSeleccionado = value; OnPropertyChanged(); }
         }
 
-        private Globo _globoSeleccionado;
-        public Globo GloboSeleccionado
+        private Globo? _globoSeleccionado;
+        public Globo? GloboSeleccionado
         {
             get => _globoSeleccionado;
             set { _globoSeleccionado = value; OnPropertyChanged(); }
         }
 
         // Filtros
-        private string _productosFilter;
+        private string _productosFilter = string.Empty;
         public string ProductosFilter
         {
             get => _productosFilter;
             set { _productosFilter = value; OnPropertyChanged(); ProductosViewFiltered?.Refresh(); }
         }
 
-        private string _globosFilter;
+        private string _globosFilter = string.Empty;
         public string GlobosFilter
         {
             get => _globosFilter;
             set { _globosFilter = value; OnPropertyChanged(); GlobosViewFiltered?.Refresh(); }
         }
 
-        private string _stockCriticoFilter;
+        private string _stockCriticoFilter = string.Empty;
         public string StockCriticoFilter
         {
             get => _stockCriticoFilter;
@@ -73,21 +74,27 @@ namespace TiendaGlobosLaFiesta.ViewModels
             StockCritico = new ObservableCollection<StockCriticoItem>();
 
             ProductosViewFiltered = CollectionViewSource.GetDefaultView(ProductosView);
+            ProductosViewFiltered.Filter = FiltroProductos;
+
             GlobosViewFiltered = CollectionViewSource.GetDefaultView(GlobosView);
+            GlobosViewFiltered.Filter = FiltroGlobos;
+
             StockCriticoView = CollectionViewSource.GetDefaultView(StockCritico);
-
-            // Definir filtros
-            ProductosViewFiltered.Filter = o =>
-                string.IsNullOrEmpty(ProductosFilter) || (o is Producto p && p.Nombre.Contains(ProductosFilter, StringComparison.OrdinalIgnoreCase));
-
-            GlobosViewFiltered.Filter = o =>
-                string.IsNullOrEmpty(GlobosFilter) || (o is Globo g && g.Material.Contains(GlobosFilter, StringComparison.OrdinalIgnoreCase));
-
-            StockCriticoView.Filter = o =>
-                string.IsNullOrEmpty(StockCriticoFilter) || (o is StockCriticoItem s && s.Nombre.Contains(StockCriticoFilter, StringComparison.OrdinalIgnoreCase));
+            StockCriticoView.Filter = FiltroStockCritico;
 
             CargarDatos();
         }
+
+
+        // --- Filtros ---
+        private bool FiltroProductos(object o) =>
+            string.IsNullOrEmpty(ProductosFilter) || (o is Producto p && p.Nombre.Contains(ProductosFilter, StringComparison.OrdinalIgnoreCase));
+
+        private bool FiltroGlobos(object o) =>
+            string.IsNullOrEmpty(GlobosFilter) || (o is Globo g && g.Material.Contains(GlobosFilter, StringComparison.OrdinalIgnoreCase));
+
+        private bool FiltroStockCritico(object o) =>
+            string.IsNullOrEmpty(StockCriticoFilter) || (o is StockCriticoItem s && s.Nombre.Contains(StockCriticoFilter, StringComparison.OrdinalIgnoreCase));
 
         // --- Carga inicial ---
         private void CargarDatos()
@@ -115,11 +122,11 @@ namespace TiendaGlobosLaFiesta.ViewModels
             StockCritico.Clear();
             try
             {
-                foreach (var s in _stockManager.ObtenerProductosStockCritico())
-                    StockCritico.Add(s);
+                foreach (var item in _stockManager.ObtenerProductosStockCritico())
+                    StockCritico.Add(item);
 
-                foreach (var s in _stockManager.ObtenerGlobosStockCritico())
-                    StockCritico.Add(s);
+                foreach (var item in _stockManager.ObtenerGlobosStockCritico())
+                    StockCritico.Add(item);
             }
             catch (Exception ex)
             {

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
+using TiendaGlobosLaFiesta.Core;
 using TiendaGlobosLaFiesta.Models.Utilities;
 using TiendaGlobosLaFiesta.Views;
 
@@ -8,8 +9,8 @@ namespace TiendaGlobosLaFiesta
 {
     public partial class MenuGerenteWindow : Window
     {
-        private string RolUsuario;
-        private Dictionary<string, UserControl> Modulos = new Dictionary<string, UserControl>();
+        private readonly string RolUsuario;
+        private readonly Dictionary<string, UserControl> Modulos = new();
 
         public MenuGerenteWindow(string rol)
         {
@@ -47,51 +48,46 @@ namespace TiendaGlobosLaFiesta
         // BOTONES DEL MENÚ
         private void BtnDashboard_Click(object sender, RoutedEventArgs e)
         {
-            if (!Modulos.ContainsKey("Dashboard"))
-                Modulos["Dashboard"] = new DashboardGerenteControl();
-            MostrarModulo(Modulos["Dashboard"]);
+            AbrirModulo("Dashboard", () => new DashboardGerenteControl());
         }
 
         private void BtnVentas_Click(object sender, RoutedEventArgs e)
         {
-            if (!Modulos.ContainsKey("Ventas"))
+            AbrirModulo("Ventas", () =>
             {
                 var ventasControl = new VentasControl();
-                Modulos["Ventas"] = ventasControl;
+                ModuloManager.Instancia.RegistrarModulo("Ventas", ventasControl);
 
-                // Suscribir evento para refrescar dashboard si es necesario
-                if (Modulos.ContainsKey("Dashboard") && Modulos["Dashboard"] is DashboardGerenteControl dashboardControl)
-                    ventasControl.VentaRealizada += dashboardControl.RefrescarKPIs;
-            }
-            MostrarModulo(Modulos["Ventas"]);
+                // Suscribirse solo si Dashboard existe
+                if (Modulos.TryGetValue("Dashboard", out var dashboardObj) &&
+                    dashboardObj is DashboardGerenteControl dashboardControl)
+                {
+                    ModuloManager.Instancia.VentaRegistrada -= dashboardControl.RefrescarKPIs;
+                    ModuloManager.Instancia.VentaRegistrada += dashboardControl.RefrescarKPIs;
+                }
+
+                return ventasControl;
+            });
         }
 
         private void BtnInventario_Click(object sender, RoutedEventArgs e)
         {
-            if (!Modulos.ContainsKey("Inventario"))
-                Modulos["Inventario"] = new InventarioControl();
-            MostrarModulo(Modulos["Inventario"]);
+            AbrirModulo("Inventario", () => new InventarioControl());
         }
 
         private void BtnClientes_Click(object sender, RoutedEventArgs e)
         {
-            if (!Modulos.ContainsKey("Clientes"))
-                Modulos["Clientes"] = new ClientesControl();
-            MostrarModulo(Modulos["Clientes"]);
+            AbrirModulo("Clientes", () => new ClientesControl());
         }
 
         private void BtnPedidos_Click(object sender, RoutedEventArgs e)
         {
-            if (!Modulos.ContainsKey("Pedidos"))
-                Modulos["Pedidos"] = new PedidosControl();
-            MostrarModulo(Modulos["Pedidos"]);
+            AbrirModulo("Pedidos", () => new PedidosControl());
         }
 
         private void BtnReportes_Click(object sender, RoutedEventArgs e)
         {
-            if (!Modulos.ContainsKey("Reportes"))
-                Modulos["Reportes"] = new ReportesControl();
-            MostrarModulo(Modulos["Reportes"]);
+            AbrirModulo("Reportes", () => new ReportesControl());
         }
 
         private void BtnCerrarSesion_Click(object sender, RoutedEventArgs e)
@@ -103,9 +99,19 @@ namespace TiendaGlobosLaFiesta
 
         private void CargarDashboard()
         {
-            if (!Modulos.ContainsKey("Dashboard"))
-                Modulos["Dashboard"] = new DashboardGerenteControl();
-            MostrarModulo(Modulos["Dashboard"]);
+            AbrirModulo("Dashboard", () => new DashboardGerenteControl());
+        }
+
+        // Método genérico para abrir módulos
+        private void AbrirModulo(string nombre, System.Func<UserControl> crearModulo)
+        {
+            if (!Modulos.ContainsKey(nombre))
+            {
+                var modulo = crearModulo();
+                Modulos[nombre] = modulo;
+            }
+
+            MostrarModulo(Modulos[nombre]);
         }
     }
 }

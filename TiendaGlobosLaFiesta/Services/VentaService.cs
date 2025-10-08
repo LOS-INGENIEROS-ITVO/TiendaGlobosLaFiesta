@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using TiendaGlobosLaFiesta.Data;
-using TiendaGlobosLaFiesta.Models.Utilities;
 using TiendaGlobosLaFiesta.Models.Ventas;
+using TiendaGlobosLaFiesta.Models.Inventario;
+using TiendaGlobosLaFiesta.Models.Clientes;
+using TiendaGlobosLaFiesta.Models.Utilities;
 
 namespace TiendaGlobosLaFiesta.Services
 {
@@ -10,13 +13,15 @@ namespace TiendaGlobosLaFiesta.Services
     {
         private readonly VentasRepository _ventasRepo;
         private readonly StockManagerRepository _stockManager;
+        private readonly ProductoRepository _productoRepo;
+        private readonly GloboRepository _globoRepo;
 
         public VentaService()
         {
-            var productoRepo = new ProductoRepository();
-            var globoRepo = new GloboRepository();
+            _productoRepo = new ProductoRepository();
+            _globoRepo = new GloboRepository();
             _ventasRepo = new VentasRepository();
-            _stockManager = new StockManagerRepository(productoRepo, globoRepo);
+            _stockManager = new StockManagerRepository(_productoRepo, _globoRepo);
         }
 
         public bool RegistrarVentaCompleta(Venta venta, out string mensajeError)
@@ -29,7 +34,6 @@ namespace TiendaGlobosLaFiesta.Services
                 return false;
             }
 
-            // Validar stock antes de iniciar transacción
             foreach (var item in venta.Productos.Cast<ItemVenta>().Concat(venta.Globos))
             {
                 if (item.Cantidad > item.Stock)
@@ -44,24 +48,18 @@ namespace TiendaGlobosLaFiesta.Services
                 using var conn = DbHelper.ObtenerConexion();
                 using var tran = conn.BeginTransaction();
 
-                // Insertar venta maestro
                 _ventasRepo.InsertarVentaMaestro(venta, conn, tran);
 
-                // Insertar detalle de productos
                 foreach (var p in venta.Productos)
                     _ventasRepo.InsertarDetalleProducto(venta.VentaId, p, conn, tran);
 
-                // Insertar detalle de globos
                 foreach (var g in venta.Globos)
                     _ventasRepo.InsertarDetalleGlobo(venta.VentaId, g, conn, tran);
 
-                // Preparar lista de items para ajuste combinado
-                var itemsStock = venta.Productos
-                    .Select(p => (id: p.ProductoId, cantidad: p.Cantidad, esGlobo: false))
+                var itemsStock = venta.Productos.Select(p => (id: p.ProductoId, cantidad: p.Cantidad, esGlobo: false))
                     .Concat(venta.Globos.Select(g => (id: g.GloboId, cantidad: g.Cantidad, esGlobo: true)))
                     .ToList();
 
-                // Ajustar stock usando la transacción existente
                 _stockManager.AjustarStockCombinado(itemsStock, SesionActual.EmpleadoId.Value, "Venta realizada", conn, tran);
 
                 tran.Commit();
@@ -72,6 +70,37 @@ namespace TiendaGlobosLaFiesta.Services
                 mensajeError = $"Error en BD: {ex.Message}";
                 return false;
             }
+        }
+
+        public VentaHistorial ObtenerUltimaVenta()
+        {
+            return _ventasRepo.ObtenerHistorialVentas().FirstOrDefault();
+        }
+
+        public List<Cliente> ObtenerClientes()
+        {
+            return _ventasRepo.ObtenerClientes();
+        }
+
+        public List<VentaHistorial> ObtenerHistorialVentas()
+        {
+            return _ventasRepo.ObtenerHistorialVentas();
+        }
+
+        public List<VentaHistorial> FiltrarHistorial(string clienteId, DateTime? desde, DateTime? hasta)
+        {
+            var historial = ObtenerHistorialVentas(); // Obtenemos todos los registros
+
+            if (!string.IsNullOrEmpty(clienteId))
+                historial = historial.Where(v => v.ClienteId == clienteId).ToList();
+
+            if (desde.HasValue)
+                historial = historial.Where(v => v.FechaVenta >= desde.Value).ToList();
+
+            if (hasta.HasValue)
+                historial = historial.Where(v => v.FechaVenta <= hasta.Value).ToList();
+
+            return historial;
         }
     }
 }

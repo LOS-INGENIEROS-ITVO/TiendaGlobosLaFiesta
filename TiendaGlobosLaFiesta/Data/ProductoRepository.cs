@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using TiendaGlobosLaFiesta.Models.Inventario;
+using TiendaGlobosLaFiesta.Models.Ventas;
 
 namespace TiendaGlobosLaFiesta.Data
 {
@@ -23,20 +24,16 @@ namespace TiendaGlobosLaFiesta.Data
             if (soloActivos)
                 query += " WHERE p.Activo = 1";
 
-            try
-            {
-                using SqlConnection conn = DbHelper.ObtenerConexion();
-                DataTable dt = DbHelper.ExecuteQuery(query, null, conn);
-
-                foreach (DataRow row in dt.Rows)
-                    lista.Add(MapearProducto(row));
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error al obtener productos: " + ex.Message, ex);
-            }
+            DataTable dt = DbHelper.ExecuteQuery(query);
+            foreach (DataRow row in dt.Rows)
+                lista.Add(MapearProducto(row));
 
             return lista;
+        }
+
+        public List<Producto> ObtenerProductosEnStock()
+        {
+            return ObtenerProductos().Where(p => p.Stock > 0 && p.Activo).ToList();
         }
 
         public Producto? ObtenerProductoPorId(string productoId)
@@ -52,19 +49,30 @@ namespace TiendaGlobosLaFiesta.Data
                 WHERE p.productoId = @id";
 
             var parametros = new[] { new SqlParameter("@id", productoId) };
+            DataTable dt = DbHelper.ExecuteQuery(query, parametros);
+            return dt.Rows.Count == 0 ? null : MapearProducto(dt.Rows[0]);
+        }
 
-            try
-            {
-                using SqlConnection conn = DbHelper.ObtenerConexion();
-                DataTable dt = DbHelper.ExecuteQuery(query, parametros, conn);
-                if (dt.Rows.Count == 0) return null;
+        public List<Producto> BuscarProductos(string nombre)
+        {
+            if (string.IsNullOrWhiteSpace(nombre))
+                return ObtenerProductos();
 
-                return MapearProducto(dt.Rows[0]);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Error al obtener el producto {productoId}: {ex.Message}", ex);
-            }
+            string query = @"
+                SELECT p.productoId, p.nombre, p.unidad, p.costo, p.stock, p.proveedorId, p.categoriaId, p.Activo,
+                       ISNULL(pr.razonSocial, 'Sin proveedor') AS ProveedorNombre
+                FROM Producto p
+                LEFT JOIN Proveedor pr ON p.proveedorId = pr.proveedorId
+                WHERE p.nombre LIKE @nombre";
+
+            var parametros = new[] { new SqlParameter("@nombre", "%" + nombre + "%") };
+            DataTable dt = DbHelper.ExecuteQuery(query, parametros);
+            return dt.AsEnumerable().Select(MapearProducto).ToList();
+        }
+
+        public List<Producto> ObtenerProductosCriticos(int stockCritico = 10)
+        {
+            return ObtenerProductos().Where(p => p.Stock <= stockCritico && p.Activo).ToList();
         }
 
         private Producto MapearProducto(DataRow row)
@@ -84,6 +92,19 @@ namespace TiendaGlobosLaFiesta.Data
             };
         }
 
+        public ProductoVenta MapearParaVenta(Producto producto, int cantidad = 1)
+        {
+            return new ProductoVenta
+            {
+                ProductoId = producto.ProductoId,
+                NombreProducto = producto.Nombre,
+                Cantidad = cantidad,
+                Costo = producto.Costo,
+                Stock = producto.Stock
+            };
+        }
+
+
         #endregion
 
         #region CRUD Productos
@@ -92,12 +113,10 @@ namespace TiendaGlobosLaFiesta.Data
         {
             if (producto == null) throw new ArgumentNullException(nameof(producto));
 
-            // Validar duplicado por nombre
             if (ObtenerProductos(false)
                     .Any(p => p.Nombre.Equals(producto.Nombre, StringComparison.OrdinalIgnoreCase)))
                 throw new Exception("Ya existe un producto con este nombre.");
 
-            // Generar ID único si no tiene
             if (string.IsNullOrWhiteSpace(producto.ProductoId))
                 producto.ProductoId = GenerarIdUnico();
 
@@ -130,7 +149,6 @@ namespace TiendaGlobosLaFiesta.Data
                 }
                 catch (SqlException ex) when (ex.Number == 2627)
                 {
-                    // Conflicto de ID, generar uno nuevo y reintentar
                     producto.ProductoId = GenerarIdUnico();
                     intentos++;
                 }
@@ -208,15 +226,8 @@ namespace TiendaGlobosLaFiesta.Data
             string query = "UPDATE Producto SET Activo = 0 WHERE productoId = @id";
             var parametros = new[] { new SqlParameter("@id", productoId) };
 
-            try
-            {
-                using SqlConnection conn = DbHelper.ObtenerConexion();
-                return DbHelper.ExecuteNonQuery(query, parametros, conn) > 0;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Error al desactivar el producto {productoId}: {ex.Message}", ex);
-            }
+            using SqlConnection conn = DbHelper.ObtenerConexion();
+            return DbHelper.ExecuteNonQuery(query, parametros, conn) > 0;
         }
 
         #endregion
