@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using TiendaGlobosLaFiesta.Models;
 using TiendaGlobosLaFiesta.Models.Inventario;
@@ -15,128 +16,168 @@ namespace TiendaGlobosLaFiesta.Data
             _connectionString = connectionString;
         }
 
-        // ===========================
-        // Crear
-        // ===========================
-        public bool AgregarGlobo(Globo globo)
-        {
-            using var conn = new SqlConnection(_connectionString);
-            var query = @"INSERT INTO Globo (globoId, material, unidad, color, stock, costo, proveedorId, Activo)
-                          VALUES (@Id, @Material, @Unidad, @Color, @Stock, @Costo, @ProveedorId, @Activo)";
-            using var cmd = new SqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@Id", globo.GloboId);
-            cmd.Parameters.AddWithValue("@Material", globo.Material);
-            cmd.Parameters.AddWithValue("@Unidad", globo.Unidad);
-            cmd.Parameters.AddWithValue("@Color", globo.Color);
-            cmd.Parameters.AddWithValue("@Stock", globo.Stock);
-            cmd.Parameters.AddWithValue("@Costo", globo.Costo);
-            cmd.Parameters.AddWithValue("@ProveedorId", (object)globo.ProveedorId ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@Activo", globo.Activo);
-
-            conn.Open();
-            return cmd.ExecuteNonQuery() > 0;
-        }
-
-        // ===========================
-        // Leer todos
-        // ===========================
-        public List<Globo> ObtenerGlobos(bool soloActivos = true)
+        // Obtener todos los globos activos
+        public List<Globo> ObtenerGlobos()
         {
             var lista = new List<Globo>();
-            using var conn = new SqlConnection(_connectionString);
-            var query = "SELECT globoId, material, unidad, color, stock, costo, proveedorId, Activo FROM Globo";
-            if (soloActivos) query += " WHERE Activo = 1";
+            string query = @"SELECT globoId, material, unidad, color, stock, costo, proveedorId, Activo 
+                             FROM Globo 
+                             WHERE Activo = 1";
 
-            using var cmd = new SqlCommand(query, conn);
-            conn.Open();
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
             {
-                lista.Add(new Globo
+                conn.Open();
+                using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    GloboId = reader.GetString(0),
-                    Material = reader.GetString(1),
-                    Unidad = reader.GetString(2),
-                    Color = reader.GetString(3),
-                    Stock = reader.GetInt32(4),
-                    Costo = reader.GetDecimal(5),
-                    ProveedorId = reader.IsDBNull(6) ? null : reader.GetString(6),
-                    Activo = reader.GetBoolean(7)
-                });
+                    while (reader.Read())
+                    {
+                        lista.Add(new Globo
+                        {
+                            GloboId = reader["globoId"].ToString(),
+                            Material = reader["material"].ToString(),
+                            Unidad = reader["unidad"].ToString(),
+                            Color = reader["color"].ToString(),
+                            Stock = Convert.ToInt32(reader["stock"]),
+                            Costo = Convert.ToDecimal(reader["costo"]),
+                            ProveedorId = reader["proveedorId"]?.ToString(),
+                            Activo = Convert.ToBoolean(reader["Activo"])
+                        });
+                    }
+                }
             }
             return lista;
         }
 
-        // ===========================
-        // Leer por ID
-        // ===========================
+        // Obtener un globo por su ID
         public Globo ObtenerGloboPorId(string globoId)
         {
-            using var conn = new SqlConnection(_connectionString);
-            var query = @"SELECT globoId, material, unidad, color, stock, costo, proveedorId, Activo
-                          FROM Globo
-                          WHERE globoId = @Id";
-            using var cmd = new SqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@Id", globoId);
-            conn.Open();
-            using var reader = cmd.ExecuteReader();
-            if (reader.Read())
+            Globo globo = null;
+            string query = @"SELECT globoId, material, unidad, color, stock, costo, proveedorId, Activo 
+                             FROM Globo 
+                             WHERE globoId = @globoId";
+
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
             {
-                return new Globo
+                cmd.Parameters.AddWithValue("@globoId", globoId);
+                conn.Open();
+                using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    GloboId = reader.GetString(0),
-                    Material = reader.GetString(1),
-                    Unidad = reader.GetString(2),
-                    Color = reader.GetString(3),
-                    Stock = reader.GetInt32(4),
-                    Costo = reader.GetDecimal(5),
-                    ProveedorId = reader.IsDBNull(6) ? null : reader.GetString(6),
-                    Activo = reader.GetBoolean(7)
-                };
+                    if (reader.Read())
+                    {
+                        globo = new Globo
+                        {
+                            GloboId = reader["globoId"].ToString(),
+                            Material = reader["material"].ToString(),
+                            Unidad = reader["unidad"].ToString(),
+                            Color = reader["color"].ToString(),
+                            Stock = Convert.ToInt32(reader["stock"]),
+                            Costo = Convert.ToDecimal(reader["costo"]),
+                            ProveedorId = reader["proveedorId"]?.ToString(),
+                            Activo = Convert.ToBoolean(reader["Activo"])
+                        };
+                    }
+                }
             }
-            return null;
+            return globo;
         }
 
-        // ===========================
-        // Actualizar
-        // ===========================
+        // Insertar un nuevo globo
+        public bool InsertarGlobo(Globo globo)
+        {
+            string query = @"INSERT INTO Globo (globoId, material, unidad, color, stock, costo, proveedorId, Activo)
+                             VALUES (@globoId, @material, @unidad, @color, @stock, @costo, @proveedorId, @Activo)";
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@globoId", globo.GloboId);
+                cmd.Parameters.AddWithValue("@material", globo.Material);
+                cmd.Parameters.AddWithValue("@unidad", globo.Unidad);
+                cmd.Parameters.AddWithValue("@color", globo.Color);
+                cmd.Parameters.AddWithValue("@stock", globo.Stock);
+                cmd.Parameters.AddWithValue("@costo", globo.Costo);
+                cmd.Parameters.AddWithValue("@proveedorId", (object)globo.ProveedorId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Activo", globo.Activo);
+
+                conn.Open();
+                return cmd.ExecuteNonQuery() > 0;
+            }
+        }
+
+        // Actualizar un globo existente
         public bool ActualizarGlobo(Globo globo)
         {
-            using var conn = new SqlConnection(_connectionString);
-            var query = @"UPDATE Globo
-                          SET material = @Material,
-                              unidad = @Unidad,
-                              color = @Color,
-                              stock = @Stock,
-                              costo = @Costo,
-                              proveedorId = @ProveedorId,
-                              Activo = @Activo
-                          WHERE globoId = @Id";
-            using var cmd = new SqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@Id", globo.GloboId);
-            cmd.Parameters.AddWithValue("@Material", globo.Material);
-            cmd.Parameters.AddWithValue("@Unidad", globo.Unidad);
-            cmd.Parameters.AddWithValue("@Color", globo.Color);
-            cmd.Parameters.AddWithValue("@Stock", globo.Stock);
-            cmd.Parameters.AddWithValue("@Costo", globo.Costo);
-            cmd.Parameters.AddWithValue("@ProveedorId", (object)globo.ProveedorId ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@Activo", globo.Activo);
+            string query = @"UPDATE Globo 
+                             SET material=@material, unidad=@unidad, color=@color, stock=@stock, 
+                                 costo=@costo, proveedorId=@proveedorId, Activo=@Activo
+                             WHERE globoId=@globoId";
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@globoId", globo.GloboId);
+                cmd.Parameters.AddWithValue("@material", globo.Material);
+                cmd.Parameters.AddWithValue("@unidad", globo.Unidad);
+                cmd.Parameters.AddWithValue("@color", globo.Color);
+                cmd.Parameters.AddWithValue("@stock", globo.Stock);
+                cmd.Parameters.AddWithValue("@costo", globo.Costo);
+                cmd.Parameters.AddWithValue("@proveedorId", (object)globo.ProveedorId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Activo", globo.Activo);
 
-            conn.Open();
-            return cmd.ExecuteNonQuery() > 0;
+                conn.Open();
+                return cmd.ExecuteNonQuery() > 0;
+            }
         }
 
-        // ===========================
-        // Eliminar
-        // ===========================
+        // Eliminar (desactivar) un globo
         public bool EliminarGlobo(string globoId)
         {
-            using var conn = new SqlConnection(_connectionString);
-            var query = "DELETE FROM Globo WHERE globoId = @Id";
-            using var cmd = new SqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@Id", globoId);
-            conn.Open();
-            return cmd.ExecuteNonQuery() > 0;
+            string query = @"UPDATE Globo SET Activo = 0 WHERE globoId = @globoId";
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@globoId", globoId);
+                conn.Open();
+                return cmd.ExecuteNonQuery() > 0;
+            }
+        }
+
+        // Obtener tamaños asociados a un globo
+        public List<string> ObtenerTamaniosGlobo(string globoId)
+        {
+            var lista = new List<string>();
+            string query = @"SELECT tamanio FROM Globo_Tamanio WHERE globoId=@globoId";
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@globoId", globoId);
+                conn.Open();
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                        lista.Add(reader["tamanio"].ToString());
+                }
+            }
+            return lista;
+        }
+
+        // Obtener formas asociadas a un globo
+        public List<string> ObtenerFormasGlobo(string globoId)
+        {
+            var lista = new List<string>();
+            string query = @"SELECT forma FROM Globo_Forma WHERE globoId=@globoId";
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@globoId", globoId);
+                conn.Open();
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                        lista.Add(reader["forma"].ToString());
+                }
+            }
+            return lista;
         }
     }
 }

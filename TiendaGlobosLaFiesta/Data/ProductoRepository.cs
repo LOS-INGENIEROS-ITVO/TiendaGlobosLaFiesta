@@ -16,128 +16,130 @@ namespace TiendaGlobosLaFiesta.Data
             _connectionString = connectionString;
         }
 
-        // ===========================
-        // Crear
-        // ===========================
-        public bool AgregarProducto(Producto producto)
-        {
-            using var conn = new SqlConnection(_connectionString);
-            var query = @"INSERT INTO Producto (productoId, nombre, unidad, stock, costo, proveedorId, categoriaId, Activo)
-                          VALUES (@Id, @Nombre, @Unidad, @Stock, @Costo, @ProveedorId, @CategoriaId, @Activo)";
-            using var cmd = new SqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@Id", producto.ProductoId);
-            cmd.Parameters.AddWithValue("@Nombre", producto.Nombre);
-            cmd.Parameters.AddWithValue("@Unidad", producto.Unidad);
-            cmd.Parameters.AddWithValue("@Stock", producto.Stock);
-            cmd.Parameters.AddWithValue("@Costo", producto.Costo);
-            cmd.Parameters.AddWithValue("@ProveedorId", (object)producto.ProveedorId ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@CategoriaId", (object)producto.CategoriaId ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@Activo", producto.Activo);
-
-            conn.Open();
-            return cmd.ExecuteNonQuery() > 0;
-        }
-
-        // ===========================
-        // Leer todos
-        // ===========================
-        public List<Producto> ObtenerProductos(bool soloActivos = true)
+        // Obtener todos los productos activos
+        public List<Producto> ObtenerProductos()
         {
             var lista = new List<Producto>();
-            using var conn = new SqlConnection(_connectionString);
-            var query = "SELECT productoId, nombre, unidad, stock, costo, proveedorId, categoriaId, Activo FROM Producto";
-            if (soloActivos) query += " WHERE Activo = 1";
+            string query = @"SELECT productoId, nombre, unidad, stock, costo, proveedorId, categoriaId, Activo 
+                             FROM Producto
+                             WHERE Activo = 1";
 
-            using var cmd = new SqlCommand(query, conn);
-            conn.Open();
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
             {
-                lista.Add(new Producto
+                conn.Open();
+                using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    ProductoId = reader.GetString(0),
-                    Nombre = reader.GetString(1),
-                    Unidad = reader.GetString(2),
-                    Stock = reader.GetInt32(3),
-                    Costo = reader.GetDecimal(4),
-                    ProveedorId = reader.IsDBNull(5) ? null : reader.GetString(5),
-                    CategoriaId = reader.IsDBNull(6) ? null : reader.GetInt32(6),
-                    Activo = reader.GetBoolean(7)
-                });
+                    while (reader.Read())
+                    {
+                        lista.Add(new Producto
+                        {
+                            ProductoId = reader["productoId"].ToString(),
+                            Nombre = reader["nombre"].ToString(),
+                            Unidad = reader["unidad"].ToString(),
+                            Stock = Convert.ToInt32(reader["stock"]),
+                            Costo = Convert.ToDecimal(reader["costo"]),
+                            ProveedorId = reader["proveedorId"]?.ToString(),
+                            CategoriaId = reader["categoriaId"] != DBNull.Value ? Convert.ToInt32(reader["categoriaId"]) : (int?)null,
+                            Activo = Convert.ToBoolean(reader["Activo"])
+                        });
+                    }
+                }
             }
             return lista;
         }
 
-        // ===========================
-        // Leer por ID
-        // ===========================
+        // Obtener un producto por su ID
         public Producto ObtenerProductoPorId(string productoId)
         {
-            using var conn = new SqlConnection(_connectionString);
-            var query = @"SELECT productoId, nombre, unidad, stock, costo, proveedorId, categoriaId, Activo
-                          FROM Producto
-                          WHERE productoId = @Id";
-            using var cmd = new SqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@Id", productoId);
-            conn.Open();
-            using var reader = cmd.ExecuteReader();
-            if (reader.Read())
+            Producto producto = null;
+            string query = @"SELECT productoId, nombre, unidad, stock, costo, proveedorId, categoriaId, Activo
+                             FROM Producto
+                             WHERE productoId = @productoId";
+
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
             {
-                return new Producto
+                cmd.Parameters.AddWithValue("@productoId", productoId);
+                conn.Open();
+                using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    ProductoId = reader.GetString(0),
-                    Nombre = reader.GetString(1),
-                    Unidad = reader.GetString(2),
-                    Stock = reader.GetInt32(3),
-                    Costo = reader.GetDecimal(4),
-                    ProveedorId = reader.IsDBNull(5) ? null : reader.GetString(5),
-                    CategoriaId = reader.IsDBNull(6) ? null : reader.GetInt32(6),
-                    Activo = reader.GetBoolean(7)
-                };
+                    if (reader.Read())
+                    {
+                        producto = new Producto
+                        {
+                            ProductoId = reader["productoId"].ToString(),
+                            Nombre = reader["nombre"].ToString(),
+                            Unidad = reader["unidad"].ToString(),
+                            Stock = Convert.ToInt32(reader["stock"]),
+                            Costo = Convert.ToDecimal(reader["costo"]),
+                            ProveedorId = reader["proveedorId"]?.ToString(),
+                            CategoriaId = reader["categoriaId"] != DBNull.Value ? Convert.ToInt32(reader["categoriaId"]) : (int?)null,
+                            Activo = Convert.ToBoolean(reader["Activo"])
+                        };
+                    }
+                }
             }
-            return null;
+            return producto;
         }
 
-        // ===========================
-        // Actualizar
-        // ===========================
+        // Insertar un nuevo producto
+        public bool InsertarProducto(Producto producto)
+        {
+            string query = @"INSERT INTO Producto (productoId, nombre, unidad, stock, costo, proveedorId, categoriaId, Activo)
+                             VALUES (@productoId, @nombre, @unidad, @stock, @costo, @proveedorId, @categoriaId, @Activo)";
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@productoId", producto.ProductoId);
+                cmd.Parameters.AddWithValue("@nombre", producto.Nombre);
+                cmd.Parameters.AddWithValue("@unidad", producto.Unidad);
+                cmd.Parameters.AddWithValue("@stock", producto.Stock);
+                cmd.Parameters.AddWithValue("@costo", producto.Costo);
+                cmd.Parameters.AddWithValue("@proveedorId", (object)producto.ProveedorId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@categoriaId", (object)producto.CategoriaId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Activo", producto.Activo);
+
+                conn.Open();
+                return cmd.ExecuteNonQuery() > 0;
+            }
+        }
+
+        // Actualizar un producto existente
         public bool ActualizarProducto(Producto producto)
         {
-            using var conn = new SqlConnection(_connectionString);
-            var query = @"UPDATE Producto
-                          SET nombre = @Nombre,
-                              unidad = @Unidad,
-                              stock = @Stock,
-                              costo = @Costo,
-                              proveedorId = @ProveedorId,
-                              categoriaId = @CategoriaId,
-                              Activo = @Activo
-                          WHERE productoId = @Id";
-            using var cmd = new SqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@Id", producto.ProductoId);
-            cmd.Parameters.AddWithValue("@Nombre", producto.Nombre);
-            cmd.Parameters.AddWithValue("@Unidad", producto.Unidad);
-            cmd.Parameters.AddWithValue("@Stock", producto.Stock);
-            cmd.Parameters.AddWithValue("@Costo", producto.Costo);
-            cmd.Parameters.AddWithValue("@ProveedorId", (object)producto.ProveedorId ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@CategoriaId", (object)producto.CategoriaId ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@Activo", producto.Activo);
+            string query = @"UPDATE Producto
+                             SET nombre=@nombre, unidad=@unidad, stock=@stock, costo=@costo, 
+                                 proveedorId=@proveedorId, categoriaId=@categoriaId, Activo=@Activo
+                             WHERE productoId=@productoId";
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@productoId", producto.ProductoId);
+                cmd.Parameters.AddWithValue("@nombre", producto.Nombre);
+                cmd.Parameters.AddWithValue("@unidad", producto.Unidad);
+                cmd.Parameters.AddWithValue("@stock", producto.Stock);
+                cmd.Parameters.AddWithValue("@costo", producto.Costo);
+                cmd.Parameters.AddWithValue("@proveedorId", (object)producto.ProveedorId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@categoriaId", (object)producto.CategoriaId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Activo", producto.Activo);
 
-            conn.Open();
-            return cmd.ExecuteNonQuery() > 0;
+                conn.Open();
+                return cmd.ExecuteNonQuery() > 0;
+            }
         }
 
-        // ===========================
-        // Eliminar
-        // ===========================
+        // Eliminar (desactivar) un producto
         public bool EliminarProducto(string productoId)
         {
-            using var conn = new SqlConnection(_connectionString);
-            var query = "DELETE FROM Producto WHERE productoId = @Id";
-            using var cmd = new SqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@Id", productoId);
-            conn.Open();
-            return cmd.ExecuteNonQuery() > 0;
+            string query = @"UPDATE Producto SET Activo = 0 WHERE productoId = @productoId";
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@productoId", productoId);
+                conn.Open();
+                return cmd.ExecuteNonQuery() > 0;
+            }
         }
     }
 }

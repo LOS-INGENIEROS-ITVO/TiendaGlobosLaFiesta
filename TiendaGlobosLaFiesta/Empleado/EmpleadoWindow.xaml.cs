@@ -31,19 +31,14 @@ namespace TiendaGlobosLaFiesta
         // Carga inicial del Dashboard
         private void CargarDashboard()
         {
-            // Asumimos que crearás un UserControl "DashboardEmpleadoControl"
-            if (!Modulos.ContainsKey("Dashboard"))
-                Modulos["Dashboard"] = new DashboardEmpleadoControl();
-            MostrarModulo(Modulos["Dashboard"]);
+
         }
 
         // --- MANEJADORES DE CLIC PARA LOS BOTONES ---
 
         private void BtnDashboard_Click(object sender, RoutedEventArgs e)
         {
-            if (!Modulos.ContainsKey("Dashboard"))
-                Modulos["Dashboard"] = new DashboardEmpleadoControl();
-            MostrarModulo(Modulos["Dashboard"]);
+
         }
 
         private void BtnVentas_Click(object sender, RoutedEventArgs e)
