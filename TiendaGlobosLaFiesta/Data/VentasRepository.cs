@@ -1,152 +1,218 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
 using TiendaGlobosLaFiesta.Models.Clientes;
+using TiendaGlobosLaFiesta.Models.Utilities;
 using TiendaGlobosLaFiesta.Models.Ventas;
-using TiendaGlobosLaFiesta.Models.Inventario;
 
 namespace TiendaGlobosLaFiesta.Data
 {
     public class VentasRepository
     {
-        private readonly string _connectionString;
-        private readonly StockManagerRepository _stockManager;
+        #region CLIENTES
 
-        public VentasRepository(string connectionString, StockManagerRepository stockManager)
+        public List<Cliente> ObtenerClientes()
         {
-            _connectionString = connectionString;
-            _stockManager = stockManager;
+            var clientes = new List<Cliente>();
+            const string query = "SELECT clienteId, primerNombre, segundoNombre, apellidoP, apellidoM FROM Cliente WHERE Activo = 1 ORDER BY primerNombre";
+            DataTable dt = DbHelper.ExecuteQuery(query);
+
+            foreach (DataRow row in dt.Rows)
+            {
+                clientes.Add(new Cliente
+                {
+                    ClienteId = row["clienteId"].ToString(),
+                    PrimerNombre = row["primerNombre"].ToString(),
+                    SegundoNombre = row["segundoNombre"]?.ToString(),
+                    ApellidoP = row["apellidoP"].ToString(),
+                    ApellidoM = row["apellidoM"]?.ToString()
+                });
+            }
+            return clientes;
         }
 
-        public bool RegistrarVenta(Venta venta)
+        #endregion
+
+        #region REGISTRAR VENTA
+
+        public void RegistrarVenta(Cliente cliente, List<ProductoVenta> productos, List<GloboVenta> globos)
         {
-            using var conn = new SqlConnection(_connectionString);
+            if (cliente == null) throw new ArgumentNullException(nameof(cliente));
+
+            string ventaId = Guid.NewGuid().ToString();
+            decimal total = productos.Sum(p => p.Importe) + globos.Sum(g => g.Importe);
+            int empleadoId = SesionActual.EmpleadoId ?? throw new Exception("No hay sesión activa de empleado.");
+
+            using SqlConnection conn = new SqlConnection(DbHelper.ConnectionString);
             conn.Open();
-            using var tran = conn.BeginTransaction();
+            using SqlTransaction tran = conn.BeginTransaction();
 
             try
             {
-                // Insertar venta
-                using (var cmdVenta = new SqlCommand(
-                    @"INSERT INTO Venta(ventaId, empleadoId, clienteId, fechaVenta, importeTotal, estatus)
-                      VALUES(@Id, @Empleado, @Cliente, @Fecha, @ImporteTotal, @Estatus)", conn, tran))
-                {
-                    cmdVenta.Parameters.AddWithValue("@Id", venta.VentaId);
-                    cmdVenta.Parameters.AddWithValue("@Empleado", venta.EmpleadoId);
-                    cmdVenta.Parameters.AddWithValue("@Cliente", venta.ClienteId);
-                    cmdVenta.Parameters.AddWithValue("@Fecha", venta.FechaVenta);
-                    cmdVenta.Parameters.AddWithValue("@ImporteTotal", venta.ImporteTotal);
-                    cmdVenta.Parameters.AddWithValue("@Estatus", venta.Estatus ?? "Completada");
-                    cmdVenta.ExecuteNonQuery();
-                }
+                // INSERTAR MAESTRO
+                const string queryVenta = @"
+                    INSERT INTO Venta (ventaId, clienteId, empleadoId, fechaVenta, importeTotal, Estatus)
+                    VALUES (@ventaId, @clienteId, @empleadoId, @fecha, @total, @estatus)";
+                using var cmdVenta = new SqlCommand(queryVenta, conn, tran);
+                cmdVenta.Parameters.AddWithValue("@ventaId", ventaId);
+                cmdVenta.Parameters.AddWithValue("@clienteId", cliente.ClienteId);
+                cmdVenta.Parameters.AddWithValue("@empleadoId", empleadoId);
+                cmdVenta.Parameters.AddWithValue("@fecha", DateTime.Now);
+                cmdVenta.Parameters.AddWithValue("@total", total);
+                cmdVenta.Parameters.AddWithValue("@estatus", "Completada");
+                cmdVenta.ExecuteNonQuery();
 
-                // Detalle productos
-                foreach (var p in venta.Productos)
-                {
-                    using var cmdDet = new SqlCommand(
-                        @"INSERT INTO Detalle_Venta_Producto (ventaId, productoId, cantidad, costo, importe)
-                          VALUES(@VentaId, @ProductoId, @Cantidad, @Costo, @Importe)", conn, tran);
-                    cmdDet.Parameters.AddWithValue("@VentaId", venta.VentaId);
-                    cmdDet.Parameters.AddWithValue("@ProductoId", p.Id);
-                    cmdDet.Parameters.AddWithValue("@Cantidad", p.Cantidad);
-                    cmdDet.Parameters.AddWithValue("@Costo", p.Costo);
-                    cmdDet.Parameters.AddWithValue("@Importe", p.Importe);
-                    cmdDet.ExecuteNonQuery();
+                // INSERTAR DETALLES PRODUCTO
+                foreach (var p in productos)
+                    InsertarDetalleProducto(ventaId, p, conn, tran);
 
-                    // Ajustar stock con transacción
-                    _stockManager.AjustarStockProducto(p.Id, -p.Cantidad, conn, tran, venta.EmpleadoId, "Venta");
-                }
-
-                // Detalle globos
-                foreach (var g in venta.Globos)
-                {
-                    using var cmdDet = new SqlCommand(
-                        @"INSERT INTO Detalle_Venta_Globo (ventaId, globoId, cantidad, costo, importe)
-                          VALUES(@VentaId, @GloboId, @Cantidad, @Costo, @Importe)", conn, tran);
-                    cmdDet.Parameters.AddWithValue("@VentaId", venta.VentaId);
-                    cmdDet.Parameters.AddWithValue("@GloboId", g.Id);
-                    cmdDet.Parameters.AddWithValue("@Cantidad", g.Cantidad);
-                    cmdDet.Parameters.AddWithValue("@Costo", g.Costo);
-                    cmdDet.Parameters.AddWithValue("@Importe", g.Importe);
-                    cmdDet.ExecuteNonQuery();
-
-                    // Ajustar stock con transacción
-                    _stockManager.AjustarStockGlobo(g.Id, -g.Cantidad, conn, tran, venta.EmpleadoId, "Venta");
-                }
+                // INSERTAR DETALLES GLOBOS
+                foreach (var g in globos)
+                    InsertarDetalleGlobo(ventaId, g, conn, tran);
 
                 tran.Commit();
-                return true;
             }
             catch
             {
                 tran.Rollback();
-                return false;
+                throw;
             }
         }
 
-        public List<Cliente> ObtenerClientes()
+        private void InsertarDetalleProducto(string ventaId, ProductoVenta producto, SqlConnection conn, SqlTransaction tran)
         {
-            var lista = new List<Cliente>();
-            using var conn = new SqlConnection(_connectionString);
-            conn.Open();
+            const string query = @"
+                INSERT INTO Detalle_Venta_Producto (ventaId, productoId, cantidad, costo, importe)
+                VALUES (@ventaId, @productoId, @cantidad, @costo, @importe)";
+            using var cmd = new SqlCommand(query, conn, tran);
+            cmd.Parameters.AddWithValue("@ventaId", ventaId);
+            cmd.Parameters.AddWithValue("@productoId", producto.ProductoId);
+            cmd.Parameters.AddWithValue("@cantidad", producto.Cantidad);
+            cmd.Parameters.AddWithValue("@costo", producto.Costo);
+            cmd.Parameters.AddWithValue("@importe", producto.Importe);
+            cmd.ExecuteNonQuery();
 
-            var query = "SELECT clienteId, primerNombre, segundoNombre, apellidoP, apellidoM, telefono FROM Cliente WHERE Activo = 1";
-            using var cmd = new SqlCommand(query, conn);
-            using var reader = cmd.ExecuteReader();
-
-            while (reader.Read())
-            {
-                lista.Add(new Cliente
-                {
-                    ClienteId = reader.GetString(0),
-                    PrimerNombre = reader.GetString(1),
-                    SegundoNombre = reader.IsDBNull(2) ? "" : reader.GetString(2),
-                    ApellidoP = reader.IsDBNull(3) ? "" : reader.GetString(3),
-                    ApellidoM = reader.IsDBNull(4) ? "" : reader.GetString(4),
-                    Telefono = reader.IsDBNull(5) ? null : (long?)reader.GetInt64(5),
-                    Activo = true
-                });
-            }
-
-            return lista;
+            ActualizarStockProducto(producto.ProductoId, producto.Cantidad, ventaId, conn, tran);
         }
+
+        private void InsertarDetalleGlobo(string ventaId, GloboVenta globo, SqlConnection conn, SqlTransaction tran)
+        {
+            const string query = @"
+                INSERT INTO Detalle_Venta_Globo (ventaId, globoId, cantidad, costo, importe)
+                VALUES (@ventaId, @globoId, @cantidad, @costo, @importe)";
+            using var cmd = new SqlCommand(query, conn, tran);
+            cmd.Parameters.AddWithValue("@ventaId", ventaId);
+            cmd.Parameters.AddWithValue("@globoId", globo.GloboId);
+            cmd.Parameters.AddWithValue("@cantidad", globo.Cantidad);
+            cmd.Parameters.AddWithValue("@costo", globo.Costo);
+            cmd.Parameters.AddWithValue("@importe", globo.Importe);
+            cmd.ExecuteNonQuery();
+
+            ActualizarStockGlobo(globo.GloboId, globo.Cantidad, ventaId, conn, tran);
+        }
+
+        #endregion
+
+        #region ACTUALIZACIÓN DE STOCK
+
+        private void ActualizarStockProducto(string productoId, int cantidadVendida, string ventaId, SqlConnection conn, SqlTransaction tran)
+        {
+            int stockActual = Convert.ToInt32(new SqlCommand("SELECT stock FROM Producto WHERE productoId=@id", conn, tran)
+            {
+                Parameters = { new SqlParameter("@id", productoId) }
+            }.ExecuteScalar() ?? 0);
+
+            int nuevoStock = Math.Max(stockActual - cantidadVendida, 0);
+
+            new SqlCommand("UPDATE Producto SET stock=@nuevo WHERE productoId=@id", conn, tran)
+            {
+                Parameters =
+                {
+                    new SqlParameter("@nuevo", nuevoStock),
+                    new SqlParameter("@id", productoId)
+                }
+            }.ExecuteNonQuery();
+
+            // Auditoría
+            using var cmdHist = new SqlCommand(@"
+                INSERT INTO HistorialAjusteStock (ProductoId, CantidadAnterior, CantidadNueva, Motivo, EmpleadoId)
+                VALUES (@ProductoId, @Anterior, @Nuevo, @Motivo, @EmpleadoId)", conn, tran);
+            cmdHist.Parameters.AddWithValue("@ProductoId", productoId);
+            cmdHist.Parameters.AddWithValue("@Anterior", stockActual);
+            cmdHist.Parameters.AddWithValue("@Nuevo", nuevoStock);
+            cmdHist.Parameters.AddWithValue("@Motivo", $"Venta {ventaId}");
+            cmdHist.Parameters.AddWithValue("@EmpleadoId", SesionActual.EmpleadoId ?? (object)DBNull.Value);
+            cmdHist.ExecuteNonQuery();
+        }
+
+        private void ActualizarStockGlobo(string globoId, int cantidadVendida, string ventaId, SqlConnection conn, SqlTransaction tran)
+        {
+            int stockActual = Convert.ToInt32(new SqlCommand("SELECT stock FROM Globo WHERE globoId=@id", conn, tran)
+            {
+                Parameters = { new SqlParameter("@id", globoId) }
+            }.ExecuteScalar() ?? 0);
+
+            int nuevoStock = Math.Max(stockActual - cantidadVendida, 0);
+
+            new SqlCommand("UPDATE Globo SET stock=@nuevo WHERE globoId=@id", conn, tran)
+            {
+                Parameters =
+                {
+                    new SqlParameter("@nuevo", nuevoStock),
+                    new SqlParameter("@id", globoId)
+                }
+            }.ExecuteNonQuery();
+
+            using var cmdHist = new SqlCommand(@"
+                INSERT INTO HistorialAjusteStockGlobo (GloboId, CantidadAnterior, CantidadNueva, Motivo, EmpleadoId)
+                VALUES (@GloboId, @Anterior, @Nuevo, @Motivo, @EmpleadoId)", conn, tran);
+            cmdHist.Parameters.AddWithValue("@GloboId", globoId);
+            cmdHist.Parameters.AddWithValue("@Anterior", stockActual);
+            cmdHist.Parameters.AddWithValue("@Nuevo", nuevoStock);
+            cmdHist.Parameters.AddWithValue("@Motivo", $"Venta {ventaId}");
+            cmdHist.Parameters.AddWithValue("@EmpleadoId", SesionActual.EmpleadoId ?? (object)DBNull.Value);
+            cmdHist.ExecuteNonQuery();
+        }
+
+        #endregion
+
+        #region HISTORIAL VENTAS
 
         public List<VentaHistorial> ObtenerHistorialVentas()
         {
-            var lista = new List<VentaHistorial>();
-            using var conn = new SqlConnection(_connectionString);
-            conn.Open();
-
-            var query = @"
-                SELECT v.ventaId, v.clienteId, c.primerNombre, c.segundoNombre, c.apellidoP, c.apellidoM,
-                       e.nombre, v.fechaVenta, v.estatus, v.importeTotal
+            var historial = new List<VentaHistorial>();
+            const string query = @"
+                SELECT v.ventaId, v.clienteId, v.empleadoId, v.fechaVenta, v.importeTotal, v.Estatus,
+                       c.primerNombre, c.segundoNombre, c.apellidoP, c.apellidoM,
+                       e.primerNombre AS emp1, e.segundoNombre AS emp2, e.apellidoP AS empP, e.apellidoM AS empM
                 FROM Venta v
-                LEFT JOIN Cliente c ON v.clienteId = c.clienteId
-                LEFT JOIN Empleado e ON v.empleadoId = e.empleadoId";
+                JOIN Cliente c ON v.clienteId = c.clienteId
+                JOIN Empleado e ON v.empleadoId = e.empleadoId
+                ORDER BY v.fechaVenta DESC";
 
-            using var cmd = new SqlCommand(query, conn);
-            using var reader = cmd.ExecuteReader();
-
-            while (reader.Read())
+            DataTable dt = DbHelper.ExecuteQuery(query);
+            foreach (DataRow row in dt.Rows)
             {
-                var venta = new Venta
+                historial.Add(new VentaHistorial
                 {
-                    VentaId = reader.GetString(0),
-                    ClienteId = reader.GetString(1),
-                    FechaVenta = reader.GetDateTime(7),
-                    Estatus = reader.GetString(8)
-                };
-
-                var nombreCliente = $"{reader.GetString(2)} {reader.GetString(3)} {reader.GetString(4)} {reader.GetString(5)}".Trim();
-                lista.Add(new VentaHistorial(
-                    venta,
-                    reader.GetString(1),
-                    nombreCliente,
-                    reader.IsDBNull(6) ? "" : reader.GetString(6)
-                ));
+                    VentaId = row["ventaId"].ToString(),
+                    ClienteId = row["clienteId"].ToString(),
+                    ClienteNombre = $"{row["primerNombre"]} {row["segundoNombre"]} {row["apellidoP"]} {row["apellidoM"]}".Trim(),
+                    NombreEmpleado = $"{row["emp1"]} {row["emp2"]} {row["empP"]} {row["empM"]}".Trim(),
+                    FechaVenta = Convert.ToDateTime(row["fechaVenta"]),
+                    Total = Convert.ToDecimal(row["importeTotal"]),
+                    Estatus = row["Estatus"].ToString(),
+                    Productos = new ObservableCollection<ProductoVenta>(),
+                    Globos = new ObservableCollection<GloboVenta>()
+                });
             }
 
-            return lista;
+            return historial;
         }
+
+        #endregion
     }
 }

@@ -8,13 +8,11 @@ namespace TiendaGlobosLaFiesta.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            var texto = value as string;
-            return string.IsNullOrWhiteSpace(texto) ? "---" : texto;
+            if (value == null) return "---";
+            if (value is string s && string.IsNullOrWhiteSpace(s)) return "---";
+            return value;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
     }
 }

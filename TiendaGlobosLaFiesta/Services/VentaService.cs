@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using TiendaGlobosLaFiesta.Data;
-using TiendaGlobosLaFiesta.Managers;
-using TiendaGlobosLaFiesta.Models.Clientes;
 using TiendaGlobosLaFiesta.Models.Utilities;
 using TiendaGlobosLaFiesta.Models.Ventas;
 
@@ -12,87 +9,69 @@ namespace TiendaGlobosLaFiesta.Services
     public class VentaService
     {
         private readonly VentasRepository _ventasRepo;
-        private readonly ModuloManager _moduloManager;
+        private readonly StockManagerRepository _stockManager;
 
-        public VentaService(VentasRepository ventasRepo, ModuloManager moduloManager)
+        public VentaService()
         {
-            _ventasRepo = ventasRepo;
-            _moduloManager = moduloManager;
+            var productoRepo = new ProductoRepository();
+            var globoRepo = new GloboRepository();
+            _ventasRepo = new VentasRepository();
+            _stockManager = new StockManagerRepository(productoRepo, globoRepo);
         }
 
-        // Obtener clientes activos
-        public List<Cliente> ObtenerClientes()
-        {
-            return _ventasRepo.ObtenerClientes();
-        }
-
-        // Registrar venta completa (productos + globos)
         public bool RegistrarVentaCompleta(Venta venta, out string mensajeError)
         {
             mensajeError = string.Empty;
 
-            if (venta == null)
+            if (!SesionActual.EmpleadoId.HasValue)
             {
-                mensajeError = "La venta es nula.";
+                mensajeError = "No se ha iniciado sesión con un empleado válido.";
                 return false;
             }
 
-            if (!venta.Productos.Any() && !venta.Globos.Any())
+            // Validar stock antes de iniciar transacción
+            foreach (var item in venta.Productos.Cast<ItemVenta>().Concat(venta.Globos))
             {
-                mensajeError = "Debe contener al menos un producto o globo.";
-                return false;
+                if (item.Cantidad > item.Stock)
+                {
+                    mensajeError = $"No hay suficiente stock para el item con ID {item.Id}.";
+                    return false;
+                }
             }
 
             try
             {
-                // Aquí usamos ModuloManager para registrar la venta
-                int empleadoId = SesionActual.EmpleadoId ?? 0;
-                string clienteId = venta.ClienteId ?? "C0001";
+                using var conn = DbHelper.ObtenerConexion();
+                using var tran = conn.BeginTransaction();
 
-                bool exito = _moduloManager.RegistrarVenta(
-                    venta.VentaId, empleadoId, clienteId,
-                    venta.Productos.ToList(), venta.Globos.ToList());
+                // Insertar venta maestro
+                _ventasRepo.InsertarVentaMaestro(venta, conn, tran);
 
-                if (exito)
-                {
-                    // Notificar si quieres
-                    // _moduloManager.NotificarVentaRegistrada(); 
-                    return true;
-                }
-                else
-                {
-                    mensajeError = "No se pudo registrar la venta.";
-                    return false;
-                }
+                // Insertar detalle de productos
+                foreach (var p in venta.Productos)
+                    _ventasRepo.InsertarDetalleProducto(venta.VentaId, p, conn, tran);
+
+                // Insertar detalle de globos
+                foreach (var g in venta.Globos)
+                    _ventasRepo.InsertarDetalleGlobo(venta.VentaId, g, conn, tran);
+
+                // Preparar lista de items para ajuste combinado
+                var itemsStock = venta.Productos
+                    .Select(p => (id: p.ProductoId, cantidad: p.Cantidad, esGlobo: false))
+                    .Concat(venta.Globos.Select(g => (id: g.GloboId, cantidad: g.Cantidad, esGlobo: true)))
+                    .ToList();
+
+                // Ajustar stock usando la transacción existente
+                _stockManager.AjustarStockCombinado(itemsStock, SesionActual.EmpleadoId.Value, "Venta realizada", conn, tran);
+
+                tran.Commit();
+                return true;
             }
             catch (Exception ex)
             {
-                mensajeError = $"Error al registrar la venta: {ex.Message}";
+                mensajeError = $"Error en BD: {ex.Message}";
                 return false;
             }
-        }
-
-        // Obtener historial completo de ventas
-        public List<VentaHistorial> ObtenerHistorialVentas()
-        {
-            return _ventasRepo.ObtenerHistorialVentas();
-        }
-
-        // Filtrar historial de ventas por cliente y fechas
-        public List<VentaHistorial> FiltrarHistorial(string clienteId, DateTime? desde, DateTime? hasta)
-        {
-            var historial = ObtenerHistorialVentas();
-
-            if (!string.IsNullOrEmpty(clienteId))
-                historial = historial.FindAll(v => v.ClienteId == clienteId);
-
-            if (desde.HasValue)
-                historial = historial.FindAll(v => v.FechaVenta.Date >= desde.Value.Date);
-
-            if (hasta.HasValue)
-                historial = historial.FindAll(v => v.FechaVenta.Date <= hasta.Value.Date);
-
-            return historial;
         }
     }
 }

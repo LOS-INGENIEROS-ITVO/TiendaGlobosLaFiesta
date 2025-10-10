@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Data.SqlClient;
 using TiendaGlobosLaFiesta.Models.Inventario;
 
@@ -7,231 +8,103 @@ namespace TiendaGlobosLaFiesta.Data
 {
     public class StockManagerRepository
     {
-        private readonly string _connectionString;
+        private readonly ProductoRepository _productoRepo;
+        private readonly GloboRepository _globoRepo;
 
-        public StockManagerRepository(string connectionString)
+        public StockManagerRepository(ProductoRepository productoRepo, GloboRepository globoRepo)
         {
-            _connectionString = connectionString;
+            _productoRepo = productoRepo ?? throw new ArgumentNullException(nameof(productoRepo));
+            _globoRepo = globoRepo ?? throw new ArgumentNullException(nameof(globoRepo));
         }
 
-        // ===========================
-        // Ajustar stock producto
-        // ===========================
-        public bool AjustarStockProducto(string productoId, int cantidad, string empleadoId, string motivo = null)
+        // ---------------------------
+        // AJUSTE DE STOCK COMBINADO
+        // ---------------------------
+        public void AjustarStockCombinado(List<(string id, int cantidad, bool esGlobo)> items, int empleadoId, string motivo, SqlConnection conn, SqlTransaction tran)
         {
-            using var conn = new SqlConnection(_connectionString);
-            conn.Open();
-            using var tran = conn.BeginTransaction();
+            if (items == null || items.Count == 0)
+                throw new ArgumentException("No se proporcionaron items para ajustar.", nameof(items));
 
-            try
+            foreach (var item in items)
             {
-                // Obtener stock actual
-                int stockAnterior;
-                using (var cmd = new SqlCommand("SELECT stock FROM Producto WHERE productoId=@Id", conn, tran))
+                if (item.esGlobo)
                 {
-                    cmd.Parameters.AddWithValue("@Id", productoId);
-                    stockAnterior = (int)cmd.ExecuteScalar();
+                    if (!_globoRepo.AjustarStockConHistorial(item.id, item.cantidad, empleadoId, motivo, conn, tran))
+                        throw new Exception($"Error ajustando stock del globo {item.id}");
                 }
-
-                // Actualizar stock
-                var query = "UPDATE Producto SET stock = stock + @Cantidad WHERE productoId = @Id";
-                using (var cmd = new SqlCommand(query, conn, tran))
+                else
                 {
-                    cmd.Parameters.AddWithValue("@Cantidad", cantidad);
-                    cmd.Parameters.AddWithValue("@Id", productoId);
-                    cmd.ExecuteNonQuery();
+                    if (!_productoRepo.AjustarStockConHistorial(item.id, item.cantidad, empleadoId, motivo, conn, tran))
+                        throw new Exception($"Error ajustando stock del producto {item.id}");
                 }
-
-                // Insertar historial
-                query = @"INSERT INTO HistorialAjusteStock (ProductoId, CantidadAnterior, CantidadNueva, Motivo, EmpleadoId)
-                          VALUES (@Id, @Anterior, @Nueva, @Motivo, @EmpleadoId)";
-                using (var cmd = new SqlCommand(query, conn, tran))
-                {
-                    cmd.Parameters.AddWithValue("@Id", productoId);
-                    cmd.Parameters.AddWithValue("@Anterior", stockAnterior);
-                    cmd.Parameters.AddWithValue("@Nueva", stockAnterior + cantidad);
-                    cmd.Parameters.AddWithValue("@Motivo", (object)motivo ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@EmpleadoId", empleadoId);
-                    cmd.ExecuteNonQuery();
-                }
-
-                tran.Commit();
-                return true;
-            }
-            catch
-            {
-                tran.Rollback();
-                return false;
             }
         }
 
-        // ===========================
-        // Ajustar stock globo
-        // ===========================
-        public bool AjustarStockGlobo(string globoId, int cantidad, string empleadoId, string motivo = null)
+        // ---------------------------
+        // STOCK CRÍTICO
+        // ---------------------------
+
+        /// <summary>
+        /// Obtiene productos cuyo stock está por debajo o igual al mínimo indicado.
+        /// </summary>
+        public List<StockCriticoItem> ObtenerProductosStockCritico(int stockMinimo = 5)
         {
-            using var conn = new SqlConnection(_connectionString);
-            conn.Open();
-            using var tran = conn.BeginTransaction();
+            var lista = _productoRepo.ObtenerProductos();
+            if (lista == null) return new List<StockCriticoItem>();
 
-            try
-            {
-                // Obtener stock actual
-                int stockAnterior;
-                using (var cmd = new SqlCommand("SELECT stock FROM Globo WHERE globoId=@Id", conn, tran))
-                {
-                    cmd.Parameters.AddWithValue("@Id", globoId);
-                    stockAnterior = (int)cmd.ExecuteScalar();
-                }
-
-                // Actualizar stock
-                var query = "UPDATE Globo SET stock = stock + @Cantidad WHERE globoId = @Id";
-                using (var cmd = new SqlCommand(query, conn, tran))
-                {
-                    cmd.Parameters.AddWithValue("@Cantidad", cantidad);
-                    cmd.Parameters.AddWithValue("@Id", globoId);
-                    cmd.ExecuteNonQuery();
-                }
-
-                // Insertar historial
-                query = @"INSERT INTO HistorialAjusteStockGlobo (GloboId, CantidadAnterior, CantidadNueva, Motivo, EmpleadoId)
-                          VALUES (@Id, @Anterior, @Nueva, @Motivo, @EmpleadoId)";
-                using (var cmd = new SqlCommand(query, conn, tran))
-                {
-                    cmd.Parameters.AddWithValue("@Id", globoId);
-                    cmd.Parameters.AddWithValue("@Anterior", stockAnterior);
-                    cmd.Parameters.AddWithValue("@Nueva", stockAnterior + cantidad);
-                    cmd.Parameters.AddWithValue("@Motivo", (object)motivo ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@EmpleadoId", empleadoId);
-                    cmd.ExecuteNonQuery();
-                }
-
-                tran.Commit();
-                return true;
-            }
-            catch
-            {
-                tran.Rollback();
-                return false;
-            }
+            return lista
+    .Where(p => p.Stock <= stockMinimo)
+    .Select(p => new StockCriticoItem
+    {
+        Id = p.ProductoId,
+        Nombre = p.Nombre,
+        StockActual = p.Stock,
+        Precio = p.Costo,
+        Tipo = "Producto",
+        Unidad = p.Unidad ?? "pieza",
+        Color = "-", // productos no tienen color
+        Producto = p
+    })
+    .ToList();
         }
 
-
-
-        // Agrega estas sobrecargas en StockManagerRepository
-        public bool AjustarStockProducto(string productoId, int cantidad, SqlConnection conn, SqlTransaction tran, string empleadoId, string motivo = null)
+        /// <summary>
+        /// Obtiene globos cuyo stock está por debajo o igual al mínimo indicado.
+        /// </summary>
+        public List<StockCriticoItem> ObtenerGlobosStockCritico(int stockMinimo = 5)
         {
-            // Obtener stock actual
-            int stockAnterior;
-            using (var cmd = new SqlCommand("SELECT stock FROM Producto WHERE productoId=@Id", conn, tran))
-            {
-                cmd.Parameters.AddWithValue("@Id", productoId);
-                stockAnterior = (int)cmd.ExecuteScalar();
-            }
+            var lista = _globoRepo.ObtenerGlobos();
+            if (lista == null) return new List<StockCriticoItem>();
 
-            // Actualizar stock
-            using (var cmd = new SqlCommand("UPDATE Producto SET stock = stock + @Cantidad WHERE productoId = @Id", conn, tran))
-            {
-                cmd.Parameters.AddWithValue("@Cantidad", cantidad);
-                cmd.Parameters.AddWithValue("@Id", productoId);
-                cmd.ExecuteNonQuery();
-            }
+            return lista
+    .Where(g => g.Stock <= stockMinimo)
+    .Select(g => new StockCriticoItem
+    {
+        Id = g.GloboId,
+        Nombre = $"{g.Material} {g.Tamano} {g.Forma}".Trim(),
+        StockActual = g.Stock,
+        Precio = g.Costo,
+        Tipo = "Globo",
+        Unidad = g.Unidad ?? "pieza",
+        Color = g.Color ?? "---",
+        Globo = g
+    })
+    .ToList();
 
-            // Insertar historial
-            using (var cmd = new SqlCommand(
-                @"INSERT INTO HistorialAjusteStock (ProductoId, CantidadAnterior, CantidadNueva, Motivo, EmpleadoId)
-          VALUES (@Id, @Anterior, @Nueva, @Motivo, @EmpleadoId)", conn, tran))
-            {
-                cmd.Parameters.AddWithValue("@Id", productoId);
-                cmd.Parameters.AddWithValue("@Anterior", stockAnterior);
-                cmd.Parameters.AddWithValue("@Nueva", stockAnterior + cantidad);
-                cmd.Parameters.AddWithValue("@Motivo", (object)motivo ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@EmpleadoId", empleadoId);
-                cmd.ExecuteNonQuery();
-            }
-
-            return true;
         }
 
-        public bool AjustarStockGlobo(string globoId, int cantidad, SqlConnection conn, SqlTransaction tran, string empleadoId, string motivo = null)
-        {
-            int stockAnterior;
-            using (var cmd = new SqlCommand("SELECT stock FROM Globo WHERE globoId=@Id", conn, tran))
-            {
-                cmd.Parameters.AddWithValue("@Id", globoId);
-                stockAnterior = (int)cmd.ExecuteScalar();
-            }
+        // ---------------------------
+        // MÉTODOS AUXILIARES
+        // ---------------------------
 
-            using (var cmd = new SqlCommand("UPDATE Globo SET stock = stock + @Cantidad WHERE globoId = @Id", conn, tran))
-            {
-                cmd.Parameters.AddWithValue("@Cantidad", cantidad);
-                cmd.Parameters.AddWithValue("@Id", globoId);
-                cmd.ExecuteNonQuery();
-            }
-
-            using (var cmd = new SqlCommand(
-                @"INSERT INTO HistorialAjusteStockGlobo (GloboId, CantidadAnterior, CantidadNueva, Motivo, EmpleadoId)
-          VALUES (@Id, @Anterior, @Nueva, @Motivo, @EmpleadoId)", conn, tran))
-            {
-                cmd.Parameters.AddWithValue("@Id", globoId);
-                cmd.Parameters.AddWithValue("@Anterior", stockAnterior);
-                cmd.Parameters.AddWithValue("@Nueva", stockAnterior + cantidad);
-                cmd.Parameters.AddWithValue("@Motivo", (object)motivo ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@EmpleadoId", empleadoId);
-                cmd.ExecuteNonQuery();
-            }
-
-            return true;
-        }
-
-
-        // ===========================
-        // Obtener stock crítico
-        // ===========================
-        public List<StockCriticoItem> ObtenerStockCritico(int nivelCritico)
+        /// <summary>
+        /// Devuelve todos los items de stock crítico combinados (productos + globos)
+        /// </summary>
+        public List<StockCriticoItem> ObtenerStockCriticoCombinado(int stockMinimo = 5)
         {
             var lista = new List<StockCriticoItem>();
-
-            // Productos
-            using (var conn = new SqlConnection(_connectionString))
-            {
-                var query = "SELECT productoId, nombre, stock FROM Producto WHERE stock <= @Nivel";
-                using var cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@Nivel", nivelCritico);
-                conn.Open();
-                using var reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    lista.Add(new StockCriticoItem
-                    {
-                        Id = reader.GetString(0),
-                        Nombre = reader.GetString(1),
-                        StockActual = reader.GetInt32(2),
-                        Tipo = "Producto"
-                    });
-                }
-            }
-
-            // Globos
-            using (var conn = new SqlConnection(_connectionString))
-            {
-                var query = "SELECT globoId, material + ' ' + color AS nombre, stock FROM Globo WHERE stock <= @Nivel";
-                using var cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@Nivel", nivelCritico);
-                conn.Open();
-                using var reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    lista.Add(new StockCriticoItem
-                    {
-                        Id = reader.GetString(0),
-                        Nombre = reader.GetString(1),
-                        StockActual = reader.GetInt32(2),
-                        Tipo = "Globo"
-                    });
-                }
-            }
-
+            lista.AddRange(ObtenerProductosStockCritico(stockMinimo));
+            lista.AddRange(ObtenerGlobosStockCritico(stockMinimo));
             return lista;
         }
     }

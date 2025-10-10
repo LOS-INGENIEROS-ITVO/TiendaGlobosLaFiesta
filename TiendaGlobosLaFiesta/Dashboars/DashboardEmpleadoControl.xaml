@@ -1,0 +1,89 @@
+﻿<UserControl x:Class="TiendaGlobosLaFiesta.Views.DashboardEmpleadoControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1200"
+             Background="#F4F7FC">
+
+    <UserControl.Resources>
+        <Style TargetType="TextBlock" x:Key="KpiTitleStyle">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="Opacity" Value="0.8"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="TextBlock" x:Key="KpiValueStyle">
+            <Setter Property="FontSize" Value="28"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,8,0,0"/>
+        </Style>
+        <Style TargetType="Border" x:Key="KpiCardStyle">
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Margin" Value="12"/>
+            <Setter Property="Width" Value="265"/>
+            <Setter Property="MinHeight" Value="130"/>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="10">
+            <TextBlock Text="Dashboard Empleado" FontSize="32" FontWeight="Bold" Foreground="#1B2B4E" Margin="20,10,0,20"/>
+
+            <WrapPanel HorizontalAlignment="Center">
+                <Border Style="{StaticResource KpiCardStyle}" Background="#28a745">
+                    <StackPanel>
+                        <TextBlock Text="💰 Mis Ventas de Hoy" Style="{StaticResource KpiTitleStyle}"/>
+                        <TextBlock x:Name="txtMisVentasHoy" Text="$0.00" Style="{StaticResource KpiValueStyle}"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource KpiCardStyle}" Background="#007bff">
+                    <StackPanel>
+                        <TextBlock Text="🎟️ Tickets de Hoy" Style="{StaticResource KpiTitleStyle}"/>
+                        <TextBlock x:Name="txtTicketsHoy" Text="0" Style="{StaticResource KpiValueStyle}"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource KpiCardStyle}" Background="#ffc107">
+                    <StackPanel>
+                        <TextBlock Text="📊 Ticket Promedio (Hoy)" Style="{StaticResource KpiTitleStyle}" Foreground="#343a40"/>
+                        <TextBlock x:Name="txtTicketPromedio" Text="$0.00" Style="{StaticResource KpiValueStyle}" Foreground="#343a40"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource KpiCardStyle}" Background="#17a2b8">
+                    <StackPanel>
+                        <TextBlock Text="👥 Clientes Atendidos Hoy" Style="{StaticResource KpiTitleStyle}"/>
+                        <TextBlock x:Name="txtClientesAtendidos" Text="0" Style="{StaticResource KpiValueStyle}"/>
+                    </StackPanel>
+                </Border>
+            </WrapPanel>
+
+            <Border Background="White" CornerRadius="12" Padding="25,25,25,10" Margin="24,20,24,20">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="📈 Mis Ventas en los Últimos 7 Días" Grid.Row="0"
+                               FontSize="20" FontWeight="Bold" Foreground="#1B2B4E"
+                               HorizontalAlignment="Left" Margin="0,0,0,20"/>
+                    <lvc:CartesianChart Grid.Row="1" MinHeight="300" AnimationsSpeed="0:0:0.5"
+                                        Series="{Binding SeriesCollection}" 
+                                        LegendLocation="None">
+                        <lvc:CartesianChart.AxisX>
+                            <lvc:Axis Labels="{Binding LabelsGrafica}" Foreground="#6c757d"/>
+                        </lvc:CartesianChart.AxisX>
+                        <lvc:CartesianChart.AxisY>
+                            <lvc:Axis LabelFormatter="{Binding Formatter}" Foreground="#6c757d" MinValue="0"/>
+                        </lvc:CartesianChart.AxisY>
+                    </lvc:CartesianChart>
+                </Grid>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
